@@ -8,4 +8,4 @@
  */
 
 rootProject.name = "guarded-queries"
-include("app", "list", "utilities")
+include("app", "lib")
