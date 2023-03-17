@@ -8,4 +8,4 @@
  */
 
 rootProject.name = "guarded-queries"
-include("app", "lib")
+include("guarded-saturation-wrapper", "app", "lib")

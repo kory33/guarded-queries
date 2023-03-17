@@ -1,3 +1,7 @@
+app/bin
+
+.metals
+
 .idea
 
 # Ignore Gradle project-specific cache directory
