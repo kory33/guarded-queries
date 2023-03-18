@@ -1,16 +1,22 @@
 //region Utilities
 
-fun downloadFile(url: java.net.URL, outputPath: String) {
-    url.openStream().use {
-        java.nio.channels.Channels.newChannel(it).use { byteChannel ->
-            java.io.FileOutputStream(outputPath).use { outputStream ->
-                outputStream.channel.transferFrom(byteChannel, 0, Long.MAX_VALUE)
+fun downloadIfNotAlreadyDownloaded(url: java.net.URL, outputPath: String) {
+    val file = File(outputPath)
+    file.parentFile.mkdirs()
+    if (!file.exists()) {
+        java.io.FileOutputStream(file).use { outputStream ->
+            url.openStream().use { input ->
+                java.nio.channels.Channels.newChannel(input).use { byteChannel ->
+                    outputStream.channel.transferFrom(byteChannel, 0, Long.MAX_VALUE)
+                }
             }
         }
+    } else if (!file.isFile) {
+        throw RuntimeException("Something other than file is present at $pdqCommonJarAbsolutePath, aborting.")
     }
 }
 
-val mavenCommand: String = kotlin.run {
+val availableMavenCommand: String = kotlin.run {
     fun mvnCommandPresentAt(mvnCommandPath: String): Boolean =
             try {
                 Runtime.getRuntime().exec(arrayOf(mvnCommandPath, "-version"))
@@ -43,12 +49,7 @@ val pdqCommonJarAbsolutePath = "${project.projectDir.absolutePath}/${pdqCommonJa
 // https://github.com/KRR-Oxford/Guarded-saturation/tree/83cb805564a8a89c399381f26c5c16f6acedd38e#installing-pdq-in-maven
 val fetchPdqJar = tasks.register("fetch-pdq-jar") {
     doFirst {
-        val file = File(pdqCommonJarAbsolutePath)
-        if (!file.exists()) {
-            downloadFile(pdqCommonJarUrl, pdqCommonJarAbsolutePath)
-        } else if (!file.isFile) {
-            throw RuntimeException("Something other than file is present at $pdqCommonJarAbsolutePath, aborting.")
-        }
+        downloadIfNotAlreadyDownloaded(pdqCommonJarUrl, pdqCommonJarAbsolutePath)
     }
 }
 
@@ -58,7 +59,7 @@ val installPdqJar = task<Exec>("install-pdq-jar") {
     // or else we will get an NPE
     workingDir(guardedSaturationMavenProjectPath)
     commandLine(
-            mavenCommand,
+            availableMavenCommand,
             "org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file",
             "-Dfile=../${pdqCommonJarRelativePath}",
     )
@@ -69,7 +70,7 @@ val installPdqJar = task<Exec>("install-pdq-jar") {
 val installKaon2 = task<Exec>("install-kaon-2") {
     workingDir(guardedSaturationMavenProjectPath)
     commandLine(
-            mavenCommand,
+            availableMavenCommand,
             "install:install-file",
             "-Dfile=./src/main/resources/kaon2.jar",
             "-DgroupId=org.semanticweb.kaon2",
@@ -84,21 +85,21 @@ val build = task<Exec>("build") {
     dependsOn(installPdqJar, installKaon2)
     workingDir(guardedSaturationMavenProjectPath)
     commandLine(
-        mavenCommand,
-        "package",
-        "-DskipTests" // some tests in GSat just fails right now, so igonre tests
+            availableMavenCommand,
+            "package",
+            "-DskipTests" // some tests in GSat just fails right now, so igonre tests
     )
 }
 
-val config: Configuration by configurations.creating {
+val gsatJar: Configuration by configurations.creating {
     isCanBeConsumed = true
     isCanBeResolved = false
 }
 
 artifacts {
-    add(config.name, File("$projectDir/target/guarded-saturation-1.0.0-jar-with-dependencies.jar")) {
+    add(gsatJar.name, File("$guardedSaturationMavenProjectPath/target/guarded-saturation-1.0.0-jar-with-dependencies.jar")) {
         builtBy(build)
     }
-}   
+}
 
 //endregion
