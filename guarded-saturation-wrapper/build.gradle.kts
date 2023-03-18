@@ -87,7 +87,7 @@ val build = task<Exec>("build") {
     commandLine(
             availableMavenCommand,
             "package",
-            "-DskipTests" // some tests in GSat just fails right now, so igonre tests
+            "-DskipTests" // some tests in GSat just fail right now, so igonre tests
     )
 }
 
