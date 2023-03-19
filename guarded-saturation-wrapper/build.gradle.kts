@@ -101,5 +101,3 @@ artifacts {
         builtBy(build)
     }
 }
-
-//endregion
