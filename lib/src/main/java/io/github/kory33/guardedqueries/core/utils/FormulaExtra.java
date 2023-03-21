@@ -10,7 +10,7 @@ public class FormulaExtra {
     private FormulaExtra() {
     }
 
-    public static Stream<Predicate> predicatesAppearingIn(final Formula formula) {
+    public static Stream<Predicate> streamPredicatesAppearingIn(final Formula formula) {
         final var children = formula.getChildren();
 
         if (children.length == 0) {
@@ -20,7 +20,7 @@ public class FormulaExtra {
                 return Stream.empty();
             }
         } else {
-            return Stream.of(children).flatMap(FormulaExtra::predicatesAppearingIn);
+            return Stream.of(children).flatMap(FormulaExtra::streamPredicatesAppearingIn);
         }
     }
 }

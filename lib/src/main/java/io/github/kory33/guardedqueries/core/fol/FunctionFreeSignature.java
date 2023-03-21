@@ -23,7 +23,7 @@ public record FunctionFreeSignature(ImmutableSet<Predicate> predicates) {
         return new FunctionFreeSignature(
                 formulas
                         .stream()
-                        .flatMap(FormulaExtra::predicatesAppearingIn)
+                        .flatMap(FormulaExtra::streamPredicatesAppearingIn)
                         .collect(Collectors.toList())
         );
     }
