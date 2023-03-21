@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.rewriting;
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram;
 import io.github.kory33.guardedqueries.core.datalog.DatalogQuery;
-import io.github.kory33.guardedqueries.core.datalog.DatalogRule;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
 import io.github.kory33.guardedqueries.core.utils.StreamExtra;
@@ -16,11 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public record GuardedRuleAndQueryRewriter(
-        AbstractSaturation<? extends GTGD> saturation,
-        Collection<GTGD> rules,
-        ConjunctiveQuery query
-) {
+public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> saturation) {
     private Dependency subqueryEntailmentToSubgoalRule(final SubqueryEntailmentInstance subqueryEntailment) {
         throw new RuntimeException("TODO: not implemented!");
     }
@@ -36,18 +31,22 @@ public record GuardedRuleAndQueryRewriter(
     /**
      * Compute the Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
      */
-    public DatalogQuery rewrite(final Collection<GTGD> rules, final ConjunctiveQuery query) {
-        final var datalogRules = StreamExtra.concatAll(
-                        rules.stream(),
-                        new SubqueryEntailmentComputation(rules, saturation.run(new ArrayList<>(rules)), query)
-                                .run()
-                                .stream()
-                                .map(this::subqueryEntailmentToSubgoalRule),
-                        generateAllSubgoalGlueingRules().stream()
-                )
-                .map(DatalogRule::tryFromDependency)
+    public DatalogQuery rewrite(final Collection<? extends GTGD> rules, final ConjunctiveQuery query) {
+        final var goalPredicate = this.pickGoalPredicate();
+        final var subgoalGlueingRules = this.generateAllSubgoalGlueingRules().stream();
+        final var subgoalRules =
+                new SubqueryEntailmentComputation(rules, saturation.run(new ArrayList<>(rules)), query)
+                        .run()
+                        .stream()
+                        .map(this::subqueryEntailmentToSubgoalRule);
+
+        final var rewritingResult = StreamExtra
+                .concatAll(rules.stream(), subgoalRules, subgoalGlueingRules)
                 .collect(Collectors.toList());
 
-        return new DatalogQuery(new DatalogProgram(datalogRules), this.pickGoalPredicate());
+        return new DatalogQuery(
+                DatalogProgram.tryFromDependencies(rewritingResult),
+                goalPredicate
+        );
     }
 }
