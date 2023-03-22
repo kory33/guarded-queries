@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  * Any GTGD can be transformed into a pair of GTGDs in normal forms by extending the language.
  * For details, see {@link #normalize} for more details.
  */
-sealed abstract class NormalGTGD extends GTGD {
+public sealed abstract class NormalGTGD extends GTGD {
     protected NormalGTGD(final Set<Atom> body, final Set<Atom> head) {
         super(body, head);
     }
@@ -143,7 +143,7 @@ sealed abstract class NormalGTGD extends GTGD {
                         return Stream.of(splitExistentialRule, splitFullRule);
                     });
         }
-        
+
         final var normalizedRules = Stream.concat(fullRulesStream, splitExistentialRules);
         return ImmutableSet.copyOf(normalizedRules.toList());
     }

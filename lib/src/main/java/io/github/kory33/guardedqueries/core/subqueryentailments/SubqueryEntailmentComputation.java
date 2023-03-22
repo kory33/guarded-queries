@@ -9,7 +9,7 @@ import java.util.Collection;
  * An object of this class represents a computation of the
  * <code>SubqueryEntailmentInstances</code> problem.
  */
-public class SubqueryEntailmentComputation {
+public final class SubqueryEntailmentComputation {
     private final Collection<? extends GTGD> rules;
     private final Collection<? extends GTGD> saturatedRule;
     private final ConjunctiveQuery query;
