@@ -27,4 +27,22 @@ public record FunctionFreeSignature(ImmutableSet<Predicate> predicates) {
                         .collect(Collectors.toList())
         );
     }
+
+    public ImmutableSet<String> predicateNames() {
+        return ImmutableSet.copyOf(predicates.stream().map(Predicate::getName).toList());
+    }
+
+    public FunctionFreeSignature plus(Collection<? extends Predicate> extension) {
+        return new FunctionFreeSignature(
+                ImmutableSet
+                        .<Predicate>builder()
+                        .addAll(extension)
+                        .addAll(predicates)
+                        .build()
+        );
+    }
+
+    public FunctionFreeSignature plus(FunctionFreeSignature extension) {
+        return this.plus(extension.predicates);
+    }
 }
