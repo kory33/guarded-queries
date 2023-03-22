@@ -77,7 +77,7 @@ public sealed abstract class NormalGTGD extends GTGD {
      *     <li><code>∀x,y,z,w. I(x,y,z,w) → S(x,y,z) ∧ T(y,y,w)</code>.</li>
      * </ol>
      */
-    public final ImmutableSet<NormalGTGD> normalize(
+    public static ImmutableSet<NormalGTGD> normalize(
             final Collection<? extends GTGD> inputRules,
             final FunctionFreeSignature signature
     ) {
