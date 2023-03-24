@@ -47,4 +47,11 @@ public record FunctionFreeSignature(ImmutableSet<Predicate> predicates) {
     public ImmutableSet<String> predicateNames() {
         return ImmutableSet.copyOf(predicates.stream().map(Predicate::getName).toList());
     }
+
+    public int maxArity() {
+        return predicates.stream()
+                .mapToInt(Predicate::getArity)
+                .max()
+                .orElseGet(() -> 0);
+    }
 }
