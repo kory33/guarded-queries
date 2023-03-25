@@ -11,13 +11,13 @@ import java.util.Collection;
  * <code>SubqueryEntailmentInstances</code> problem.
  */
 public final class SubqueryEntailmentComputation {
-    final SaturatedRuleSet<NormalGTGD> saturatedRule;
+    final SaturatedRuleSet<? extends NormalGTGD> saturatedRule;
     private final ConjunctiveQuery query;
 
     private Collection<SubqueryEntailmentInstance> resultCache = null;
 
     public SubqueryEntailmentComputation(
-            final SaturatedRuleSet<NormalGTGD> saturatedRule,
+            final SaturatedRuleSet<? extends NormalGTGD> saturatedRule,
             final ConjunctiveQuery query
     ) {
         this.saturatedRule = saturatedRule;
