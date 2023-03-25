@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.utils;
+package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Formula;
@@ -6,8 +6,8 @@ import uk.ac.ox.cs.pdq.fol.Predicate;
 
 import java.util.stream.Stream;
 
-public class FormulaExtra {
-    private FormulaExtra() {
+public class FormulaExtensions {
+    private FormulaExtensions() {
     }
 
     public static Stream<Predicate> streamPredicatesAppearingIn(final Formula formula) {
@@ -20,7 +20,7 @@ public class FormulaExtra {
                 return Stream.empty();
             }
         } else {
-            return Stream.of(children).flatMap(FormulaExtra::streamPredicatesAppearingIn);
+            return Stream.of(children).flatMap(FormulaExtensions::streamPredicatesAppearingIn);
         }
     }
 }

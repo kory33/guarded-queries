@@ -1,8 +1,8 @@
 package io.github.kory33.guardedqueries.core.fol;
 
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.utils.StringSetExtra;
-import io.github.kory33.guardedqueries.core.utils.TGDExtra;
+import io.github.kory33.guardedqueries.core.utils.extensions.StringSetExtensions;
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions;
 import uk.ac.ox.cs.gsat.GTGD;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Predicate;
@@ -92,7 +92,7 @@ public sealed abstract class NormalGTGD extends GTGD {
 
         final var fullRulesStream = fullRules.stream().map(FullGTGD::tryFromGTGD);
 
-        final var intermediaryPredicatePrefix = StringSetExtra.freshPrefix(
+        final var intermediaryPredicatePrefix = StringSetExtensions.freshPrefix(
                 signature.predicateNames(),
                 // prefix all intermediate predicates with "IP", stands for "intermediate predicate"
                 "IP"
@@ -102,7 +102,7 @@ public sealed abstract class NormalGTGD extends GTGD {
         {
             final var frontierVariablesList = existentialRules
                     .stream()
-                    .map(TGDExtra::frontierVariables)
+                    .map(TGDExtensions::frontierVariables)
                     .toList();
 
             splitExistentialRules = IntStream

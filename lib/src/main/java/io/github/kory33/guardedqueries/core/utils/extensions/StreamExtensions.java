@@ -1,9 +1,9 @@
-package io.github.kory33.guardedqueries.core.utils;
+package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import java.util.stream.Stream;
 
-public class StreamExtra {
-    private StreamExtra() {
+public class StreamExtensions {
+    private StreamExtensions() {
     }
 
     /**

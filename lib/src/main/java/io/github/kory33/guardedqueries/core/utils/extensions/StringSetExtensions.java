@@ -1,9 +1,9 @@
-package io.github.kory33.guardedqueries.core.utils;
+package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import java.util.Collection;
 
-public class StringSetExtra {
-    private StringSetExtra() {
+public class StringSetExtensions {
+    private StringSetExtensions() {
     }
 
     public static boolean isPrefixOfSome(final Collection<String> strings, String string) {

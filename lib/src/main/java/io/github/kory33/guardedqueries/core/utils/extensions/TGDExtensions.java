@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.utils;
+package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import com.google.common.collect.ImmutableSet;
 import uk.ac.ox.cs.pdq.fol.TGD;
@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TGDExtra {
-    private TGDExtra() {
+public class TGDExtensions {
+    private TGDExtensions() {
     }
 
     /**
