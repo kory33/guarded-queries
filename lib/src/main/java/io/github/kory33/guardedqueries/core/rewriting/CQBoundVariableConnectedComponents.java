@@ -28,11 +28,11 @@ import java.util.Arrays;
  * <p>
  * The constructor takes a {@link ConjunctiveQuery} object and computes the decomposition.
  */
-public class CQConnectedComponents {
+public class CQBoundVariableConnectedComponents {
     public final ImmutableSet<Atom> boundVariableFreeAtoms;
     public final ImmutableSet<ConjunctiveQuery> maximallyConnectedSubqueries;
 
-    public CQConnectedComponents(final ConjunctiveQuery cq) {
+    public CQBoundVariableConnectedComponents(final ConjunctiveQuery cq) {
         final var cqBoundVariables = ImmutableSet.copyOf(cq.getBoundVariables());
         this.boundVariableFreeAtoms = ImmutableSet.copyOf(
                 Arrays.stream(cq.getAtoms())
