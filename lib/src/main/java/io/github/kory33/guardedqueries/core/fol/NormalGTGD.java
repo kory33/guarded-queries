@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.fol;
 
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.utils.extensions.StringSetExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions;
 import uk.ac.ox.cs.gsat.GTGD;
 import uk.ac.ox.cs.pdq.fol.Atom;
@@ -76,10 +75,15 @@ public sealed abstract class NormalGTGD extends GTGD {
      *     <li><code>∀x,y. R(x,y) -> ∃z,w. I(x,y,z,w)</code>, and</li>
      *     <li><code>∀x,y,z,w. I(x,y,z,w) → S(x,y,z) ∧ T(y,y,w)</code>.</li>
      * </ol>
+     *
+     * @param inputRules                  a collection of rules to normalize
+     * @param intermediaryPredicatePrefix a prefix to use for naming intermediary predicates.
+     *                                    For example, if the prefix is "I", intermediary predicates
+     *                                    will have names "I_0", "I_1", etc.
      */
     public static ImmutableSet<NormalGTGD> normalize(
             final Collection<? extends GTGD> inputRules,
-            final FunctionFreeSignature signature
+            final String intermediaryPredicatePrefix
     ) {
         final List<? extends GTGD> fullRules, existentialRules;
         {
@@ -91,12 +95,6 @@ public sealed abstract class NormalGTGD extends GTGD {
         }
 
         final var fullRulesStream = fullRules.stream().map(FullGTGD::tryFromGTGD);
-
-        final var intermediaryPredicatePrefix = StringSetExtensions.freshPrefix(
-                signature.predicateNames(),
-                // prefix all intermediate predicates with "IP", stands for "intermediate predicate"
-                "IP"
-        );
 
         final Stream<NormalGTGD> splitExistentialRules;
         {
