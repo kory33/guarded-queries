@@ -22,6 +22,9 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
             Predicate goalPredicate,
             ImmutableList<Variable> goalPredicateCanonicalVariables
     ) {
+        public Atom goalAtom() {
+            return Atom.create(goalPredicate, goalPredicateCanonicalVariables.toArray(Term[]::new));
+        }
     }
 
     private BoundVariableConnectedComponentRewriteResult rewriteBoundVariableConnectedComponent(
@@ -102,12 +105,7 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
             //  - goal predicates of each maximally connected subquery
             final var bodyAtoms = Stream.concat(
                     cqConnectedComponents.boundVariableFreeAtoms.stream(),
-                    bvccRewriteResults
-                            .stream()
-                            .map(bvccRewriteResult -> Atom.create(
-                                    bvccRewriteResult.goalPredicate,
-                                    bvccRewriteResult.goalPredicateCanonicalVariables.toArray(Term[]::new)
-                            ))
+                    bvccRewriteResults.stream().map(BoundVariableConnectedComponentRewriteResult::goalAtom)
             ).toArray(Atom[]::new);
 
             // ... to derive the final goal predicate
