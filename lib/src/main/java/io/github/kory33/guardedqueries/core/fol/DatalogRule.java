@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.datalog;
+package io.github.kory33.guardedqueries.core.fol;
 
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Conjunction;
@@ -9,8 +9,10 @@ import uk.ac.ox.cs.pdq.fol.Formula;
  * A class of Datalog rules.
  * <p>
  * A Datalog rule is a Dependency such that
- * - all variables are universally quantified
- * - every variable in the head appears in some atom in the body
+ * <ul>
+ *   <li>all variables are universally quantified, and</li>
+ *   <li>every variable in the head appears in some atom in the body.</li>
+ * </ul>
  */
 public class DatalogRule extends Dependency {
     protected DatalogRule(Atom[] body, Atom[] head) {
