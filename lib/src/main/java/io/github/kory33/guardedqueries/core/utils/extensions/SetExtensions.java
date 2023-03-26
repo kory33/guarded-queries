@@ -14,6 +14,19 @@ public class SetExtensions {
     }
 
     /**
+     * Union of elements from two collections.
+     */
+    public static <T> ImmutableSet<T> union(
+            final Collection<? extends T> collection1,
+            final Collection<? extends T> collection2
+    ) {
+        return ImmutableSet.<T>builder()
+                .addAll(collection1)
+                .addAll(collection2)
+                .build();
+    }
+
+    /**
      * Intersection of elements from two collections.
      */
     public static <T> ImmutableSet<T> intersection(
