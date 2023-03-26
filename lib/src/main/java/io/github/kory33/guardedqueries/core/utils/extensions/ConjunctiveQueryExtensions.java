@@ -1,12 +1,14 @@
 package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import com.google.common.collect.ImmutableSet;
+import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 public class ConjunctiveQueryExtensions {
     private ConjunctiveQueryExtensions() {
@@ -78,5 +80,45 @@ public class ConjunctiveQueryExtensions {
         final var boundVariableSet = ImmutableSet.copyOf(boundVariables);
 
         return SetExtensions.difference(subqueryVariables, boundVariableSet);
+    }
+
+    /**
+     * Given a conjunctive query {@code q} and a set {@code v} of variables in {@code q},
+     * checks if {@code v} is connected in {@code q}.
+     * <p>
+     * A set of variables {@code V} is said to be connected in {@code q} if
+     * there is only one {@code q}-connected component of {@code V} in {@code q}.
+     */
+    public static boolean isConnected(
+            final ConjunctiveQuery conjunctiveQuery,
+            final Collection<? extends Variable> variables
+    ) {
+        if (variables.isEmpty()) {
+            return true;
+        }
+
+        final var unionFindTree = new SimpleUnionFindTree<Variable>(variables);
+        for (final var atom : conjunctiveQuery.getAtoms()) {
+            final var variablesToUnion = SetExtensions.intersection(
+                    ImmutableSet.copyOf(atom.getVariables()),
+                    variables
+            );
+            unionFindTree.unionAll(variablesToUnion);
+        }
+
+        return unionFindTree.getEquivalenceClasses().size() == 1;
+    }
+
+    /**
+     * Given a conjunctive query {@code q}, returns a stream of all {@code q}-connected
+     * nonempty sets of {@code q}-bound variables.
+     */
+    public static Stream</* nonempty */ImmutableSet<Variable>> allConnectedBoundVariableSets(
+            final ConjunctiveQuery conjunctiveQuery
+    ) {
+        final var boundVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables());
+        return SetExtensions.powerset(boundVariables)
+                .filter(variableSet -> !variableSet.isEmpty())
+                .filter(variableSet -> isConnected(conjunctiveQuery, variableSet));
     }
 }
