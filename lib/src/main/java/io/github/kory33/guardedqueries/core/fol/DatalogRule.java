@@ -1,9 +1,6 @@
 package io.github.kory33.guardedqueries.core.fol;
 
-import uk.ac.ox.cs.pdq.fol.Atom;
-import uk.ac.ox.cs.pdq.fol.Conjunction;
-import uk.ac.ox.cs.pdq.fol.Dependency;
-import uk.ac.ox.cs.pdq.fol.Formula;
+import uk.ac.ox.cs.pdq.fol.*;
 
 /**
  * A class of Datalog rules.
@@ -14,7 +11,7 @@ import uk.ac.ox.cs.pdq.fol.Formula;
  *   <li>every variable in the head appears in some atom in the body.</li>
  * </ul>
  */
-public class DatalogRule extends Dependency {
+public class DatalogRule extends TGD {
     protected DatalogRule(Atom[] body, Atom[] head) {
         super(body, head);
         if (existential.length != 0) {
