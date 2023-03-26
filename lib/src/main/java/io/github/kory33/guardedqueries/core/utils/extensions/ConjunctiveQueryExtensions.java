@@ -16,30 +16,25 @@ public class ConjunctiveQueryExtensions {
 
     /**
      * Computes a subquery of a given Conjunctive Query that includes only the atoms
-     * where all variables bound in the atom are present in a specified set of variables.
+     * where all bound variables in the atom are present in a specified set of variables.
      * <p>
      * The set of bound (resp. free) variables in the returned subquery is the
      * subset of {@code boundVariableSet} (resp. the free variables in {@code conjunctiveQuery}).
+     * <p>
+     * For example, if {@code conjunctiveQuery} is {@code ∃x,y,z. T(x,y,z) ∧ T(x,y,w) ∧ T(x,c,z)}
+     * and {@code boundVariableSet} is {@code {x,y}}, then the returned subquery is
+     * {@code ∃x,y. T(x,y,w)}.
      *
      * @param conjunctiveQuery The Conjunctive Query to compute the subquery from
-     * @param boundVariables   The set of variables that should be included in the subquery.
+     * @param variables        The filter of variables that should be included in the subquery.
      * @return The computed subquery.
-     * @throws IllegalArgumentException if {@code boundVariableSet} is not a subset
-     *                                  of the bound variables in {@code conjunctiveQuery}.
      */
-    public static ConjunctiveQuery strictlyInduceSubqueryByBoundVariables(
+    public static ConjunctiveQuery strictlyInduceSubqueryByVariables(
             final ConjunctiveQuery conjunctiveQuery,
-            final Collection<? extends Variable> boundVariables
+            final Collection<? extends Variable> variables
     ) {
-        final var boundVariableSet = ImmutableSet.<Variable>copyOf(boundVariables);
+        final var variableSet = ImmutableSet.<Variable>copyOf(variables);
         final var cqBoundVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables());
-
-        // we would like to eliminate cases such as conjunctiveQuery: ∃x,y,z. T(x,y,z), boundVariableSet: {x,y,w}
-        if (!cqBoundVariables.containsAll(boundVariables)) {
-            throw new IllegalArgumentException(
-                    "The given set of bound variables is not a subset of the bound variables of the given CQ."
-            );
-        }
 
         final var filteredAtoms = Arrays.stream(conjunctiveQuery.getAtoms())
                 .filter(atom -> {
@@ -48,7 +43,7 @@ public class ConjunctiveQueryExtensions {
                             ImmutableSet.copyOf(atom.getVariables()),
                             cqBoundVariables
                     );
-                    return boundVariableSet.containsAll(atomBoundVariables);
+                    return variableSet.containsAll(atomBoundVariables);
                 })
                 .toArray(Atom[]::new);
 
@@ -62,10 +57,10 @@ public class ConjunctiveQueryExtensions {
     }
 
     /**
-     * Variables in the strict neighbourhood of a given set of bound variables in the given CQ.
+     * Variables in the strict neighbourhood of a given set of variables in the given CQ.
      * <p>
-     * Given a conjunctive query {@code q} and a variable {@code x} appearing (either bound or freely) in {@code q},
-     * {@code x} is said to be in the strict neighbourhood of a set {@code V} of bound variables if
+     * Given a conjunctive query {@code q} and a variable {@code x} appearing in {@code q},
+     * {@code x} is said to be in the strict neighbourhood of a set {@code V} of variables if
      * <ol>
      *   <li>{@code x} is not an element of {@code V}, and</li>
      *   <li>{@code x} occurs in the subquery of {@code q} strictly induced by {@code V}.</li>
@@ -73,17 +68,15 @@ public class ConjunctiveQueryExtensions {
      */
     public static ImmutableSet<Variable> neighbourhoodVariables(
             final ConjunctiveQuery conjunctiveQuery,
-            final Collection<? extends Variable> boundVariables
+            final Collection<? extends Variable> variables
     ) {
-        final var subquery = strictlyInduceSubqueryByBoundVariables(conjunctiveQuery, boundVariables);
-        final var subqueryVariables = ImmutableSet
-                .<Variable>builder()
-                .addAll(Arrays.asList(subquery.getBoundVariables()))
-                .addAll(Arrays.asList(subquery.getFreeVariables()))
-                .build();
-        final var boundVariableSet = ImmutableSet.copyOf(boundVariables);
+        final var subquery = strictlyInduceSubqueryByVariables(conjunctiveQuery, variables);
+        final var subqueryVariables = SetExtensions.union(
+                Arrays.asList(subquery.getBoundVariables()),
+                Arrays.asList(subquery.getFreeVariables())
+        );
 
-        return SetExtensions.difference(subqueryVariables, boundVariableSet);
+        return SetExtensions.difference(subqueryVariables, variables);
     }
 
     /**
