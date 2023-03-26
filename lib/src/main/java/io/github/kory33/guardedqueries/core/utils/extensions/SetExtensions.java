@@ -38,6 +38,17 @@ public class SetExtensions {
     }
 
     /**
+     * Check if two collections have any common elements.
+     */
+    public static boolean nontriviallyIntersects(
+            final Collection<?> collection1,
+            final Collection<?> collection2
+    ) {
+        final var set2 = ImmutableSet.copyOf(collection2);
+        return collection1.stream().anyMatch(set2::contains);
+    }
+
+    /**
      * Set difference of elements from two collections.
      */
     public static <T> ImmutableSet<T> difference(
