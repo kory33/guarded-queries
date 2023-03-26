@@ -62,13 +62,13 @@ public class ConjunctiveQueryExtensions {
     }
 
     /**
-     * Variables appearing in the strict neighbourhood of a given set of bound variables in the given CQ.
+     * Variables in the strict neighbourhood of a given set of bound variables in the given CQ.
      * <p>
      * Given a conjunctive query {@code q} and a variable {@code x} appearing (either bound or freely) in {@code q},
      * {@code x} is said to be in the strict neighbourhood of a set {@code V} of bound variables if
      * <ol>
-     *     <li>{@code x} is not an element of {@code V}, and</li>
-     *     <li>{@code x} occurs in the subquery of {@code q} strictly induced by {@code V}.</li>
+     *   <li>{@code x} is not an element of {@code V}, and</li>
+     *   <li>{@code x} occurs in the subquery of {@code q} strictly induced by {@code V}.</li>
      * </ol>
      */
     public static ImmutableSet<Variable> neighbourhoodVariables(
@@ -76,7 +76,11 @@ public class ConjunctiveQueryExtensions {
             final Collection<? extends Variable> boundVariables
     ) {
         final var subquery = strictlyInduceSubqueryByBoundVariables(conjunctiveQuery, boundVariables);
-        final var subqueryVariables = ImmutableSet.copyOf(subquery.getFreeVariables());
+        final var subqueryVariables = ImmutableSet
+                .<Variable>builder()
+                .addAll(Arrays.asList(subquery.getBoundVariables()))
+                .addAll(Arrays.asList(subquery.getFreeVariables()))
+                .build();
         final var boundVariableSet = ImmutableSet.copyOf(boundVariables);
 
         return SetExtensions.difference(subqueryVariables, boundVariableSet);
