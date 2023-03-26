@@ -51,7 +51,7 @@ public class CQBoundVariableConnectedComponents {
         this.maximallyConnectedSubqueries = ImmutableSet.copyOf(
                 boundVariableConnectedComponents
                         .stream()
-                        .map(component -> ConjunctiveQueryExtensions.strictlyInduceSubqueryByBoundVariables(cq, component))
+                        .map(component -> ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(cq, component))
                         .iterator()
         );
     }
