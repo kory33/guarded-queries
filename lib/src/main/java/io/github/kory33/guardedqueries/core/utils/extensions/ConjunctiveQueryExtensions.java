@@ -80,18 +80,15 @@ public class ConjunctiveQueryExtensions {
     }
 
     /**
-     * Given a conjunctive query {@code q} and a set {@code v} of variables in {@code q},
-     * checks if {@code v} is connected in {@code q}.
-     * <p>
-     * A set of variables {@code V} is said to be connected in {@code q} if
-     * there is only one {@code q}-connected component of {@code V} in {@code q}.
+     * Given a conjunctive query {@code conjunctiveQuery} and a set of variables {@code variables},
+     * returns a stream of all {@code conjunctiveQuery}-connected components of {@code variables}.
      */
-    public static boolean isConnected(
+    public static Stream</* nonempty */ImmutableSet<Variable>> connectedComponents(
             final ConjunctiveQuery conjunctiveQuery,
             final Collection<? extends Variable> variables
     ) {
         if (variables.isEmpty()) {
-            return true;
+            return Stream.empty();
         }
 
         final var unionFindTree = new SimpleUnionFindTree<Variable>(variables);
@@ -102,8 +99,21 @@ public class ConjunctiveQueryExtensions {
             );
             unionFindTree.unionAll(variablesToUnion);
         }
+        return unionFindTree.getEquivalenceClasses().stream();
+    }
 
-        return unionFindTree.getEquivalenceClasses().size() == 1;
+    /**
+     * Given a conjunctive query {@code q} and a set {@code v} of variables in {@code q},
+     * checks if {@code v} is connected in {@code q}.
+     * <p>
+     * A set of variables {@code V} is said to be connected in {@code q} if
+     * there is at most one {@code q}-connected component of {@code V} in {@code q}.
+     */
+    public static boolean isConnected(
+            final ConjunctiveQuery conjunctiveQuery,
+            final Collection<? extends Variable> variables
+    ) {
+        return connectedComponents(conjunctiveQuery, variables).count() <= 1L;
     }
 
     /**
