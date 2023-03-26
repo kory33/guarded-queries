@@ -12,7 +12,7 @@ import uk.ac.ox.cs.pdq.fol.*;
  * </ul>
  */
 public class DatalogRule extends TGD {
-    protected DatalogRule(Atom[] body, Atom[] head) {
+    public DatalogRule(Atom[] body, Atom[] head) {
         super(body, head);
         if (existential.length != 0) {
             throw new IllegalArgumentException(
