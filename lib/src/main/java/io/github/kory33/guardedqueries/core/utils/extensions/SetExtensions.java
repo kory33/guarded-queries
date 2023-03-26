@@ -25,6 +25,17 @@ public class SetExtensions {
     }
 
     /**
+     * Set difference of elements from two collections.
+     */
+    public static <T> ImmutableSet<T> difference(
+            final Collection<? extends T> collection1,
+            final Collection<? extends T> collection2
+    ) {
+        final var set2 = ImmutableSet.copyOf(collection2);
+        return ImmutableSet.copyOf(collection1.stream().filter(e -> !set2.contains(e)).iterator());
+    }
+
+    /**
      * Powerset of a set of elements from the given collection, lazily streamed.
      */
     public static <T> Stream<ImmutableSet<T>> powerset(final Collection<? extends T> collection) {

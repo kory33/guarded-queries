@@ -8,8 +8,8 @@ import uk.ac.ox.cs.pdq.fol.Variable;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class ConjunctiveQueryExtentions {
-    private ConjunctiveQueryExtentions() {
+public class ConjunctiveQueryExtensions {
+    private ConjunctiveQueryExtensions() {
     }
 
     /**
@@ -25,7 +25,7 @@ public class ConjunctiveQueryExtentions {
      * @throws IllegalArgumentException if {@code boundVariableSet} is not a subset
      *                                  of the bound variables in {@code conjunctiveQuery}.
      */
-    public static ConjunctiveQuery induceSubqueryByBoundVariables(
+    public static ConjunctiveQuery strictlyInduceSubqueryByBoundVariables(
             final ConjunctiveQuery conjunctiveQuery,
             final Collection<? extends Variable> boundVariables
     ) {
@@ -57,5 +57,26 @@ public class ConjunctiveQueryExtentions {
                 .toArray(Variable[]::new);
 
         return ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms);
+    }
+
+    /**
+     * Variables appearing in the strict neighbourhood of a given set of bound variables in the given CQ.
+     * <p>
+     * Given a conjunctive query {@code q} and a variable {@code x} appearing (either bound or freely) in {@code q},
+     * {@code x} is said to be in the strict neighbourhood of a set {@code V} of bound variables if
+     * <ol>
+     *     <li>{@code x} is not an element of {@code V}, and</li>
+     *     <li>{@code x} occurs in the subquery of {@code q} strictly induced by {@code V}.</li>
+     * </ol>
+     */
+    public static ImmutableSet<Variable> neighbourhoodVariables(
+            final ConjunctiveQuery conjunctiveQuery,
+            final Collection<? extends Variable> boundVariables
+    ) {
+        final var subquery = strictlyInduceSubqueryByBoundVariables(conjunctiveQuery, boundVariables);
+        final var subqueryVariables = ImmutableSet.copyOf(subquery.getFreeVariables());
+        final var boundVariableSet = ImmutableSet.copyOf(boundVariables);
+
+        return SetExtensions.difference(subqueryVariables, boundVariableSet);
     }
 }

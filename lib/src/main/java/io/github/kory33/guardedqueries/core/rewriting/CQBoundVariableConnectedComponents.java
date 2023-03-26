@@ -2,7 +2,7 @@ package io.github.kory33.guardedqueries.core.rewriting;
 
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree;
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtentions;
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
@@ -51,7 +51,7 @@ public class CQBoundVariableConnectedComponents {
         this.maximallyConnectedSubqueries = ImmutableSet.copyOf(
                 boundVariableConnectedComponents
                         .stream()
-                        .map(component -> ConjunctiveQueryExtentions.induceSubqueryByBoundVariables(cq, component))
+                        .map(component -> ConjunctiveQueryExtensions.strictlyInduceSubqueryByBoundVariables(cq, component))
                         .iterator()
         );
     }
