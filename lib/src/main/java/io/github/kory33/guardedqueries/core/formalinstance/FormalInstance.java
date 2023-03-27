@@ -17,10 +17,6 @@ public class FormalInstance<TermAlphabet> {
         this.facts = ImmutableSet.copyOf(facts);
     }
 
-    public FormalInstance(final Iterator<FormalFact<TermAlphabet>> facts) {
-        this.facts = ImmutableSet.copyOf(facts);
-    }
-
     public ImmutableSet<TermAlphabet> getActiveTerms() {
         if (this.activeTerms == null) {
             this.activeTerms = ImmutableSet.copyOf(this.facts
@@ -33,7 +29,7 @@ public class FormalInstance<TermAlphabet> {
     }
 
     public <T> FormalInstance<T> map(final Function<TermAlphabet, T> mapper) {
-        return new FormalInstance<>(this.facts.stream().map(fact -> fact.map(mapper)).iterator());
+        return FormalInstance.fromIterator(this.facts.stream().map(fact -> fact.map(mapper)).iterator());
     }
 
     public static ImmutableList<Atom> asAtoms(final FormalInstance<Term> instance) {
@@ -42,5 +38,9 @@ public class FormalInstance<TermAlphabet> {
                         .map(FormalFact::asAtom)
                         .iterator()
         );
+    }
+
+    public static <TermAlphabet> FormalInstance<TermAlphabet> fromIterator(final Iterator<FormalFact<TermAlphabet>> facts) {
+        return new FormalInstance<>(ImmutableSet.copyOf(facts));
     }
 }

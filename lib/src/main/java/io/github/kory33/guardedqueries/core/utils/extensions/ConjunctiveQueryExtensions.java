@@ -154,17 +154,4 @@ public class ConjunctiveQueryExtensions {
     ) {
         return connectedComponents(conjunctiveQuery, variables).count() <= 1L;
     }
-
-    /**
-     * Given a conjunctive query {@code q}, returns a stream of all {@code q}-connected
-     * nonempty sets of {@code q}-bound variables.
-     */
-    public static Stream</* nonempty */ImmutableSet<Variable>> allConnectedBoundVariableSets(
-            final ConjunctiveQuery conjunctiveQuery
-    ) {
-        final var boundVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables());
-        return SetExtensions.powerset(boundVariables)
-                .filter(variableSet -> !variableSet.isEmpty())
-                .filter(variableSet -> isConnected(conjunctiveQuery, variableSet));
-    }
 }
