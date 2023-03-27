@@ -8,10 +8,6 @@ import uk.ac.ox.cs.pdq.fol.Term;
 import java.util.function.Function;
 
 public record FormalFact<TermAlphabet>(Predicate predicate, ImmutableList<? extends TermAlphabet> appliedTerms) {
-    @SafeVarargs
-    public FormalFact {
-    }
-
     public <T> FormalFact<T> map(final Function<? super TermAlphabet, ? extends T> mapper) {
         return new FormalFact<>(
                 this.predicate,
