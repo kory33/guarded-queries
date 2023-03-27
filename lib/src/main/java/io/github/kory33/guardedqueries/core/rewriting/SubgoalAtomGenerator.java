@@ -6,6 +6,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExt
 import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions;
 import uk.ac.ox.cs.pdq.fol.*;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -77,7 +78,7 @@ public class SubgoalAtomGenerator {
      *
      * @throws IllegalArgumentException if the given set of variables is disconnected or contains free variables.
      */
-    public Atom apply(final ImmutableSet<Variable> variableSet) {
-        return this.subgoalAtoms.apply(variableSet);
+    public Atom apply(final Collection<? extends Variable> variableSet) {
+        return this.subgoalAtoms.apply(ImmutableSet.copyOf(variableSet));
     }
 }
