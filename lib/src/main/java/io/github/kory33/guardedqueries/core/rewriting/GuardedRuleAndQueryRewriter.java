@@ -12,7 +12,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalName;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
-import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
 import uk.ac.ox.cs.gsat.AbstractSaturation;
 import uk.ac.ox.cs.gsat.GTGD;
@@ -76,17 +75,8 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
         // unification of variables mapped by localWitnessGuess to fresh variables
         final ImmutableMap</* domain of localWitnessGuess */Variable, /* fresh */Variable> unification;
         {
-            final ImmutableSet<Variable> localWitnessGuessDomain =
-                    ImmutableSet.copyOf(localWitnessGuess.keySet());
-
-            final ImmutableSet<ImmutableSet<Variable>> equivalenceClasses;
-            {
-                final var unionFind = new SimpleUnionFindTree<>(localWitnessGuessDomain);
-                for (final var unionedVariables : neighbourhoodPreimages.values()) {
-                    unionFind.unionAll(unionedVariables);
-                }
-                equivalenceClasses = unionFind.getEquivalenceClasses();
-            }
+            final ImmutableSet<ImmutableSet<Variable>> equivalenceClasses =
+                    ImmutableSet.copyOf(neighbourhoodPreimages.values().stream().iterator());
 
             final ImmutableMap<ImmutableSet<Variable>, Variable> unifiedVariableMap =
                     ImmutableMapExtensions.consumeAndCopy(
