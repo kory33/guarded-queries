@@ -9,7 +9,7 @@ import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalName;
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
@@ -66,11 +66,19 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
         final var localWitnessGuess = subqueryEntailment.localWitnessGuess();
         final var localInstance = subqueryEntailment.localInstance();
 
+        final var activeLocalNames = localInstance.getActiveTerms().stream().flatMap(t -> {
+            if (t instanceof LocalInstanceTerm.LocalName) {
+                return Stream.of((LocalInstanceTerm.LocalName) t);
+            } else {
+                return Stream.empty();
+            }
+        }).toList();
+
         // Mapping of local names to their preimages in the neighbourhood mapping.
         // Contains all active local names in the key set,
         // and the range of the mapping is a partition of variables mapped by localWitnessGuess.
-        final ImmutableMap<LocalName, /* possibly empty, disjoint */ImmutableSet<Variable>> neighbourhoodPreimages =
-                MapExtensions.preimages(localWitnessGuess, localInstance.getActiveTerms());
+        final ImmutableMap<LocalInstanceTerm.LocalName, /* possibly empty, disjoint */ImmutableSet<Variable>> neighbourhoodPreimages =
+                MapExtensions.preimages(localWitnessGuess, activeLocalNames);
 
         // unification of variables mapped by localWitnessGuess to fresh variables
         final ImmutableMap</* domain of localWitnessGuess */Variable, /* fresh */Variable> unification;
@@ -100,24 +108,22 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
 
         // Mapping of local names to terms.
         // Contains all active local names in the key set.
-        final ImmutableMap<LocalName, Term> nameToTermMap =
+        final ImmutableMap<LocalInstanceTerm.LocalName, Term> nameToTermMap =
                 ImmutableMapExtensions.consumeAndCopy(
-                        StreamExtensions
-                                .associate(localInstance.getActiveTerms().stream(), localName -> {
-                                    final var preimage = neighbourhoodPreimages.get(localName);
-                                    if (preimage.isEmpty()) {
-                                        // if this local name is not in the range of localWitnessGuess,
-                                        // we assign a fresh variable to represent the genericity
-                                        // of the local name
-                                        return Variable.getFreshVariable();
-                                    } else {
-                                        // otherwise unify
-                                        final var unifiedVariable = unification.get(preimage.iterator().next());
-                                        assert unifiedVariable != null;
-                                        return unifiedVariable;
-                                    }
-                                })
-                                .iterator()
+                        StreamExtensions.associate(activeLocalNames.stream(), localName -> {
+                            final var preimage = neighbourhoodPreimages.get(localName);
+                            if (preimage.isEmpty()) {
+                                // if this local name is not in the range of localWitnessGuess,
+                                // we assign a fresh variable to represent the genericity
+                                // of the local name
+                                return Variable.getFreshVariable();
+                            } else {
+                                // otherwise unify
+                                final var unifiedVariable = unification.get(preimage.iterator().next());
+                                assert unifiedVariable != null;
+                                return unifiedVariable;
+                            }
+                        }).iterator()
                 );
 
         final var mappedInstance = subqueryEntailment.localInstance().map(nameToTermMap::get);

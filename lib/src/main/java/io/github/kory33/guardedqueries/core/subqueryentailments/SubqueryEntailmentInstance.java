@@ -10,7 +10,7 @@ import java.util.Set;
 public record SubqueryEntailmentInstance(
         Map<Variable, Constant> ruleConstantWitnessGuess,
         Set<Variable> coexistentialVariables,
-        Map<Variable, LocalName> localWitnessGuess,
-        FormalInstance<LocalName> localInstance
+        Map<Variable, LocalInstanceTerm.LocalName> localWitnessGuess,
+        FormalInstance<LocalInstanceTerm> localInstance
 ) {
 }
