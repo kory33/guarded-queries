@@ -114,7 +114,7 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
                         }).iterator()
                 );
 
-        final var mappedInstance = subqueryEntailment.localInstance().map(nameToTermMap::get);
+        final var mappedInstance = subqueryEntailment.localInstance().map(t -> t.mapLocalNamesToTerm(nameToTermMap::get));
 
         final Atom mappedSubgoalAtom;
         {
