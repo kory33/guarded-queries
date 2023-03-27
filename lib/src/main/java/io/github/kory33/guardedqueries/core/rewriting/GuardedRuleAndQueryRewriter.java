@@ -94,9 +94,9 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
         }
 
 
-        // Mapping of local names to terms.
+        // Mapping of local names to variables.
         // Contains all active local names in the key set.
-        final ImmutableMap<LocalInstanceTerm.LocalName, Term> nameToTermMap =
+        final ImmutableMap<LocalInstanceTerm.LocalName, Variable> nameToVariableMap =
                 ImmutableMapExtensions.consumeAndCopy(
                         StreamExtensions.associate(activeLocalNames.stream(), localName -> {
                             final var preimage = neighbourhoodPreimages.get(localName);
@@ -114,7 +114,7 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
                         }).iterator()
                 );
 
-        final var mappedInstance = subqueryEntailment.localInstance().map(t -> t.mapLocalNamesToTerm(nameToTermMap::get));
+        final var mappedInstance = subqueryEntailment.localInstance().map(t -> t.mapLocalNamesToTerm(nameToVariableMap::get));
 
         final Atom mappedSubgoalAtom;
         {
