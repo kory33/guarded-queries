@@ -37,14 +37,14 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
      * the query {@code subgoalAtoms.query()}.
      * <p>
      * For example, suppose that the subquery entailment instance
-     * <pre><{ x ↦ a }, {z, w}, { y ↦ 2 }, { { R(2,1,3), U(1), P(2,3) } }></pre>
-     * in fact entails the subquery of {@code subgoalAtoms.query()} relevant to {z, w}.
-     * We must then add a rule of the form
-     * <pre>R(y,_f1,_f3) ∧ U(_f1) ∧ P(y,_f3) → SGL_{z,w}(a,y)</pre>
+     * <pre><{ x ↦ a }, {z, w}, { y ↦ 2 }, { { R(2,1,3), U(1), P(2,c) } }></pre>
+     * where c is a constant from the rule-set, entails the subquery of {@code subgoalAtoms.query()}
+     * relevant to {z, w}. Then we must add a rule of the form
+     * <pre>R(y,_f1,_f3) ∧ U(_f1) ∧ P(y,c) → SGL_{z,w}(a,y)</pre>
      * where {@code _f1} and {@code _f3} are fresh variables and {@code SGL_{z,w}(x,y)} is the subgoal atom
      * provided by subgoalAtoms object.
      * <p>
-     * In general, we transform a subquery entailment instance {@code <C, V, L, I>},
+     * In general, for each subquery entailment instance {@code <C, V, L, I>},
      * we need to produce a rule of the form
      * <pre>
      *  (I with each local name pulled back and unified by L, except that
