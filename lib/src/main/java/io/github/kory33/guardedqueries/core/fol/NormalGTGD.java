@@ -45,8 +45,8 @@ public sealed abstract class NormalGTGD extends GTGD {
          * This constructor may throw an {@link IllegalArgumentException}
          * if not all variables in the head appear in the body.
          */
-        public FullGTGD(final Set<Atom> body, final Set<Atom> head) {
-            super(body, head);
+        public FullGTGD(final Collection<Atom> body, final Collection<Atom> head) {
+            super(ImmutableSet.copyOf(body), ImmutableSet.copyOf(head));
             if (existential.length != 0) {
                 throw new IllegalArgumentException(
                         "Datalog rules cannot contain existential variables, got " + super.toString()
