@@ -29,7 +29,7 @@ public sealed abstract class NormalGTGD extends GTGD {
     /**
      * A single-headed GTGD.
      */
-    final static class SingleHeadedGTGD extends NormalGTGD {
+    public final static class SingleHeadedGTGD extends NormalGTGD {
         public SingleHeadedGTGD(final Set<Atom> body, final Atom head) {
             super(body, Set.of(head));
         }
@@ -38,7 +38,7 @@ public sealed abstract class NormalGTGD extends GTGD {
     /**
      * An existential-free GTGD.
      */
-    final static class FullGTGD extends NormalGTGD {
+    public final static class FullGTGD extends NormalGTGD {
         /**
          * Try constructing the object from sets of atoms in body and head.
          * <p>
