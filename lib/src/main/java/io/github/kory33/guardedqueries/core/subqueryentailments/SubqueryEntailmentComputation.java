@@ -4,34 +4,28 @@ import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * An object of this class represents a computation of the
  * <code>SubqueryEntailmentInstances</code> problem.
  */
 public final class SubqueryEntailmentComputation {
-    final SaturatedRuleSet<? extends NormalGTGD> saturatedRule;
-    private final ConjunctiveQuery query;
-
-    private Collection<SubqueryEntailmentInstance> resultCache = null;
+    private final SaturatedRuleSet<? extends NormalGTGD> saturatedRule;
+    private final ConjunctiveQuery boundVariableConnectedSubquery;
 
     public SubqueryEntailmentComputation(
             final SaturatedRuleSet<? extends NormalGTGD> saturatedRule,
-            final ConjunctiveQuery query
+            final ConjunctiveQuery boundVariableConnectedSubquery
     ) {
         this.saturatedRule = saturatedRule;
-        this.query = query;
+        this.boundVariableConnectedSubquery = boundVariableConnectedSubquery;
     }
 
     /**
      * Enumerate all maximally-subsuming subquery entailments.
      */
-    public Collection<SubqueryEntailmentInstance> run() {
-        if (resultCache != null) {
-            return resultCache;
-        }
-
+    public Stream<SubqueryEntailmentInstance> run() {
         throw new RuntimeException("TODO: Unimplemented!");
     }
 }
