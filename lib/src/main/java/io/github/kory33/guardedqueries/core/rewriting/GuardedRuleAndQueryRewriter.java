@@ -20,7 +20,6 @@ import uk.ac.ox.cs.pdq.fol.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> saturation) {
@@ -76,27 +75,16 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
 
         // Mapping of local names to their preimages in the neighbourhood mapping.
         // Contains all active local names in the key set,
-        // and the range of the mapping is a partition of variables mapped by localWitnessGuess.
+        // and the range of the mapping is a partition of domain of localWitnessGuess.
         final ImmutableMap<LocalInstanceTerm.LocalName, /* possibly empty, disjoint */ImmutableSet<Variable>> neighbourhoodPreimages =
                 MapExtensions.preimages(localWitnessGuess, activeLocalNames);
 
         // unification of variables mapped by localWitnessGuess to fresh variables
         final ImmutableMap</* domain of localWitnessGuess */Variable, /* fresh */Variable> unification;
         {
-            final ImmutableSet<ImmutableSet<Variable>> equivalenceClasses =
-                    ImmutableSet.copyOf(neighbourhoodPreimages.values().stream().iterator());
-
-            final ImmutableMap<ImmutableSet<Variable>, Variable> unifiedVariableMap =
-                    ImmutableMapExtensions.consumeAndCopy(
-                            equivalenceClasses
-                                    .stream()
-                                    .map(c -> Map.entry(c, Variable.getFreshVariable()))
-                                    .iterator()
-                    );
-
             final var unificationMapBuilder = ImmutableMap.<Variable, Variable>builder();
-            for (final var equivalenceClass : equivalenceClasses) {
-                final var unifiedVariable = unifiedVariableMap.get(equivalenceClass);
+            for (final var equivalenceClass : neighbourhoodPreimages.values()) {
+                final var unifiedVariable = Variable.getFreshVariable();
                 for (final var variable : equivalenceClass) {
                     unificationMapBuilder.put(variable, unifiedVariable);
                 }
