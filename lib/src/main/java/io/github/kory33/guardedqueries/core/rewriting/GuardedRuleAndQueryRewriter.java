@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 
 public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> saturation) {
     private record BoundVariableConnectedComponentRewriteResult(
-            ImmutableCollection<? extends TGD> additionalRules,
-            Atom goalAtom
+            Atom goalAtom,
+            ImmutableCollection<? extends TGD> goalDerivationRules
     ) {
     }
 
@@ -154,37 +154,46 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
         return new NormalGTGD.FullGTGD(FormalInstance.asAtoms(mappedInstance), List.of(mappedSubgoalAtom));
     }
 
+    /**
+     * Rewrite a bound-variable-connected query {@code boundVariableConnectedQuery} into a pair of
+     * <ol>
+     *   <li>a fresh goal atom for the query.</li>
+     *   <li>a set of additional rules that, when run on a saturated base data, produces all answers to
+     *       {@code boundVariableConnectedQuery}</li>
+     * </ol>
+     */
     private BoundVariableConnectedComponentRewriteResult rewriteBoundVariableConnectedComponent(
             final SaturatedRuleSet<? extends NormalGTGD> saturatedRules,
-            final /* bound-variable-connected */ ConjunctiveQuery boundVariableConnectedSubquery,
+            final /* bound-variable-connected */ ConjunctiveQuery boundVariableConnectedQuery,
             final String intentionalPredicatePrefix
     ) {
-        final var queryFreeVariables = boundVariableConnectedSubquery.getFreeVariables();
-        final var subqueryGoalPredicate = Predicate.create(
-                intentionalPredicatePrefix + "_GOAL",
-                queryFreeVariables.length
-        );
-        final var subqueryGoalAtom = Atom.create(
-                subqueryGoalPredicate,
-                VariableSetExtensions
-                        .sortBySymbol(Arrays.asList(queryFreeVariables))
-                        .toArray(Term[]::new)
-        );
+        final Atom queryGoalAtom;
+        {
+            final var queryFreeVariables = boundVariableConnectedQuery.getFreeVariables();
+            final var goalPredicate = Predicate.create(
+                    intentionalPredicatePrefix + "_GOAL",
+                    queryFreeVariables.length
+            );
+            final var sortedFreeVariables = VariableSetExtensions
+                    .sortBySymbol(Arrays.asList(queryFreeVariables))
+                    .toArray(Variable[]::new);
+            queryGoalAtom = Atom.create(goalPredicate, sortedFreeVariables);
+        }
 
         final var subgoalAtoms = new SubgoalAtomGenerator(
-                boundVariableConnectedSubquery,
+                boundVariableConnectedQuery,
                 intentionalPredicatePrefix + "_SGL_"
         );
 
         final Collection<NormalGTGD.FullGTGD> subgoalDerivationRules =
-                new SubqueryEntailmentComputation(saturatedRules, boundVariableConnectedSubquery)
+                new SubqueryEntailmentComputation(saturatedRules, boundVariableConnectedQuery)
                         .run()
                         .map(subqueryEntailment -> subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms))
                         .toList();
 
-        final Collection<TGD> subgoalGlueingRules = SetExtensions
-                .powerset(Arrays.asList(boundVariableConnectedSubquery.getBoundVariables()))
-                .<TGD>map(existentialWitnessCandidate -> {
+        final Collection<DatalogRule> subgoalGlueingRules = SetExtensions
+                .powerset(Arrays.asList(boundVariableConnectedQuery.getBoundVariables()))
+                .map(existentialWitnessCandidate -> {
                     // A single existentialWitnessCandidate is a set of variables that the rule
                     // (which we are about to produce) expects to be existentially satisfied.
                     //
@@ -193,11 +202,11 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
                     // by values in the base instance.
                     //
                     // The rule that we need to produce, therefore, will be of the form
-                    //   (subquery strongly induced by baseWitnessVariables,
-                    //    except there is no existential quantification)
+                    //   (subquery of boundVariableConnectedQuery strongly induced by baseWitnessVariables,
+                    //    except we turn all existential quantifications to universal quantifications)
                     // ∧ (for each connected component V of existentialWitnessCandidate,
                     //    a subgoal atom corresponding to V)
-                    //  → subqueryGoalAtom
+                    //  → queryGoalAtom
                     //
                     // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
                     // the second conjunct "neighbourhoodsSubgoals".
@@ -205,20 +214,20 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
                     final var baseWitnessVariables = SetExtensions.difference(
                             existentialWitnessCandidate,
                             SetExtensions.union(
-                                    Arrays.asList(boundVariableConnectedSubquery.getBoundVariables()),
-                                    Arrays.asList(boundVariableConnectedSubquery.getFreeVariables())
+                                    Arrays.asList(boundVariableConnectedQuery.getBoundVariables()),
+                                    Arrays.asList(boundVariableConnectedQuery.getFreeVariables())
                             )
                     );
 
                     final var baseWitnessJoinConditions = ConjunctiveQueryExtensions
                             .strictlyInduceSubqueryByVariables(
-                                    boundVariableConnectedSubquery,
+                                    boundVariableConnectedQuery,
                                     baseWitnessVariables
                             ).getAtoms();
 
                     final var neighbourhoodsSubgoals = ConjunctiveQueryExtensions
                             .connectedComponents(
-                                    boundVariableConnectedSubquery,
+                                    boundVariableConnectedQuery,
                                     existentialWitnessCandidate
                             )
                             .map(subgoalAtoms::apply)
@@ -229,19 +238,19 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
                                     Arrays.stream(baseWitnessJoinConditions),
                                     Arrays.stream(neighbourhoodsSubgoals)
                             ).toArray(Atom[]::new),
-                            new Atom[]{subqueryGoalAtom}
+                            new Atom[]{queryGoalAtom}
                     );
                 })
                 .toList();
 
         return new BoundVariableConnectedComponentRewriteResult(
-                SetExtensions.union(subgoalDerivationRules, subgoalGlueingRules),
-                subqueryGoalAtom
+                queryGoalAtom,
+                SetExtensions.union(subgoalDerivationRules, subgoalGlueingRules)
         );
     }
 
     /**
-     * Compute the Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
+     * Compute a Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
      */
     public DatalogQuery rewrite(final Collection<? extends GTGD> rules, final ConjunctiveQuery query) {
         final var initialSignature = FunctionFreeSignature.encompassingRuleQuery(rules, query);
@@ -304,7 +313,7 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
                 .addAll(saturatedRuleSet.saturatedRules)
                 .addAll(bvccRewriteResults
                         .stream()
-                        .map(BoundVariableConnectedComponentRewriteResult::additionalRules)
+                        .map(BoundVariableConnectedComponentRewriteResult::goalDerivationRules)
                         .flatMap(Collection::stream)
                         .toList()
                 )
