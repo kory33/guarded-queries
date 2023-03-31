@@ -22,7 +22,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> saturation) {
+public record GuardedRuleAndQueryRewriter(
+        AbstractSaturation<? extends GTGD> saturation,
+        SubqueryEntailmentComputation subqueryEntailmentComputation
+) {
     private record BoundVariableConnectedComponentRewriteResult(
             Atom goalAtom,
             ImmutableCollection<? extends TGD> goalDerivationRules
@@ -186,8 +189,8 @@ public record GuardedRuleAndQueryRewriter(AbstractSaturation<? extends GTGD> sat
         );
 
         final Collection<NormalGTGD.FullGTGD> subgoalDerivationRules =
-                new SubqueryEntailmentComputation(saturatedRules, boundVariableConnectedQuery)
-                        .run()
+                subqueryEntailmentComputation
+                        .apply(saturatedRules, boundVariableConnectedQuery)
                         .map(subqueryEntailment -> subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms))
                         .toList();
 
