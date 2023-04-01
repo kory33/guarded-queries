@@ -27,7 +27,7 @@ import java.util.stream.Stream;
  *     to constants appearing in {@code S}
  *    </li>
  *    <li>
- *     {@code i.coexistentialVariables()} is a set of bound variables in {@code Q}
+ *     {@code i.coexistentialVariables()} is a nonempty set of bound variables in {@code Q}
  *     that is connected in {@code Q}
  *    </li>
  *    <li>
