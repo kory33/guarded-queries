@@ -47,6 +47,10 @@ import java.util.stream.Stream;
  *     </ol>
  *     to local names appearing in {@code i.localInstance()}
  *    </li>
+ *    <li>
+ *     {@code i.queryConstantEmbedding()} is an injective map sending some local names
+ *     that are not in {@code i.localWitnessGuess().values()} to constants appearing in {@code Q} but not in {@code S}
+ *    </li>
  *   </ol>
  *  </li>
  *  <li>

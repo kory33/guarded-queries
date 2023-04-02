@@ -67,6 +67,7 @@ public record GuardedRuleAndQueryRewriter(
         final var coexistentialVariables = subqueryEntailment.coexistentialVariables();
         final var localWitnessGuess = subqueryEntailment.localWitnessGuess();
         final var localInstance = subqueryEntailment.localInstance();
+        final var queryConstantEmbedding = subqueryEntailment.queryConstantEmbedding();
 
         final var activeLocalNames = localInstance.getActiveTerms().stream().flatMap(t -> {
             if (t instanceof LocalInstanceTerm.LocalName) {
@@ -97,19 +98,31 @@ public record GuardedRuleAndQueryRewriter(
         }
 
 
-        // Mapping of local names to variables.
+        // Mapping of local names to variables (or constants for local names bound to query-constant).
         // Contains all active local names in the key set.
-        final ImmutableMap<LocalInstanceTerm.LocalName, Variable> nameToVariableMap =
+        final ImmutableMap<LocalInstanceTerm.LocalName, Term> nameToTermMap =
                 ImmutableMapExtensions.consumeAndCopy(
                         StreamExtensions.associate(activeLocalNames.stream(), localName -> {
                             final var preimage = neighbourhoodPreimages.get(localName);
                             if (preimage.isEmpty()) {
-                                // if this local name is not in the range of localWitnessGuess,
-                                // we assign a fresh variable to represent the genericity
-                                // of the local name
-                                return Variable.getFreshVariable();
+                                if (queryConstantEmbedding.containsKey(localName)) {
+                                    // if this local name is bound to a query constant,
+                                    // we assign the query constant to the local name
+                                    return queryConstantEmbedding.get(localName);
+                                } else {
+                                    // the local name is bound neither to a query constant nor
+                                    // query-bound variable, so we assign a fresh variable to it
+                                    return Variable.getFreshVariable();
+                                }
                             } else {
-                                // otherwise unify
+                                // the contract of SubqueryEntailmentComputation guarantees that
+                                // local names bound to bound variables should not be bound
+                                // to a query constant
+                                assert !queryConstantEmbedding.containsKey(localName);
+
+                                // otherwise unify to the variable corresponding to the preimage
+                                // e.g. if {x, y} is the preimage of localName and _xy is the variable
+                                // corresponding to {x, y}, we turn localName into _xy
                                 final var unifiedVariable = unification.get(preimage.iterator().next());
                                 assert unifiedVariable != null;
                                 return unifiedVariable;
@@ -117,7 +130,7 @@ public record GuardedRuleAndQueryRewriter(
                         }).iterator()
                 );
 
-        final var mappedInstance = subqueryEntailment.localInstance().map(t -> t.mapLocalNamesToTerm(nameToVariableMap::get));
+        final var mappedInstance = subqueryEntailment.localInstance().map(t -> t.mapLocalNamesToTerm(nameToTermMap::get));
 
         final Atom mappedSubgoalAtom;
         {
@@ -151,6 +164,7 @@ public record GuardedRuleAndQueryRewriter(
         }
 
         // The contract ensures that the instance is guarded by some atom.
+        // TODO: remove this assertion; we would like to relax the contract as much as possible
         // Since we have unified the instance together with the subgoal atom,
         // - mappedSubgoalAtom contains no existential variables, and
         // - there must be a guard in the mapped instance
