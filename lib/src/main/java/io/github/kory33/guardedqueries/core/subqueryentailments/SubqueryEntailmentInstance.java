@@ -12,6 +12,6 @@ public record SubqueryEntailmentInstance(
         ImmutableSet<Variable> coexistentialVariables,
         FormalInstance<LocalInstanceTerm> localInstance,
         ImmutableMap<Variable, LocalInstanceTerm.LocalName> localWitnessGuess,
-        ImmutableBiMap<LocalInstanceTerm.LocalName /* not in the range of localWitnessGuess */, Constant> queryConstantEmbedding
+        ImmutableBiMap<Constant, LocalInstanceTerm.LocalName /* not in the range of localWitnessGuess */> queryConstantEmbedding
 ) {
 }

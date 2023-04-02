@@ -48,15 +48,15 @@ import java.util.stream.Stream;
  *     to local names appearing in {@code i.localInstance()}
  *    </li>
  *    <li>
- *     {@code i.queryConstantEmbedding()} is an injective map sending some local names that are
+ *     {@code i.queryConstantEmbedding()} is an injective map that send <i>all</i> constants that
+ *     <ol>
+ *      <li>appear in a subquery of {@code Q} weakly induced by {@code i.coexistentialVariables()} but</li>
+ *      <li>do not appear in {@code S}</li>
+ *     </ol>
+ *     to local names that are
  *     <ol>
  *      <li>active in {@code i.localInstance()} and</li>
  *      <li>not in the range of {@code i.localWitnessGuess()}</li>
- *     </ol>
- *     to constants that
- *     <ol>
- *      <li>appears in a subquery of {@code Q} weakly induced by {@code i.coexistentialVariables()} but</li>
- *      <li>does not appear in {@code S}</li>
  *     </ol>
  *    </li>
  *   </ol>

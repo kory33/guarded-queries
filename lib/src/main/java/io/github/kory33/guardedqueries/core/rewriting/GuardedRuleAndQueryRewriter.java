@@ -66,7 +66,7 @@ public record GuardedRuleAndQueryRewriter(
         final var coexistentialVariables = subqueryEntailment.coexistentialVariables();
         final var localWitnessGuess = subqueryEntailment.localWitnessGuess();
         final var localInstance = subqueryEntailment.localInstance();
-        final var queryConstantEmbedding = subqueryEntailment.queryConstantEmbedding();
+        final var queryConstantEmbeddingInverse = subqueryEntailment.queryConstantEmbedding().inverse();
 
         final var activeLocalNames = localInstance.getActiveTerms().stream().flatMap(t -> {
             if (t instanceof LocalInstanceTerm.LocalName) {
@@ -104,10 +104,10 @@ public record GuardedRuleAndQueryRewriter(
                         StreamExtensions.associate(activeLocalNames.stream(), localName -> {
                             final var preimage = neighbourhoodPreimages.get(localName);
                             if (preimage.isEmpty()) {
-                                if (queryConstantEmbedding.containsKey(localName)) {
+                                if (queryConstantEmbeddingInverse.containsKey(localName)) {
                                     // if this local name is bound to a query constant,
                                     // we assign the query constant to the local name
-                                    return queryConstantEmbedding.get(localName);
+                                    return queryConstantEmbeddingInverse.get(localName);
                                 } else {
                                     // the local name is bound neither to a query constant nor
                                     // query-bound variable, so we assign a fresh variable to it
@@ -117,7 +117,7 @@ public record GuardedRuleAndQueryRewriter(
                                 // the contract of SubqueryEntailmentComputation guarantees that
                                 // local names bound to bound variables should not be bound
                                 // to a query constant
-                                assert !queryConstantEmbedding.containsKey(localName);
+                                assert !queryConstantEmbeddingInverse.containsKey(localName);
 
                                 // otherwise unify to the variable corresponding to the preimage
                                 // e.g. if {x, y} is the preimage of localName and _xy is the variable
