@@ -19,7 +19,6 @@ import uk.ac.ox.cs.pdq.fol.*;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Stream;
 
 public record GuardedRuleAndQueryRewriter(
@@ -28,7 +27,7 @@ public record GuardedRuleAndQueryRewriter(
 ) {
     private record BoundVariableConnectedComponentRewriteResult(
             Atom goalAtom,
-            ImmutableCollection<? extends TGD> goalDerivationRules
+            ImmutableCollection<? extends DatalogRule> goalDerivationRules
     ) {
     }
 
@@ -59,7 +58,7 @@ public record GuardedRuleAndQueryRewriter(
      *     (hence some constant) in C)
      * </pre>
      */
-    private NormalGTGD.FullGTGD subqueryEntailmentRecordToSubgoalRule(
+    private DatalogRule subqueryEntailmentRecordToSubgoalRule(
             final SubqueryEntailmentInstance subqueryEntailment,
             final SubgoalAtomGenerator subgoalAtoms
     ) {
@@ -130,7 +129,7 @@ public record GuardedRuleAndQueryRewriter(
                         }).iterator()
                 );
 
-        final var mappedInstance = subqueryEntailment.localInstance().map(t -> t.mapLocalNamesToTerm(nameToTermMap::get));
+        final var mappedInstance = localInstance.map(t -> t.mapLocalNamesToTerm(nameToTermMap::get));
 
         final Atom mappedSubgoalAtom;
         {
@@ -163,12 +162,21 @@ public record GuardedRuleAndQueryRewriter(
             mappedSubgoalAtom = Atom.create(subgoalAtom.getPredicate(), replacedTerms);
         }
 
-        // The contract ensures that the instance is guarded by some atom.
-        // TODO: remove this assertion; we would like to relax the contract as much as possible
-        // Since we have unified the instance together with the subgoal atom,
-        // - mappedSubgoalAtom contains no existential variables, and
-        // - there must be a guard in the mapped instance
-        return new NormalGTGD.FullGTGD(FormalInstance.asAtoms(mappedInstance), List.of(mappedSubgoalAtom));
+        // subgoalAtom has variables in the neighbourhood of coexistentialVariables as its parameters.
+        // On the other hand, every variable in the neighbourhood of coexistentialVariables is mapped
+        // either
+        //  1. by ruleConstantWitnessGuess to a constant appearing in the rule, or
+        //  2. by localWitnessGuess to a local name active in localInstance, which is then unified by unification,
+        // and these mappings are applied uniformly across localInstance and subgoalAtom.
+        //
+        // Therefore, every variable appearing in mappedSubgoalAtom is a variable produced by unification map,
+        // which must also occur in some atom of mappedInstance (as the local name
+        // to which the unified variables were sent was active in localInstance).
+        // Hence, the rule (mappedInstance → mappedSubgoalAtom) is a Datalog rule.
+        return new DatalogRule(
+                FormalInstance.asAtoms(mappedInstance).toArray(Atom[]::new),
+                new Atom[]{mappedSubgoalAtom}
+        );
     }
 
     /**
@@ -202,7 +210,7 @@ public record GuardedRuleAndQueryRewriter(
                 intentionalPredicatePrefix + "_SGL_"
         );
 
-        final Collection<NormalGTGD.FullGTGD> subgoalDerivationRules =
+        final Collection<DatalogRule> subgoalDerivationRules =
                 subqueryEntailmentComputation
                         .apply(saturatedRules, boundVariableConnectedQuery)
                         .map(subqueryEntailment -> subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms))
