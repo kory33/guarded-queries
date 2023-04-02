@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  *    </li>
  *    <li>
  *     {@code i.coexistentialVariables()} is a nonempty set of bound variables in {@code Q}
- *     that is connected in {@code Q}
+ *     that is connected in {@code Q} but disjoint from {@code i.ruleConstantWitnessGuess().keySet()}
  *    </li>
  *    <li>
  *     {@code i.localInstance()} is a formal instance on
@@ -39,9 +39,12 @@ import java.util.stream.Stream;
  *     such that at most {@code k} distinct local names appear in the formal instance
  *    </li>
  *    <li>
- *     {@code i.localWitnessGuess()} is a map sending
- *     all strict neighbourhood of {@code i.coexistentialVariables()} in {@code Q}
- *     (that are also bound in {@code Q})
+ *     {@code i.localWitnessGuess()} is a map that sends all {@code Q}-bound variables
+ *     that are
+ *     <ol>
+ *      <li>in the strict neighbourhood of {@code i.coexistentialVariables()} in {@code Q}, and</li>
+ *      <li>not in {@code i.ruleConstantWitnessGuess().keySet()}</li>
+ *     </ol>
  *     to local names appearing in {@code i.localInstance()}
  *    </li>
  *   </ol>
