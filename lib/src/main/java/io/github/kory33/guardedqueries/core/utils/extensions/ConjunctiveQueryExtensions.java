@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
+import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.Arrays;
@@ -153,5 +154,15 @@ public class ConjunctiveQueryExtensions {
             final Collection<? extends Variable> variables
     ) {
         return connectedComponents(conjunctiveQuery, variables).count() <= 1L;
+    }
+
+    public static ImmutableSet<Constant> constantsIn(
+            final ConjunctiveQuery conjunctiveQuery
+    ) {
+        return ImmutableSet.copyOf(
+                StreamExtensions
+                        .filterSubtype(Arrays.stream(conjunctiveQuery.getTerms()), Constant.class)
+                        .iterator()
+        );
     }
 }
