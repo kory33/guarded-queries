@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 public class StreamExtensions {
     private StreamExtensions() {
     }
-    
+
     /**
      * Zip each element of a stream with its index (in the order traversed by the iterator) starting from 0.
      */
@@ -26,5 +26,9 @@ public class StreamExtensions {
             final Function<? super T, ? extends R> mapper
     ) {
         return stream.map(t -> Map.entry(t, mapper.apply(t)));
+    }
+
+    public static <T> Iterable<T> asIterable(final Stream<T> stream) {
+        return stream::iterator;
     }
 }

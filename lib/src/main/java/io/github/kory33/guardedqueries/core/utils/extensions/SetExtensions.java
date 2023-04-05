@@ -49,6 +49,16 @@ public class SetExtensions {
     }
 
     /**
+     * Check if two collections have no common elements.
+     */
+    public static boolean disjoint(
+            final Collection<?> collection1,
+            final Collection<?> collection2
+    ) {
+        return !nontriviallyIntersects(collection1, collection2);
+    }
+
+    /**
      * Set difference of elements from two collections.
      */
     public static <T> ImmutableSet<T> difference(
