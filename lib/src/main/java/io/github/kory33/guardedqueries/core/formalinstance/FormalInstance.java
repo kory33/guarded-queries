@@ -28,6 +28,15 @@ public class FormalInstance<TermAlphabet> {
         return this.activeTerms;
     }
 
+    public <T extends TermAlphabet> ImmutableSet<T> getActiveTermsInClass(final Class<T> clazz) {
+        return ImmutableSet.copyOf(
+                this.getActiveTerms().stream()
+                        .filter(clazz::isInstance)
+                        .map(clazz::cast)
+                        .iterator()
+        );
+    }
+
     public <T> FormalInstance<T> map(final Function<TermAlphabet, T> mapper) {
         return FormalInstance.fromIterator(this.facts.stream().map(fact -> fact.map(mapper)).iterator());
     }
