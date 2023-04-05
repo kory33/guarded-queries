@@ -3,7 +3,7 @@ package io.github.kory33.guardedqueries.core.rewriting;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree;
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions;
-import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions;
+import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 
@@ -44,7 +44,7 @@ public class CQBoundVariableConnectedComponents {
         final var boundVariableUFTree = new SimpleUnionFindTree<>(cqBoundVariables);
         for (final var atom : cq.getAtoms()) {
             final var atomVariables = ImmutableSet.copyOf(atom.getVariables());
-            boundVariableUFTree.unionAll(SetExtensions.intersection(atomVariables, cqBoundVariables));
+            boundVariableUFTree.unionAll(SetLikeExtensions.intersection(atomVariables, cqBoundVariables));
         }
         final var boundVariableConnectedComponents = boundVariableUFTree.getEquivalenceClasses();
 

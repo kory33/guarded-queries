@@ -63,7 +63,7 @@ public class ConjunctiveQueryExtensions {
 
         return filterAtoms(conjunctiveQuery, atom -> {
             // variables in the atom that are bound in the CQ
-            final var atomBoundVariables = SetExtensions.intersection(
+            final var atomBoundVariables = SetLikeExtensions.intersection(
                     Arrays.asList(atom.getVariables()),
                     cqBoundVariables
             );
@@ -88,11 +88,11 @@ public class ConjunctiveQueryExtensions {
 
         return filterAtoms(conjunctiveQuery, atom -> {
             // variables in the atom that are bound in the CQ
-            final var atomBoundVariables = SetExtensions.intersection(
+            final var atomBoundVariables = SetLikeExtensions.intersection(
                     Arrays.asList(atom.getVariables()),
                     cqBoundVariables
             );
-            return SetExtensions.nontriviallyIntersects(atomBoundVariables, variableSet);
+            return SetLikeExtensions.nontriviallyIntersects(atomBoundVariables, variableSet);
         });
     }
 
@@ -111,12 +111,12 @@ public class ConjunctiveQueryExtensions {
             final Collection<? extends Variable> variables
     ) {
         final var subquery = subqueryRelevantToVariables(conjunctiveQuery, variables);
-        final var subqueryVariables = SetExtensions.union(
+        final var subqueryVariables = SetLikeExtensions.union(
                 Arrays.asList(subquery.getBoundVariables()),
                 Arrays.asList(subquery.getFreeVariables())
         );
 
-        return SetExtensions.difference(subqueryVariables, variables);
+        return SetLikeExtensions.difference(subqueryVariables, variables);
     }
 
     /**
@@ -133,7 +133,7 @@ public class ConjunctiveQueryExtensions {
 
         final var unionFindTree = new SimpleUnionFindTree<Variable>(variables);
         for (final var atom : conjunctiveQuery.getAtoms()) {
-            final var variablesToUnion = SetExtensions.intersection(
+            final var variablesToUnion = SetLikeExtensions.intersection(
                     ImmutableSet.copyOf(atom.getVariables()),
                     variables
             );

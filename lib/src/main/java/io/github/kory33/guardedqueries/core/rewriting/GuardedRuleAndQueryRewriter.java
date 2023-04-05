@@ -216,7 +216,7 @@ public record GuardedRuleAndQueryRewriter(
                         .map(subqueryEntailment -> subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms))
                         .toList();
 
-        final Collection<DatalogRule> subgoalGlueingRules = SetExtensions
+        final Collection<DatalogRule> subgoalGlueingRules = SetLikeExtensions
                 .powerset(Arrays.asList(boundVariableConnectedQuery.getBoundVariables()))
                 .map(existentialWitnessCandidate -> {
                     // A single existentialWitnessCandidate is a set of variables that the rule
@@ -236,9 +236,9 @@ public record GuardedRuleAndQueryRewriter(
                     // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
                     // the second conjunct "neighbourhoodsSubgoals".
 
-                    final var baseWitnessVariables = SetExtensions.difference(
+                    final var baseWitnessVariables = SetLikeExtensions.difference(
                             existentialWitnessCandidate,
-                            SetExtensions.union(
+                            SetLikeExtensions.union(
                                     Arrays.asList(boundVariableConnectedQuery.getBoundVariables()),
                                     Arrays.asList(boundVariableConnectedQuery.getFreeVariables())
                             )
@@ -270,7 +270,7 @@ public record GuardedRuleAndQueryRewriter(
 
         return new BoundVariableConnectedComponentRewriteResult(
                 queryGoalAtom,
-                SetExtensions.union(subgoalDerivationRules, subgoalGlueingRules)
+                SetLikeExtensions.union(subgoalDerivationRules, subgoalGlueingRules)
         );
     }
 

@@ -9,8 +9,8 @@ import java.util.Iterator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class SetExtensions {
-    private SetExtensions() {
+public class SetLikeExtensions {
+    private SetLikeExtensions() {
     }
 
     /**
