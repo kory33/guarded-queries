@@ -1,11 +1,12 @@
 package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -77,31 +78,22 @@ public class SetLikeExtensions {
         final var arrayList = new ArrayList<>(ImmutableSet.copyOf(collection));
         final var setSize = arrayList.size();
 
-        // all non-negative BigInteger less than this value represents a unique subset of the given collection
+        // every non-negative BigInteger less than this value represents a unique subset of the given collection
         final var upperLimit = BigInteger.ONE.shiftLeft(setSize);
 
-        final Iterator<ImmutableSet<T>> iterator = new Iterator<ImmutableSet<T>>() {
-            BigInteger currentIndex = BigInteger.ZERO;
-
-            @Override
-            public boolean hasNext() {
-                // currentIndex < upperLimit
-                return currentIndex.compareTo(upperLimit) < 0;
-            }
-
-            @Override
-            public ImmutableSet<T> next() {
+        return StreamExtensions.unfold(BigInteger.ZERO, currentIndex -> {
+            // currentIndex < upperLimit
+            if (currentIndex.compareTo(upperLimit) < 0) {
                 final var subset = ImmutableSet.<T>copyOf(
                         IntStream.range(0, setSize)
-                                .filter(i -> currentIndex.testBit(i))
+                                .filter(currentIndex::testBit)
                                 .mapToObj(arrayList::get)
                                 .iterator()
                 );
-                currentIndex = currentIndex.add(BigInteger.ONE);
-                return subset;
+                return Optional.of(Pair.of(subset, currentIndex.add(BigInteger.ONE)));
+            } else {
+                return Optional.empty();
             }
-        };
-
-        return IteratorExtensions.stream(iterator);
+        });
     }
 }
