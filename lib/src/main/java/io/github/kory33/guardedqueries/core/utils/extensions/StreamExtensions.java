@@ -4,8 +4,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -39,31 +39,60 @@ public class StreamExtensions {
         return stream.filter(clazz::isInstance).map(clazz::cast);
     }
 
-    public static <State, Output> Stream<Output> unfold(
-            final State initialState,
-            final Function<? super State, Optional<? extends Pair<? extends Output, ? extends State>>> yieldNext
+    /**
+     * Create a stream that yields elements of type {@code Output} by mutating a mutable state of type {@code MutableState}.
+     * The stream terminates when the function {@code mutateAndYieldNext} returns an empty optional.
+     * <p>
+     * The function {@code mutateAndYieldNext} should be a stateless {@code Function} object.
+     */
+    public static <MutableState, Output> Stream<Output> unfoldMutable(
+            final MutableState mutableState,
+            final Function<? super MutableState, Optional<Output>> mutateAndYieldNext
     ) {
         final Iterator<Output> iterator = new Iterator<Output>() {
+            private final MutableState nextState;
             @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-            Optional<? extends Pair<? extends Output, ? extends State>> currentOutputStatePair = yieldNext.apply(initialState);
+            private Optional<Output> nextOutput;
+
+            {
+                nextOutput = mutateAndYieldNext.apply(mutableState);
+                nextState = mutableState;
+            }
 
             @Override
             public boolean hasNext() {
-                return currentOutputStatePair.isPresent();
+                return nextOutput.isPresent();
             }
 
             @Override
             public Output next() {
-                if (currentOutputStatePair.isEmpty()) {
-                    throw new NoSuchElementException();
-                }
-
-                final Output output = currentOutputStatePair.get().getLeft();
-                currentOutputStatePair = yieldNext.apply(currentOutputStatePair.get().getRight());
+                @SuppressWarnings("OptionalGetWithoutIsPresent") final var output = nextOutput.get();
+                nextOutput = mutateAndYieldNext.apply(nextState);
                 return output;
             }
         };
 
         return IteratorExtensions.stream(iterator);
     }
+
+    /**
+     * Create a stream that yields elements of type by repeatedly applying a function {@code yieldNext}
+     * to a state of type {@code State}. The function {@code yieldNext} should be a stateless {@code Function} object.
+     */
+    public static <State, Output> Stream<Output> unfold(
+            final State initialState,
+            final Function<? super State, Optional<? extends Pair<? extends Output, ? extends State>>> yieldNext
+    ) {
+        AtomicReference<State> stateCell = new AtomicReference<>(initialState);
+        return unfoldMutable(stateCell, cell -> {
+            final var nextPair = yieldNext.apply(cell.get());
+            if (nextPair.isPresent()) {
+                cell.set(nextPair.get().getRight());
+                return Optional.of(nextPair.get().getLeft());
+            } else {
+                return Optional.empty();
+            }
+        });
+    }
+
 }
