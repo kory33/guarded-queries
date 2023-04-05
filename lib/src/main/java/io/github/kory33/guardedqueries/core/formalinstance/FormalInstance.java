@@ -2,6 +2,7 @@ package io.github.kory33.guardedqueries.core.formalinstance;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Term;
 
@@ -29,12 +30,7 @@ public class FormalInstance<TermAlphabet> {
     }
 
     public <T extends TermAlphabet> ImmutableSet<T> getActiveTermsInClass(final Class<T> clazz) {
-        return ImmutableSet.copyOf(
-                this.getActiveTerms().stream()
-                        .filter(clazz::isInstance)
-                        .map(clazz::cast)
-                        .iterator()
-        );
+        return ImmutableSet.copyOf(StreamExtensions.filterSubtype(this.getActiveTerms().stream(), clazz).iterator());
     }
 
     public <T> FormalInstance<T> map(final Function<TermAlphabet, T> mapper) {

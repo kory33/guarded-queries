@@ -31,4 +31,8 @@ public class StreamExtensions {
     public static <T> Iterable<T> asIterable(final Stream<T> stream) {
         return stream::iterator;
     }
+
+    public static <T1, T2 extends T1> Stream<T2> filterSubtype(final Stream<T1> stream, final Class<T2> clazz) {
+        return stream.filter(clazz::isInstance).map(clazz::cast);
+    }
 }
