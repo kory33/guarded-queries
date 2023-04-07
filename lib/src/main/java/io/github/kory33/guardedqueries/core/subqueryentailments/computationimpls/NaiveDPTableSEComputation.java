@@ -96,7 +96,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                 );
 
                                 final var applicableHomomorphisms = allHomomorphisms.filter(homomorphism -> {
-                                    final var mappedBody = Arrays.stream(existentialRule.getBodyAtoms())
+                                    final Stream<FormalFact<LocalInstanceTerm>> mappedBody = Arrays
+                                            .stream(existentialRule.getBodyAtoms())
                                             .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, homomorphism::get));
 
                                     return mappedBody.allMatch(instance::containsFact);
