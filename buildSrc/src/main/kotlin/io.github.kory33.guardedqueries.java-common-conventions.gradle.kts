@@ -7,6 +7,10 @@ plugins {
     java
 }
 
+tasks.withType(JavaCompile::class.java) {
+    options.encoding = "UTF-8"
+}
+
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
