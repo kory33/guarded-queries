@@ -23,7 +23,7 @@ public class ListExtensionsTest {
                         ImmutableStack.of(2, 6, 10)
                 ),
                 IteratorUtils.toList(
-                        ListExtensions.productMappedCollections(
+                        ListExtensions.productMappedCollectionsToStacks(
                                 List.of(1, 5, 9),
                                 i -> List.of(i, i + 1)
                         ).iterator()
@@ -49,7 +49,7 @@ public class ListExtensionsTest {
                     // the size of RHS is the product of the sizes of the lists in listOfLists
                     sizesOfLists.stream().reduce(1, (a, b) -> a * b).longValue(),
                     IteratorExtensions.intoStream(
-                            ListExtensions.productMappedCollections(
+                            ListExtensions.productMappedCollectionsToStacks(
                                     IntStream.range(0, listOfLists.size()).boxed().toList(),
                                     listOfLists::get
                             ).iterator()

@@ -3,6 +3,7 @@ package io.github.kory33.guardedqueries.core.utils.extensions;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Iterator;
+import java.util.function.Function;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -41,5 +42,22 @@ public class IteratorExtensions {
     public static <T> Stream<T> intoStream(final Iterator<T> iterator) {
         final Iterable<T> iterable = () -> iterator;
         return StreamSupport.stream(iterable.spliterator(), false);
+    }
+
+    public static <R, T> Iterator<R> mapInto(
+            final Iterator<? extends T> iterator,
+            final Function<? super T, ? extends R> mapper
+    ) {
+        return new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public R next() {
+                return mapper.apply(iterator.next());
+            }
+        };
     }
 }

@@ -1,5 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils.extensions;
 
+import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.utils.datastructures.ImmutableStack;
 
 import java.util.Iterator;
@@ -13,9 +14,9 @@ public class ListExtensions {
     private ListExtensions() {
     }
 
-    public static <I, R> Iterable<ImmutableStack<R>> productMappedCollections(
+    public static <I, R> Iterable<ImmutableStack<R>> productMappedCollectionsToStacks(
             final List<I> items,
-            final /* pure */ Function<I, Iterable<R>> mapperToIterable
+            final /* pure */ Function<? super I, ? extends Iterable<R>> mapperToIterable
     ) {
         final var size = items.size();
         final var iterablesToProduct = items.stream().map(mapperToIterable).toList();
@@ -100,5 +101,15 @@ public class ListExtensions {
                 return toReturn;
             }
         };
+    }
+
+    public static <I, R> Iterable<ImmutableSet<R>> productMappedCollectionsToSets(
+            final List<I> items,
+            final /* pure */ Function<? super I, ? extends Iterable<R>> mapperToIterable
+    ) {
+        return () -> IteratorExtensions.mapInto(
+                productMappedCollectionsToStacks(items, mapperToIterable).iterator(),
+                ImmutableSet::copyOf
+        );
     }
 }
