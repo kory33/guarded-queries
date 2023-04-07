@@ -76,68 +76,71 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 // universally quantified variables because those values are what get passed down to the chase child.
                 // Then we can try to find a substitution that maps unmapped universally quantified variables to
                 // local names or constants appearing in the instance.
+                final Function<NormalGTGD, Stream<FormalInstance<LocalInstanceTerm>>> allChasesWithRule = (NormalGTGD existentialRule) -> {
+                    final var universalVariables = Arrays.asList(existentialRule.getUniversal());
+
+                    return MappingStreams
+                            .allInjectiveTotalFunctionsBetween(namesToBePreservedDuringChase, universalVariables)
+                            .flatMap(namesToVariablesInjection -> {
+                                final var unmappedVariables = SetLikeExtensions.difference(
+                                        universalVariables,
+                                        namesToVariablesInjection.values()
+                                );
+
+                                final var allMappingsOfUnmappedVariables = MappingStreams.allTotalFunctionsBetween(
+                                        unmappedVariables,
+                                        instance.getActiveTerms()
+                                );
+
+                                final var allHomomorphisms = allMappingsOfUnmappedVariables.map(map ->
+                                        ImmutableMapExtensions.union(namesToVariablesInjection.inverse(), map)
+                                );
+
+                                final var applicableHomomorphisms = allHomomorphisms.filter(homomorphism -> {
+                                    final var mappedBody = Arrays.stream(existentialRule.getBodyAtoms())
+                                            .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, homomorphism::get));
+
+                                    return mappedBody.allMatch(instance::containsFact);
+                                });
+
+                                final var usableLocalNamesInChildren = SetLikeExtensions.difference(
+                                        IntStream.range(0, folSignature.maxArity() * 2)
+                                                .mapToObj(LocalInstanceTerm.LocalName::new)
+                                                .toList(),
+                                        instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
+                                ).stream().toList();
+
+                                return applicableHomomorphisms.map(homomorphism -> {
+                                    final ImmutableMap<Variable, LocalInstanceTerm.LocalName> existentialVariablesMap;
+                                    {
+                                        final var builder = ImmutableMap.<Variable, LocalInstanceTerm.LocalName>builder();
+                                        final var existentialVariables = existentialRule.getExistential();
+                                        for (int i = 0; i < existentialVariables.length; i++) {
+                                            builder.put(existentialVariables[i], usableLocalNamesInChildren.get(i));
+                                        }
+                                        existentialVariablesMap = builder.build();
+                                    }
+
+                                    final var extendedHomomorphism = ImmutableMapExtensions.union(homomorphism, existentialVariablesMap);
+
+                                    final var headInstance = FormalInstance.fromIterator(
+                                            Arrays.stream(existentialRule.getHeadAtoms())
+                                                    .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, extendedHomomorphism::get))
+                                                    .iterator()
+                                    );
+
+                                    final var inherited = instance.restrictToAlphabetsWith(t ->
+                                            (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.containsValue(t))
+                                    );
+
+                                    return FormalInstance.unionAll(List.of(inherited, headInstance));
+                                });
+                            });
+                };
+
                 final Stream<FormalInstance<LocalInstanceTerm>> children = saturatedRuleSet.existentialRules
                         .stream()
-                        .flatMap(existentialRule -> {
-                            final var universalVariables = Arrays.asList(existentialRule.getUniversal());
-                            return MappingStreams
-                                    .allInjectiveTotalFunctionsBetween(namesToBePreservedDuringChase, universalVariables)
-                                    .flatMap(namesToVariablesInjection -> {
-                                        final var unmappedVariables = SetLikeExtensions.difference(
-                                                universalVariables,
-                                                namesToVariablesInjection.values()
-                                        );
-
-                                        final var allMappingsOfUnmappedVariables = MappingStreams.allTotalFunctionsBetween(
-                                                unmappedVariables,
-                                                instance.getActiveTerms()
-                                        );
-
-                                        final var allHomomorphisms = allMappingsOfUnmappedVariables.map(map ->
-                                                ImmutableMapExtensions.union(namesToVariablesInjection.inverse(), map)
-                                        );
-
-                                        final var applicableHomomorphisms = allHomomorphisms.filter(homomorphism -> {
-                                            final var mappedBody = Arrays.stream(existentialRule.getBodyAtoms())
-                                                    .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, homomorphism::get));
-
-                                            return mappedBody.allMatch(instance::containsFact);
-                                        });
-
-                                        final var usableLocalNamesInChildren = SetLikeExtensions.difference(
-                                                IntStream.range(0, folSignature.maxArity() * 2)
-                                                        .mapToObj(LocalInstanceTerm.LocalName::new)
-                                                        .toList(),
-                                                instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
-                                        ).stream().toList();
-
-                                        return applicableHomomorphisms.map(homomorphism -> {
-                                            final ImmutableMap<Variable, LocalInstanceTerm.LocalName> existentialVariablesMap;
-                                            {
-                                                final var builder = ImmutableMap.<Variable, LocalInstanceTerm.LocalName>builder();
-                                                final var existentialVariables = existentialRule.getExistential();
-                                                for (int i = 0; i < existentialVariables.length; i++) {
-                                                    builder.put(existentialVariables[i], usableLocalNamesInChildren.get(i));
-                                                }
-                                                existentialVariablesMap = builder.build();
-                                            }
-
-                                            final var extendedHomomorphism = ImmutableMapExtensions.union(homomorphism, existentialVariablesMap);
-
-                                            final var headInstance = FormalInstance.fromIterator(
-                                                    Arrays.stream(existentialRule.getHeadAtoms())
-                                                            .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, extendedHomomorphism::get))
-                                                            .iterator()
-                                            );
-
-                                            final var inherited = instance.restrictToAlphabetsWith(t ->
-                                                    (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.containsValue(t))
-                                            );
-
-                                            return FormalInstance.unionAll(List.of(inherited, headInstance));
-                                        });
-                                    });
-                        });
+                        .flatMap(allChasesWithRule);
 
                 return ImmutableList.copyOf(children.iterator());
             });
