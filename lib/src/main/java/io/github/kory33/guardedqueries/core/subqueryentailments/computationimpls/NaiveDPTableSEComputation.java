@@ -1,6 +1,7 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.datalog.DatalogEngine;
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
@@ -9,15 +10,19 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
+import io.github.kory33.guardedqueries.core.utils.MappingStreams;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Predicate;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -59,7 +64,88 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 final FormalInstance<LocalInstanceTerm> localInstance,
                 final ImmutableSet<LocalInstanceTerm.LocalName> namesToBePreservedDuringChase
         ) {
-            throw new RuntimeException("Not implemented yet");
+            final var saturate = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) ->
+                    datalogEngine.saturateInstance(saturatedRuleSet.saturatedRulesAsDatalogProgram, instance)
+            );
+
+            final var shortcutChaseOneStep = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) -> {
+                // We need to chase the instance with all existential rules
+                // while preserving the names in namesToBePreservedDuringChase.
+                //
+                // To achieve this, we must first injectively map the names in namesToBePreservedDuringChase to
+                // universally quantified variables because those values are what get passed down to the chase child.
+                // Then we can try to find a substitution that maps unmapped universally quantified variables to
+                // local names or constants appearing in the instance.
+                final Stream<FormalInstance<LocalInstanceTerm>> children = saturatedRuleSet.existentialRules
+                        .stream()
+                        .flatMap(existentialRule -> {
+                            final var universalVariables = Arrays.asList(existentialRule.getUniversal());
+                            return MappingStreams
+                                    .allInjectiveTotalFunctionsBetween(namesToBePreservedDuringChase, universalVariables)
+                                    .flatMap(namesToVariablesInjection -> {
+                                        final var unmappedVariables = SetLikeExtensions.difference(
+                                                universalVariables,
+                                                namesToVariablesInjection.values()
+                                        );
+
+                                        final var allMappingsOfUnmappedVariables = MappingStreams.allTotalFunctionsBetween(
+                                                unmappedVariables,
+                                                instance.getActiveTerms()
+                                        );
+
+                                        final var allHomomorphisms = allMappingsOfUnmappedVariables.map(map ->
+                                                ImmutableMapExtensions.union(namesToVariablesInjection.inverse(), map)
+                                        );
+
+                                        final var applicableHomomorphisms = allHomomorphisms.filter(homomorphism -> {
+                                            final var mappedBody = Arrays.stream(existentialRule.getBodyAtoms())
+                                                    .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, homomorphism::get));
+
+                                            return mappedBody.allMatch(instance::containsFact);
+                                        });
+
+                                        final var usableLocalNamesInChildren = SetLikeExtensions.difference(
+                                                IntStream.range(0, folSignature.maxArity() * 2)
+                                                        .mapToObj(LocalInstanceTerm.LocalName::new)
+                                                        .toList(),
+                                                instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
+                                        ).stream().toList();
+
+                                        return applicableHomomorphisms.map(homomorphism -> {
+                                            final ImmutableMap<Variable, LocalInstanceTerm.LocalName> existentialVariablesMap;
+                                            {
+                                                final var builder = ImmutableMap.<Variable, LocalInstanceTerm.LocalName>builder();
+                                                final var existentialVariables = existentialRule.getExistential();
+                                                for (int i = 0; i < existentialVariables.length; i++) {
+                                                    builder.put(existentialVariables[i], usableLocalNamesInChildren.get(i));
+                                                }
+                                                existentialVariablesMap = builder.build();
+                                            }
+
+                                            final var extendedHomomorphism = ImmutableMapExtensions.union(homomorphism, existentialVariablesMap);
+
+                                            final var headInstance = FormalInstance.fromIterator(
+                                                    Arrays.stream(existentialRule.getHeadAtoms())
+                                                            .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, extendedHomomorphism::get))
+                                                            .iterator()
+                                            );
+
+                                            final var inherited = instance.restrictToAlphabetsWith(t ->
+                                                    (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.containsValue(t))
+                                            );
+
+                                            return FormalInstance.unionAll(List.of(inherited, headInstance));
+                                        });
+                                    });
+                        });
+
+                return ImmutableList.copyOf(children.iterator());
+            });
+
+            return SetLikeExtensions.saturate(
+                    List.of(saturate.apply(localInstance)),
+                    shortcutChaseOneStep
+            );
         }
 
         /**
@@ -254,8 +340,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
     public Stream<SubqueryEntailmentInstance> apply(
             final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,
             final ConjunctiveQuery conjunctiveQuery) {
-        final var signature = FunctionFreeSignature.encompassingRuleQuery(saturatedRuleSet.rules.rules, conjunctiveQuery);
-        final var ruleConstants = saturatedRuleSet.rules.getConstants();
+        final var signature = FunctionFreeSignature.encompassingRuleQuery(saturatedRuleSet.allRules, conjunctiveQuery);
+        final var ruleConstants = saturatedRuleSet.constants();
 
         final var dpTable = new DPTable(saturatedRuleSet, signature, conjunctiveQuery);
 

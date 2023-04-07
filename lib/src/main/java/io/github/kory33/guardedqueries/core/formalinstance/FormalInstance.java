@@ -9,6 +9,7 @@ import uk.ac.ox.cs.pdq.fol.Term;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class FormalInstance<TermAlphabet> {
     public final ImmutableSet<FormalFact<TermAlphabet>> facts;
@@ -35,6 +36,20 @@ public class FormalInstance<TermAlphabet> {
 
     public <T> FormalInstance<T> map(final Function<TermAlphabet, T> mapper) {
         return FormalInstance.fromIterator(this.facts.stream().map(fact -> fact.map(mapper)).iterator());
+    }
+
+    public FormalInstance<TermAlphabet> restrictToAlphabetsWith(final Predicate<TermAlphabet> predicate) {
+        return fromIterator(
+                this.facts.stream()
+                        .filter(fact ->
+                                fact.appliedTerms().stream().allMatch(predicate)
+                        )
+                        .iterator()
+        );
+    }
+
+    public boolean containsFact(final FormalFact<TermAlphabet> fact) {
+        return this.facts.contains(fact);
     }
 
     public static ImmutableList<Atom> asAtoms(final FormalInstance<Term> instance) {

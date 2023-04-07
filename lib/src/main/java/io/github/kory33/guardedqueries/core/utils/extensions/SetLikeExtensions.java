@@ -6,7 +6,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -95,5 +97,35 @@ public class SetLikeExtensions {
                 return Optional.empty();
             }
         });
+    }
+
+    /**
+     * Saturate a collection until generator function produces no additional elements when run on the set.
+     * That is, the returned set is the smallest set {@code S} such that
+     * <ol>
+     *  <li>{@code S} contains all elements from the initial collection</li>
+     *  <li>for every element {@code t} of {@code S}, {@code generator.apply(t)} is contained in {@code S}</li>
+     * </ol>
+     */
+    public static <T> ImmutableSet<T> saturate(
+            final Collection<? extends T> initialCollection,
+            final Function<? super T, ? extends Collection<? extends T>> generator
+    ) {
+        final var hashSet = new HashSet<T>(initialCollection);
+        while (true) {
+            final var oldSize = hashSet.size();
+            final ImmutableSet<T> generatedElements;
+            {
+                final var builder = ImmutableSet.<T>builder();
+                hashSet.forEach(e -> builder.addAll(generator.apply(e)));
+                generatedElements = builder.build();
+            }
+            hashSet.addAll(generatedElements);
+
+            if (hashSet.size() == oldSize) {
+                // we have reached the fixpoint
+                return ImmutableSet.copyOf(hashSet);
+            }
+        }
     }
 }

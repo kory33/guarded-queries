@@ -18,4 +18,8 @@ public record FormalFact<TermAlphabet>(Predicate predicate, ImmutableList<? exte
     public static Atom asAtom(final FormalFact<Term> fact) {
         return Atom.create(fact.predicate, fact.appliedTerms.toArray(Term[]::new));
     }
+
+    public static FormalFact<Term> fromAtom(final Atom atom) {
+        return new FormalFact<>(atom.getPredicate(), ImmutableList.copyOf(atom.getTerms()));
+    }
 }
