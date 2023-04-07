@@ -48,4 +48,10 @@ public class FormalInstance<TermAlphabet> {
     public static <TermAlphabet> FormalInstance<TermAlphabet> fromIterator(final Iterator<FormalFact<TermAlphabet>> facts) {
         return new FormalInstance<>(ImmutableSet.copyOf(facts));
     }
+
+    public static <TermAlphabet> FormalInstance<TermAlphabet> unionAll(final Iterable<FormalInstance<TermAlphabet>> instances) {
+        final var factSetBuilder = ImmutableSet.<FormalFact<TermAlphabet>>builder();
+        instances.forEach(instance -> factSetBuilder.addAll(instance.facts));
+        return new FormalInstance<>(factSetBuilder.build());
+    }
 }
