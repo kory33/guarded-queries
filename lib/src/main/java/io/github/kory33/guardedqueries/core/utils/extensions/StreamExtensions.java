@@ -17,7 +17,7 @@ public class StreamExtensions {
      * Zip each element of a stream with its index (in the order traversed by the iterator) starting from 0.
      */
     public static <T> Stream<Pair<T, Long>> zipWithIndex(final Stream<T> stream) {
-        return IteratorExtensions.stream(IteratorExtensions.zipWithIndex(stream.iterator()));
+        return IteratorExtensions.intoStream(IteratorExtensions.zipWithIndex(stream.iterator()));
     }
 
     /**
@@ -31,7 +31,7 @@ public class StreamExtensions {
         return stream.map(t -> Map.entry(t, mapper.apply(t)));
     }
 
-    public static <T> Iterable<T> asIterable(final Stream<T> stream) {
+    public static <T> Iterable<T> intoIterable(final Stream<T> stream) {
         return stream::iterator;
     }
 
@@ -72,7 +72,7 @@ public class StreamExtensions {
             }
         };
 
-        return IteratorExtensions.stream(iterator);
+        return IteratorExtensions.intoStream(iterator);
     }
 
     /**

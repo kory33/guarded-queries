@@ -48,7 +48,7 @@ public class ListExtensionsTest {
             Assertions.assertEquals(
                     // the size of RHS is the product of the sizes of the lists in listOfLists
                     sizesOfLists.stream().reduce(1, (a, b) -> a * b).longValue(),
-                    IteratorExtensions.stream(
+                    IteratorExtensions.intoStream(
                             ListExtensions.productMappedCollections(
                                     IntStream.range(0, listOfLists.size()).boxed().toList(),
                                     listOfLists::get

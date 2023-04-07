@@ -38,7 +38,7 @@ public class IteratorExtensions {
     /**
      * Convert an iterator to a stream.
      */
-    public static <T> Stream<T> stream(final Iterator<T> iterator) {
+    public static <T> Stream<T> intoStream(final Iterator<T> iterator) {
         final Iterable<T> iterable = () -> iterator;
         return StreamSupport.stream(iterable.spliterator(), false);
     }
