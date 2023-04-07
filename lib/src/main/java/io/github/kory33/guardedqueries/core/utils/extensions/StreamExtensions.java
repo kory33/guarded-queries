@@ -31,7 +31,7 @@ public class StreamExtensions {
         return stream.map(t -> Map.entry(t, mapper.apply(t)));
     }
 
-    public static <T> Iterable<T> intoIterable(final Stream<T> stream) {
+    public static <T> Iterable<T> intoIterableOnce(final Stream<T> stream) {
         return stream::iterator;
     }
 

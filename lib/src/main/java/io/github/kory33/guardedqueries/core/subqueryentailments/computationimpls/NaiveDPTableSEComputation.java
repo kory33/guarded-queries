@@ -75,7 +75,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                         chasedInstance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
                 );
 
-                for (final var localWitnessGuessExtension : StreamExtensions.asIterable(localWitnessGuessExtensions)) {
+                for (final var localWitnessGuessExtension : StreamExtensions.intoIterableOnce(localWitnessGuessExtensions)) {
                     final var extendedLocalWitnessGuess = ImmutableMapExtensions.union(
                             instance.localWitnessGuess(), localWitnessGuessExtension
                     );
