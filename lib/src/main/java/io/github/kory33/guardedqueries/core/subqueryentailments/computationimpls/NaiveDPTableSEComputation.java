@@ -152,7 +152,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
         final var allActiveLocalNames = SetLikeExtensions
                 .powerset(IntStream.range(0, maxArity * 2).boxed().toList())
-                .filter(localNameSet -> localNameSet.size() == maxArity);
+                .filter(localNameSet -> localNameSet.size() <= maxArity);
 
         return allActiveLocalNames.flatMap(localNameSet -> {
             final var localNames = ImmutableSet.copyOf(
