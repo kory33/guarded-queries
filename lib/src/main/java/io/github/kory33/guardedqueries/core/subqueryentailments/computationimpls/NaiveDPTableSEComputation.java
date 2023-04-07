@@ -64,9 +64,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 final FormalInstance<LocalInstanceTerm> localInstance,
                 final ImmutableSet<LocalInstanceTerm.LocalName> namesToBePreservedDuringChase
         ) {
-            final var saturate = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) ->
-                    datalogEngine.saturateInstance(saturatedRuleSet.saturatedRulesAsDatalogProgram, instance)
-            );
+            final var datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram;
 
             final var shortcutChaseOneStep = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) -> {
                 // We need to chase the instance with all existential rules
@@ -79,6 +77,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 final Function<NormalGTGD, Stream<FormalInstance<LocalInstanceTerm>>> allChasesWithRule = (NormalGTGD existentialRule) -> {
                     final var universalVariables = Arrays.asList(existentialRule.getUniversal());
 
+                    // TODO: do something smarter e.g. loop join instead of trying every single possible homomorphism
                     return MappingStreams
                             .allInjectiveTotalFunctionsBetween(namesToBePreservedDuringChase, universalVariables)
                             .flatMap(namesToVariablesInjection -> {
@@ -133,7 +132,11 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                             (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.containsValue(t))
                                     );
 
-                                    return FormalInstance.unionAll(List.of(inherited, headInstance));
+                                    return datalogEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                                            datalogSaturation,
+                                            inherited,
+                                            headInstance
+                                    );
                                 });
                             });
                 };
@@ -146,7 +149,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             });
 
             return SetLikeExtensions.saturate(
-                    List.of(saturate.apply(localInstance)),
+                    List.of(datalogEngine.saturateInstance(datalogSaturation, localInstance)),
                     shortcutChaseOneStep
             );
         }
