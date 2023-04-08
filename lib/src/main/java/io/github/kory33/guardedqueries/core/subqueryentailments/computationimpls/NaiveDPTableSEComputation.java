@@ -396,15 +396,44 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
         final var dpTable = new DPTable(saturatedRuleSet, signature, conjunctiveQuery);
 
-        // NOTE: This is massively inefficient because we only have to consider local instances
-        //       that are both guarded and saturated by the rules.
-        //       Moreover, once we mark a local instance (together with rules constant witness guess and other data)
-        //       as a true instance, we no longer have to fill the table for larger instances (due to subsumptions).
-        //       Finally, we could always "normalize" instances so that active values are always within the range of
-        //       {0,1,...,maxArity-1} (except during the chasing phase), so that we do not have to explore
-        //       all possible local instances, but only those that are normalized.
-        //       However, in this NaiveDPTable implementation, we do not optimize the DP table for subsumption or
-        //       normalization, so we are just filling the table for all well-formed instances.
+        // NOTE:
+        //   This algorithm is massively inefficient as-is.
+        //   Here are a few optimization points that we could further explore:
+        //    - Problem 1:
+        //        We actually only need to consider local instances that are
+        //        (1) saturated by the input ruleset and (2) guarded as an instance.
+        //        The implementation in this class brute-forces all possible local instances,
+        //        so we are simply exploring a much larger search space than necessary.
+        //    - Problem 2:
+        //        Once we mark a problem instance as a true instance, we no longer have to fill the table
+        //        for "larger" local instances due to the subsumption.
+        //        It is easy to see that, for problems instances `sqei1` and `sqei2`, if
+        //         - `sqei2.coexistentialVariables` is a superset of `sqei1.coexistentialVariables`
+        //         - there exists a function θ (a "matching" between local names) that sends active local names
+        //           in `sqei1.localInstance` to active terms (so either local names or rule constants)
+        //           in `sqei2.localInstance`, such that
+        //           - `θ(sqei1.localInstance)` is a subinstance of `sqei2.localInstance`
+        //           - all of `ruleConstantWitnessGuess`, `localWitnessGuess`, and `queryConstantEmbedding`
+        //             of `sqei1` are "matched" to `sqei2` by θ (TODO: make this precise?)
+        //        then `sqei1` being a true instance implies `sqei2` being a true instance.
+        //    - Problem 3:
+        //        During the chase phase, we can always "normalize" local instances so that active values are
+        //        always within the range of {0,1,...,maxArity-1}. Moreover, we can rearrange
+        //        the local names in the local instance so that the guard atom (which is chosen according
+        //        to a canonical order on the predicate names) has its local-name parameters in the increasing
+        //        order. This way, we can identify a number of local instances that have the "same shape",
+        //        avoiding the need to explore all possible local instances.
+        //    - Problem 4:
+        //        During the chase phase, if we happen to mark the root problem instance as a true instance,
+        //        we can mark all "intermediate" local instances between the root and the successful branching point
+        //        as true, too. On the other hand, if we happen to mark the root problem instance as a false instance,
+        //        we can mark all local instances below the root as false, too.
+        //        The implementation in this class completely ignores this aspect of the tree-structure of the chase.
+        //
+        //    The challenge to solve these problems essentially boils down to
+        //     - keeping track of only "maximally subsuming true instances" and "minimally subsuming false instances"
+        //     - efficiently matching a problem instance to other subsuming instances using indexing techniques
+        //    which we shall explore in another implementation.
         allWellFormedSubqueryEntailmentInstancesFor(signature, ruleConstants, conjunctiveQuery).forEach(dpTable::fillTableUpto);
 
         return dpTable.getKnownYesInstances();
