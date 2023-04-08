@@ -112,22 +112,20 @@ public class SetLikeExtensions {
             final Function<? super T, ? extends Collection<? extends T>> generator
     ) {
         final var hashSet = new HashSet<T>(initialCollection);
-        while (true) {
-            final var oldSize = hashSet.size();
+
+        var addedElements = ImmutableSet.copyOf(hashSet);
+        while (!addedElements.isEmpty()) {
             final ImmutableSet<T> generatedElements;
             {
                 final var builder = ImmutableSet.<T>builder();
-                // FIXME: we do not need to apply generator to the entire hashSet!
-                //        only to the newly added elements suffice
-                hashSet.forEach(e -> builder.addAll(generator.apply(e)));
+                addedElements.forEach(newElements -> builder.addAll(generator.apply(newElements)));
                 generatedElements = builder.build();
             }
-            hashSet.addAll(generatedElements);
 
-            if (hashSet.size() == oldSize) {
-                // we have reached the fixpoint
-                return ImmutableSet.copyOf(hashSet);
-            }
+            hashSet.addAll(generatedElements);
+            addedElements = generatedElements;
         }
+
+        return ImmutableSet.copyOf(hashSet);
     }
 }
