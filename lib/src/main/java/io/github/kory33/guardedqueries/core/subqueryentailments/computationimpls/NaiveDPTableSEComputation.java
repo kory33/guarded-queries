@@ -3,7 +3,7 @@ package io.github.kory33.guardedqueries.core.subqueryentailments.computationimpl
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.datalog.DatalogEngine;
+import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine;
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
@@ -31,10 +31,10 @@ import java.util.stream.Stream;
 import static io.github.kory33.guardedqueries.core.utils.MappingStreams.*;
 
 public final class NaiveDPTableSEComputation implements SubqueryEntailmentComputation {
-    private final DatalogEngine datalogEngine;
+    private final DatalogSaturationEngine datalogSaturationEngine;
 
-    public NaiveDPTableSEComputation(final DatalogEngine datalogEngine) {
-        this.datalogEngine = datalogEngine;
+    public NaiveDPTableSEComputation(final DatalogSaturationEngine datalogSaturationEngine) {
+        this.datalogSaturationEngine = datalogSaturationEngine;
     }
 
     private final class DPTable {
@@ -133,7 +133,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                             (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.containsValue(t))
                                     );
 
-                                    return datalogEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                                    return datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
                                             datalogSaturation,
                                             inherited,
                                             headInstance
@@ -150,7 +150,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             });
 
             return SetLikeExtensions.saturate(
-                    List.of(datalogEngine.saturateInstance(datalogSaturation, localInstance)),
+                    List.of(datalogSaturationEngine.saturateInstance(datalogSaturation, localInstance)),
                     shortcutChaseOneStep
             );
         }
