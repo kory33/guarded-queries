@@ -117,6 +117,8 @@ public class SetLikeExtensions {
             final ImmutableSet<T> generatedElements;
             {
                 final var builder = ImmutableSet.<T>builder();
+                // FIXME: we do not need to apply generator to the entire hashSet!
+                //        only to the newly added elements suffice
                 hashSet.forEach(e -> builder.addAll(generator.apply(e)));
                 generatedElements = builder.build();
             }

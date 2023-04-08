@@ -1,11 +1,13 @@
 package io.github.kory33.guardedqueries.core.utils.extensions;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class MapExtensions {
     /**
@@ -40,5 +42,27 @@ public class MapExtensions {
                         .map(entry -> Map.entry(entry.getKey(), function.apply(entry.getValue())))
                         .iterator()
         );
+    }
+
+    public static <K, V> ImmutableMap<K, V> restrictToKeys(
+            final Map<K, V> map,
+            final Collection<K> keys
+    ) {
+        return ImmutableMapExtensions.consumeAndCopy(
+                ImmutableSet.copyOf(keys).stream()
+                        .flatMap(key -> map.containsKey(key)
+                                ? Stream.of(Map.entry(key, map.get(key)))
+                                : Stream.empty()
+                        )
+                        .iterator()
+        );
+    }
+
+    public static <K, V> ImmutableBiMap<K, V> restrictToKeys(
+            final ImmutableBiMap<K, V> map,
+            final Collection<K> keys
+    ) {
+        // this does not lose any entry since a restriction of an injective map is again injective
+        return ImmutableBiMap.copyOf(restrictToKeys((Map<K, V>) map, keys));
     }
 }

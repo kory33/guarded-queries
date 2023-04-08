@@ -185,7 +185,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 for (final var localWitnessGuessExtension : StreamExtensions.intoIterableOnce(localWitnessGuessExtensions)) {
                     final var newlyCoveredVariables = localWitnessGuessExtension.keySet();
                     final var extendedLocalWitnessGuess = ImmutableMapExtensions.union(
-                            instance.localWitnessGuess(), localWitnessGuessExtension
+                            instance.localWitnessGuess(),
+                            localWitnessGuessExtension
                     );
 
                     final boolean newlyCoveredAtomsOccurInChasedInstance;
@@ -195,7 +196,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                 instance.ruleConstantWitnessGuessAsMapToInstanceTerms()
                         );
                         final var coveredVariables = extendedGuess.keySet();
-                        final var coveredAtoms = Arrays.stream(relevantSubquery.getAtoms())
+                        final var newlyCoveredAtoms = Arrays.stream(relevantSubquery.getAtoms())
                                 .filter(atom -> {
                                     final var atomVariables = ImmutableSet.copyOf(Arrays.asList(atom.getVariables()));
                                     final var allVariablesAreCovered = coveredVariables.containsAll(atomVariables);
@@ -209,28 +210,50 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                     return allVariablesAreCovered && someVariableIsNewlyCovered;
                                 });
 
-                        newlyCoveredAtomsOccurInChasedInstance = coveredAtoms
+                        newlyCoveredAtomsOccurInChasedInstance = newlyCoveredAtoms
                                 .map(atom -> LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess::get))
                                 .allMatch(chasedInstance::containsFact);
                     }
 
                     final boolean allSplitInstancesAreYesInstances;
                     {
-                        final ImmutableSet<ImmutableSet<Variable>> splitCoexistentialVariables = null;
-                        {
-                            // TODO: initialize splitCoexistentialVariables
-                            //  this is the set of query variable-connected components of
-                            //  instance.coexistentialVariables() \ extendedLocalWitnessGuess.keySet()
-                        }
+                        final ImmutableSet<ImmutableSet<Variable>> splitCoexistentialVariables =
+                                ImmutableSet.copyOf(ConjunctiveQueryExtensions.connectedComponents(
+                                        relevantSubquery,
+                                        SetLikeExtensions.difference(
+                                                instance.coexistentialVariables(),
+                                                newlyCoveredVariables
+                                        )
+                                ).iterator());
 
                         allSplitInstancesAreYesInstances = splitCoexistentialVariables.stream()
                                 .allMatch(splitCoexistentialVariablesComponent -> {
-                                    final SubqueryEntailmentInstance inducedInstance = null;
-                                    {
-                                        // TODO: initialize this
-                                        //  this should look something like
-                                        //  chasedInstance.inducedBy(splitCoexistentialVariablesComponent)
-                                    }
+                                    final var newNeighbourhood = SetLikeExtensions.difference(
+                                            ConjunctiveQueryExtensions.neighbourhoodVariables(
+                                                    relevantSubquery,
+                                                    splitCoexistentialVariablesComponent
+                                            ),
+                                            instance.ruleConstantWitnessGuess().keySet()
+                                    );
+
+                                    final var newRelevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
+                                            relevantSubquery,
+                                            splitCoexistentialVariablesComponent
+                                    );
+
+                                    final SubqueryEntailmentInstance inducedInstance = new SubqueryEntailmentInstance(
+                                            instance.ruleConstantWitnessGuess(),
+                                            splitCoexistentialVariablesComponent,
+                                            chasedInstance,
+                                            MapExtensions.restrictToKeys(
+                                                    extendedLocalWitnessGuess,
+                                                    newNeighbourhood
+                                            ),
+                                            MapExtensions.restrictToKeys(
+                                                    instance.queryConstantEmbedding(),
+                                                    ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery)
+                                            )
+                                    );
 
                                     return isYesInstance(inducedInstance);
                                 });
