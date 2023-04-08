@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
 public class MapExtensions {
     /**
@@ -26,6 +27,17 @@ public class MapExtensions {
 
                             return Map.entry(value, ImmutableSet.copyOf(preimageIterator));
                         })
+                        .iterator()
+        );
+    }
+
+    public static <K, V1, V2> ImmutableMap<K, V2> composeWithFunction(
+            final Map<K, V1> map,
+            final Function<? super V1, ? extends V2> function
+    ) {
+        return ImmutableMapExtensions.consumeAndCopy(
+                map.entrySet().stream()
+                        .map(entry -> Map.entry(entry.getKey(), function.apply(entry.getValue())))
                         .iterator()
         );
     }

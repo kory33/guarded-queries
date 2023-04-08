@@ -159,6 +159,11 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
          * Fill the DP table up to the given instance.
          */
         public void fillTableUpto(final SubqueryEntailmentInstance instance) {
+            final var relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
+                    conjunctiveQuery,
+                    instance.coexistentialVariables()
+            );
+
             final ImmutableSet<FormalInstance<LocalInstanceTerm>> instancesWithGuessedVariablesPreserved =
                     chaseLocalInstance(
                             instance.localInstance(),
@@ -178,19 +183,35 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 );
 
                 for (final var localWitnessGuessExtension : StreamExtensions.intoIterableOnce(localWitnessGuessExtensions)) {
+                    final var newlyCoveredVariables = localWitnessGuessExtension.keySet();
                     final var extendedLocalWitnessGuess = ImmutableMapExtensions.union(
                             instance.localWitnessGuess(), localWitnessGuessExtension
                     );
 
-                    final Boolean newlyCoveredAtomsOccurInChasedInstance = null;
+                    final boolean newlyCoveredAtomsOccurInChasedInstance;
                     {
-                        // TODO:
-                        //  initialize newlyCoveredAtomsOccurInChasedInstance
-                        //  by checking if every atom in the conjunctiveQuery such that
-                        //   - all variables in the atom are in the union of ranges of
-                        //     ruleConstantWitnessGuess, localWitnessGuess and queryConstantEmbedding, and
-                        //   - there exists a variable that is newly mapped by σ,
-                        //  is an element of I (with a suitable substitution by these three substituting notions)
+                        final var extendedGuess = ImmutableMapExtensions.union(
+                                extendedLocalWitnessGuess,
+                                instance.ruleConstantWitnessGuessAsMapToInstanceTerms()
+                        );
+                        final var coveredVariables = extendedGuess.keySet();
+                        final var coveredAtoms = Arrays.stream(relevantSubquery.getAtoms())
+                                .filter(atom -> {
+                                    final var atomVariables = ImmutableSet.copyOf(Arrays.asList(atom.getVariables()));
+                                    final var allVariablesAreCovered = coveredVariables.containsAll(atomVariables);
+
+                                    // we no longer care about the part of the query
+                                    // which entirely lies in the neighborhood of coexistential variables
+                                    // of the instance
+                                    final var someVariableIsNewlyCovered = atomVariables.stream()
+                                            .anyMatch(newlyCoveredVariables::contains);
+
+                                    return allVariablesAreCovered && someVariableIsNewlyCovered;
+                                });
+
+                        newlyCoveredAtomsOccurInChasedInstance = coveredAtoms
+                                .map(atom -> LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess::get))
+                                .allMatch(chasedInstance::containsFact);
                     }
 
                     final boolean allSplitInstancesAreYesInstances;
