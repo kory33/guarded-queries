@@ -15,6 +15,10 @@ public class FormalInstance<TermAlphabet> {
     public final ImmutableSet<FormalFact<TermAlphabet>> facts;
     private ImmutableSet<TermAlphabet> activeTerms;
 
+    public FormalInstance(final Iterator<FormalFact<TermAlphabet>> fact) {
+        this.facts = ImmutableSet.copyOf(fact);
+    }
+
     public FormalInstance(final Collection<FormalFact<TermAlphabet>> facts) {
         this.facts = ImmutableSet.copyOf(facts);
     }

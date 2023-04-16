@@ -1,19 +1,18 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine;
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
+import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin;
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
-import io.github.kory33.guardedqueries.core.utils.MappingStreams;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 import uk.ac.ox.cs.pdq.fol.Constant;
@@ -67,80 +66,99 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             final var datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram;
 
             final var shortcutChaseOneStep = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) -> {
+                final var localNamesUsableInChildren = ImmutableList.copyOf(
+                        SetLikeExtensions.difference(
+                                IntStream.range(0, folSignature.maxArity() * 2)
+                                        .mapToObj(LocalInstanceTerm.LocalName::new)
+                                        .toList(),
+                                instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
+                        ).stream().iterator()
+                );
+
                 // We need to chase the instance with all existential rules
                 // while preserving the names in namesToBePreservedDuringChase.
                 //
-                // To achieve this, we must first injectively map the names in namesToBePreservedDuringChase to
-                // universally quantified variables because those values are what get passed down to the chase child.
-                // Then we can try to find a substitution that maps unmapped universally quantified variables to
-                // local names or constants appearing in the instance.
+                // For a chase step to preserve names, it must injectively map the
+                // names in namesToBePreservedDuringChase to universally quantified variables
+                // because those values are what get passed down to the chase child.
+                //
+                // We can first find all possible homomorphisms from the body of
+                // the existential rule to the instance by a join algorithm,
+                // and then filter out those that do not preserve the names.
                 final Function<NormalGTGD, Stream<FormalInstance<LocalInstanceTerm>>> allChasesWithRule = (NormalGTGD existentialRule) -> {
-                    final var universalVariables = Arrays.asList(existentialRule.getUniversal());
+                    final var bodyHomomorphisms = new FilterNestedLoopJoin<LocalInstanceTerm>().join(
+                            TGDExtensions.bodyAsCQ(existentialRule),
+                            instance
+                    );
 
-                    // TODO: do something smarter e.g. loop join instead of trying every single possible homomorphism
-                    return MappingStreams
-                            .allInjectiveTotalFunctionsBetween(namesToBePreservedDuringChase, universalVariables)
-                            .flatMap(namesToVariablesInjection -> {
-                                final var unmappedVariables = SetLikeExtensions.difference(
-                                        universalVariables,
-                                        namesToVariablesInjection.values()
-                                );
+                    // An ordering of variables that appear in the body of the existential rule,
+                    // as specified by the join algorithm
+                    final var variableOrdering = bodyHomomorphisms.variableOrdering();
 
-                                final var allMappingsOfUnmappedVariables = MappingStreams.allTotalFunctionsBetween(
-                                        unmappedVariables,
-                                        instance.getActiveTerms()
-                                );
+                    // An ordering of variables that appear in the head of the existential rule
+                    final var orderedHeadVariables =
+                            ImmutableList.copyOf(ImmutableSet.copyOf(existentialRule.getHead().getFreeVariables()));
 
-                                final var allHomomorphisms = allMappingsOfUnmappedVariables.map(map ->
-                                        ImmutableMapExtensions.union(namesToVariablesInjection.inverse(), map)
-                                );
+                    // An ordering of all variables that appear in the existential rule
+                    final var extendedVariableOrdering = ImmutableList.<Variable>builder()
+                            .addAll(variableOrdering)
+                            .addAll(orderedHeadVariables)
+                            .build();
 
-                                final var applicableHomomorphisms = allHomomorphisms.filter(homomorphism -> {
-                                    final Stream<FormalFact<LocalInstanceTerm>> mappedBody = Arrays
-                                            .stream(existentialRule.getBodyAtoms())
-                                            .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, homomorphism::get));
+                    // An assignment of names to the variables in the head
+                    final var headVariableHomomorphism = ImmutableList.copyOf(
+                            IntStream.range(0, orderedHeadVariables.size())
+                                    .mapToObj(localNamesUsableInChildren::get)
+                                    .iterator()
+                    );
 
-                                    return mappedBody.allMatch(instance::containsFact);
-                                });
+                    return bodyHomomorphisms.allHomomorphisms().stream().flatMap(homomorphism -> {
+                        // We need to first check that all names in namesToBePreservedDuringChase
+                        // appear in the homomorphism exactly once.
+                        for (final var name : namesToBePreservedDuringChase) {
+                            final var nameCount = homomorphism.stream().filter(term -> term.equals(name)).count();
+                            if (nameCount != 1) {
+                                return Stream.empty();
+                            }
+                        }
 
-                                final var usableLocalNamesInChildren = SetLikeExtensions.difference(
-                                        IntStream.range(0, folSignature.maxArity() * 2)
-                                                .mapToObj(LocalInstanceTerm.LocalName::new)
-                                                .toList(),
-                                        instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
-                                ).stream().toList();
+                        final var extendedHomomorphism = ImmutableList.<LocalInstanceTerm>builder()
+                                .addAll(homomorphism)
+                                .addAll(headVariableHomomorphism)
+                                .build();
 
-                                return applicableHomomorphisms.map(homomorphism -> {
-                                    final ImmutableMap<Variable, LocalInstanceTerm.LocalName> existentialVariablesMap;
-                                    {
-                                        final var builder = ImmutableMap.<Variable, LocalInstanceTerm.LocalName>builder();
-                                        final var existentialVariables = existentialRule.getExistential();
-                                        for (int i = 0; i < existentialVariables.length; i++) {
-                                            builder.put(existentialVariables[i], usableLocalNamesInChildren.get(i));
-                                        }
-                                        existentialVariablesMap = builder.build();
-                                    }
+                        // the set of facts in the parent instance that are
+                        // "guarded" by the head of the existential rule
+                        final var inheritedFactsInstance = instance.restrictToAlphabetsWith(t ->
+                                (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.contains(t))
+                        );
 
-                                    final var extendedHomomorphism = ImmutableMapExtensions.union(homomorphism, existentialVariablesMap);
+                        // The instance containing only the head atom produced by the existential rule.
+                        // This should be a singleton instance because the existential rule is normal.
+                        final var headInstance = new FormalInstance<>(
+                                Arrays.stream(existentialRule.getHeadAtoms())
+                                        .map(FormalFact::fromAtom)
+                                        .map(fact -> fact.map(term ->
+                                                LocalInstanceTerm.fromTermWithVariableMap(term, variable ->
+                                                        extendedHomomorphism.get(extendedVariableOrdering.indexOf(variable))
+                                                )
+                                        ))
+                                        .iterator()
+                        );
 
-                                    final var headInstance = FormalInstance.fromIterator(
-                                            Arrays.stream(existentialRule.getHeadAtoms())
-                                                    .map(f -> LocalInstanceTermFact.fromAtomWithVariableMap(f, extendedHomomorphism::get))
-                                                    .iterator()
-                                    );
+                        // The child instance, which is the saturation of the union of
+                        // the set of inherited facts and the head instance.
+                        final var childInstance = datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                                datalogSaturation,
+                                // because the parent is saturated, a restriction of it to the alphabet
+                                // occurring in the child is also saturated.
+                                inheritedFactsInstance,
+                                headInstance,
+                                LocalInstanceTerm.RuleConstant::new
+                        );
 
-                                    final var inherited = instance.restrictToAlphabetsWith(t ->
-                                            (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.containsValue(t))
-                                    );
-
-                                    return datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
-                                            datalogSaturation,
-                                            inherited,
-                                            headInstance,
-                                            LocalInstanceTerm.RuleConstant::new
-                                    );
-                                });
-                            });
+                        return Stream.of(childInstance);
+                    });
                 };
 
                 final Stream<FormalInstance<LocalInstanceTerm>> children = saturatedRuleSet.existentialRules
@@ -150,6 +168,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 return ImmutableList.copyOf(children.iterator());
             });
 
+            // we keep chasing until we reach a fixpoint
             return SetLikeExtensions.generateFromElementsUntilFixpoint(
                     List.of(datalogSaturationEngine.saturateInstance(
                             datalogSaturation,

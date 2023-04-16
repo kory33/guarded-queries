@@ -27,10 +27,10 @@ public sealed interface LocalInstanceTerm {
             final Term term,
             final Function<? super Variable, ? extends LocalInstanceTerm> mapper
     ) {
-        if (term instanceof Constant) {
-            return new RuleConstant((Constant) term);
-        } else if (term instanceof Variable) {
-            return mapper.apply((Variable) term);
+        if (term instanceof Constant constant) {
+            return new RuleConstant(constant);
+        } else if (term instanceof Variable variable) {
+            return mapper.apply(variable);
         } else {
             throw new IllegalArgumentException("Unsupported term: " + term);
         }
