@@ -149,7 +149,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 return ImmutableList.copyOf(children.iterator());
             });
 
-            return SetLikeExtensions.saturate(
+            return SetLikeExtensions.generateFromElementsUntilFixpoint(
                     List.of(datalogSaturationEngine.saturateInstance(datalogSaturation, localInstance)),
                     shortcutChaseOneStep
             );

@@ -100,14 +100,17 @@ public class SetLikeExtensions {
     }
 
     /**
-     * Saturate a collection until generator function produces no additional elements when run on the set.
-     * That is, the returned set is the smallest set {@code S} such that
+     * Saturate a collection of elements of type {@code T} by repeatedly applying a
+     * generator function {@code generator} that generates a collection of elements
+     * of type {@code T} from values of type {@code T}.
+     * <p>
+     * More precisely, the returned set is the smallest set {@code S} such that
      * <ol>
      *  <li>{@code S} contains all elements from the initial collection</li>
      *  <li>for every element {@code t} of {@code S}, {@code generator.apply(t)} is contained in {@code S}</li>
      * </ol>
      */
-    public static <T> ImmutableSet<T> saturate(
+    public static <T> ImmutableSet<T> generateFromElementsUntilFixpoint(
             final Collection<? extends T> initialCollection,
             final Function<? super T, ? extends Collection<? extends T>> generator
     ) {
@@ -127,5 +130,36 @@ public class SetLikeExtensions {
         }
 
         return ImmutableSet.copyOf(hashSet);
+    }
+
+    /**
+     * Saturate a collection of elements of type {@code T} by repeatedly applying a
+     * generator function {@code generator} that generates a collection of elements
+     * of type {@code T} from a collection of values of type {@code T}.
+     * <p>
+     * More precisely, the returned set is the smallest set {@code S} such that
+     * <ol>
+     *  <li>{@code S} contains all elements from the initial collection</li>
+     *  <li>{@code generator.apply(S)} is contained in {@code S}</li>
+     * </ol>
+     */
+    public static <T> ImmutableSet<T> generateFromSetUntilFixpoint(
+            final Collection<? extends T> initialCollection,
+            final Function<? super ImmutableSet<T>, ? extends Collection<? extends T>> generator
+    ) {
+        final var hashSet = new HashSet<T>(initialCollection);
+
+        while (true) {
+            final var elementsGeneratedSoFar = ImmutableSet.copyOf(hashSet);
+            final var elementsGeneratedInThisIteration =
+                    ImmutableSet.<T>copyOf(generator.apply(elementsGeneratedSoFar));
+
+            if (hashSet.containsAll(elementsGeneratedInThisIteration)) {
+                // we have reached the least fixpoint above initialCollection
+                return ImmutableSet.copyOf(hashSet);
+            } else {
+                hashSet.addAll(elementsGeneratedInThisIteration);
+            }
+        }
     }
 }
