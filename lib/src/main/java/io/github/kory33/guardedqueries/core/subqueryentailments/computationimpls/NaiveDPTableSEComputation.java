@@ -304,7 +304,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                         predicateParameterIndices,
                         allLocalInstanceTerms
                 ).map(parameterMap -> {
-                    final var parameterList = ImmutableList.copyOf(
+                    final var parameterList = ImmutableList.<LocalInstanceTerm>copyOf(
                             IntStream
                                     .range(0, predicate.getArity())
                                     .mapToObj(parameterMap::get)
