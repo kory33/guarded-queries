@@ -136,7 +136,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                     return datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
                                             datalogSaturation,
                                             inherited,
-                                            headInstance
+                                            headInstance,
+                                            LocalInstanceTerm.RuleConstant::new
                                     );
                                 });
                             });
@@ -150,7 +151,11 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             });
 
             return SetLikeExtensions.generateFromElementsUntilFixpoint(
-                    List.of(datalogSaturationEngine.saturateInstance(datalogSaturation, localInstance)),
+                    List.of(datalogSaturationEngine.saturateInstance(
+                            datalogSaturation,
+                            localInstance,
+                            LocalInstanceTerm.RuleConstant::new
+                    )),
                     shortcutChaseOneStep
             );
         }

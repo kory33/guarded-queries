@@ -1,6 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import com.google.common.collect.ImmutableSet;
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 import uk.ac.ox.cs.pdq.fol.TGD;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
@@ -23,5 +24,11 @@ public class TGDExtensions {
         final var headVariablesMutableSet = new HashSet<>(Arrays.asList(headVariables));
         headVariablesMutableSet.retainAll(Set.of(bodyVariables));
         return ImmutableSet.copyOf(headVariablesMutableSet);
+    }
+
+    public static ConjunctiveQuery bodyAsCQ(final TGD tgd) {
+        final var bodyAtoms = tgd.getBodyAtoms();
+        final var bodyVariables = tgd.getBody().getFreeVariables();
+        return ConjunctiveQuery.create(bodyVariables, bodyAtoms);
     }
 }

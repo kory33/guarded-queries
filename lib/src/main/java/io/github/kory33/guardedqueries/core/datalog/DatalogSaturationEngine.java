@@ -1,15 +1,21 @@
 package io.github.kory33.guardedqueries.core.datalog;
 
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
+import uk.ac.ox.cs.pdq.fol.Constant;
 
 import java.util.Set;
+import java.util.function.Function;
 
 public interface DatalogSaturationEngine {
-    default <TA> FormalInstance<TA> saturateInstance(final DatalogProgram program, final FormalInstance<TA> instance) {
+    default <TA> FormalInstance<TA> saturateInstance(
+            final DatalogProgram program,
+            final FormalInstance<TA> instance,
+            final Function<Constant, TA> includeConstantsToTA) {
         return this.saturateUnionOfSaturatedAndUnsaturatedInstance(
                 program,
                 new FormalInstance<>(Set.of()),
-                instance
+                instance,
+                includeConstantsToTA
         );
     }
 
@@ -19,6 +25,7 @@ public interface DatalogSaturationEngine {
     <TA> FormalInstance<TA> saturateUnionOfSaturatedAndUnsaturatedInstance(
             final DatalogProgram program,
             final FormalInstance<TA> saturatedInstance,
-            final FormalInstance<TA> instance
+            final FormalInstance<TA> instance,
+            final Function<Constant, TA> includeConstantsToTA
     );
 }
