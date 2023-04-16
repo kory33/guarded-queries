@@ -1,3 +1,5 @@
+import java.util.*
+
 //region Utilities
 
 fun downloadIfNotAlreadyDownloaded(url: java.net.URL, outputPath: String) {
@@ -30,6 +32,14 @@ val availableMavenCommand: String = kotlin.run {
             ?: throw RuntimeException("maven command is not found: tried mvn and mvn.cmd")
 }
 
+fun printlnUntilEndOfStream(inputStream: java.io.InputStream) {
+    Scanner(inputStream).use { scanner ->
+        while (scanner.hasNextLine()) {
+            println(scanner.nextLine())
+        }
+    }
+}
+
 //endregion
 
 //region constants
@@ -47,41 +57,63 @@ val pdqCommonJarAbsolutePath = "${project.projectDir.absolutePath}/${pdqCommonJa
 
 // fetch and install pdq-common library to local maven repository, according to
 // https://github.com/KRR-Oxford/Guarded-saturation/tree/83cb805564a8a89c399381f26c5c16f6acedd38e#installing-pdq-in-maven
-val fetchPdqJar = tasks.register("fetch-pdq-jar") {
-    doFirst {
+val installPdqJar = tasks.register("install-pdq-jar") {
+    outputs.file(pdqCommonJarRelativePath)
+
+    // fetch
+    doLast {
         downloadIfNotAlreadyDownloaded(pdqCommonJarUrl, pdqCommonJarAbsolutePath)
     }
-}
 
-val installPdqJar = task<Exec>("install-pdq-jar") {
-    dependsOn(fetchPdqJar)
-    // we have to run maven install-file command in the maven project directory
-    // or else we will get an NPE
-    workingDir(guardedSaturationMavenProjectPath)
-    commandLine(
-            availableMavenCommand,
-            "org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file",
-            "-Dfile=../${pdqCommonJarRelativePath}",
-    )
+    // install
+    doLast {
+        printlnUntilEndOfStream(
+                ProcessBuilder(
+                        availableMavenCommand,
+                        "org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file",
+                        "-Dfile=../${pdqCommonJarRelativePath}",
+                )
+                        .directory(File(guardedSaturationMavenProjectPath))
+                        .start()
+                        .inputStream
+        )
+    }
 }
 
 // install included kaon2.jar to local maven repository, according to
 // https://github.com/KRR-Oxford/Guarded-saturation/tree/83cb805564a8a89c399381f26c5c16f6acedd38e#installing-kaon-2
-val installKaon2 = task<Exec>("install-kaon-2") {
-    workingDir(guardedSaturationMavenProjectPath)
-    commandLine(
-            availableMavenCommand,
-            "install:install-file",
-            "-Dfile=./src/main/resources/kaon2.jar",
-            "-DgroupId=org.semanticweb.kaon2",
-            "-DartifactId=kaon2",
-            "-Dversion=2008-06-29",
-            "-Dpackaging=jar",
-            "-DgeneratePom=true"
-    )
+val installKaon2 = tasks.register("install-kaon-2") {
+    val kaon2JarPathRelativeToGSatProject = "src/main/resources/kaon2.jar"
+
+    outputs.file("$guardedSaturationMavenProjectPath/$kaon2JarPathRelativeToGSatProject")
+
+    doLast {
+        printlnUntilEndOfStream(
+                ProcessBuilder(
+                        availableMavenCommand,
+                        "install:install-file",
+                        "-Dfile=./$kaon2JarPathRelativeToGSatProject",
+                        "-DgroupId=org.semanticweb.kaon2",
+                        "-DartifactId=kaon2",
+                        "-Dversion=2008-06-29",
+                        "-Dpackaging=jar",
+                        "-DgeneratePom=true"
+                )
+                        .directory(File(guardedSaturationMavenProjectPath))
+                        .start()
+                        .inputStream
+        )
+    }
 }
 
 val build = task<Exec>("build") {
+    listOf("src", "executables", "target").forEach {
+        outputs.dir("$guardedSaturationMavenProjectPath/$it")
+    }
+    listOf("pom.xml").forEach {
+        outputs.file("$guardedSaturationMavenProjectPath/$it")
+    }
+
     dependsOn(installPdqJar, installKaon2)
     workingDir(guardedSaturationMavenProjectPath)
     commandLine(
