@@ -4,6 +4,10 @@ plugins {
 
 dependencies {
     implementation(project(":lib"))
+    implementation(project(mapOf(
+            "path" to ":guarded-saturation-wrapper",
+            "configuration" to "gsatJar"
+    )))
 }
 
 application {
