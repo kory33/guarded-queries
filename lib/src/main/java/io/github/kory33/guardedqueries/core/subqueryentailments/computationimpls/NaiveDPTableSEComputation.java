@@ -331,22 +331,21 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
             final Function<Predicate, Iterable<FormalInstance<LocalInstanceTerm>>> allLocalInstancesOverThePredicate = predicate -> {
                 final var predicateParameterIndices = IntStream.range(0, predicate.getArity()).boxed().toList();
-                final var allFormalFactsOverThePredicate = allTotalFunctionsBetween(
-                        predicateParameterIndices,
-                        allLocalInstanceTerms
-                ).map(parameterMap -> {
-                    final var parameterList = ImmutableList.<LocalInstanceTerm>copyOf(
-                            IntStream
-                                    .range(0, predicate.getArity())
-                                    .mapToObj(parameterMap::get)
-                                    .iterator()
-                    );
+                final var allFormalFactsOverThePredicate = ImmutableList.copyOf(
+                        allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(parameterMap -> {
+                            final var parameterList = ImmutableList.<LocalInstanceTerm>copyOf(
+                                    IntStream
+                                            .range(0, predicate.getArity())
+                                            .mapToObj(parameterMap::get)
+                                            .iterator()
+                            );
 
-                    return new FormalFact<LocalInstanceTerm>(predicate, parameterList);
-                });
+                            return new FormalFact<>(predicate, parameterList);
+                        }).iterator()
+                );
 
                 return () -> SetLikeExtensions
-                        .powerset(allFormalFactsOverThePredicate.toList())
+                        .powerset(allFormalFactsOverThePredicate)
                         .map(FormalInstance::new)
                         .iterator();
             };
