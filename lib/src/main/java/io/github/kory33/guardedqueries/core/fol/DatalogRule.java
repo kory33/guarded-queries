@@ -14,7 +14,7 @@ import uk.ac.ox.cs.pdq.fol.*;
 public class DatalogRule extends TGD {
     public DatalogRule(Atom[] body, Atom[] head) {
         super(body, head);
-        if (existential.length != 0) {
+        if (this.getExistential().length != 0) {
             throw new IllegalArgumentException(
                     "Datalog rule cannot contain existential variables, got " + super.toString()
             );
