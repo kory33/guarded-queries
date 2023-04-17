@@ -47,7 +47,7 @@ public sealed abstract class NormalGTGD extends GTGD {
          */
         public FullGTGD(final Collection<Atom> body, final Collection<Atom> head) {
             super(ImmutableSet.copyOf(body), ImmutableSet.copyOf(head));
-            if (existential.length != 0) {
+            if (getExistential().length != 0) {
                 throw new IllegalArgumentException(
                         "Datalog rules cannot contain existential variables, got " + super.toString()
                 );
