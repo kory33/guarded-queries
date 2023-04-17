@@ -10,3 +10,5 @@ lib/bin
 
 # Ignore Gradle build output directory
 build
+
+report/out
