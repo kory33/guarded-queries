@@ -6,8 +6,6 @@ import uk.ac.ox.cs.pdq.fol.TGD;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 public class TGDExtensions {
     private TGDExtensions() {
@@ -18,12 +16,10 @@ public class TGDExtensions {
      * that appear in both the body and the head of the TGD.
      */
     public static ImmutableSet<Variable> frontierVariables(final TGD tgd) {
-        final var headVariables = tgd.getHead().getBoundVariables();
-        final var bodyVariables = tgd.getBody().getBoundVariables();
+        final var headVariables = tgd.getHead().getFreeVariables();
+        final var bodyVariables = tgd.getBody().getFreeVariables();
 
-        final var headVariablesMutableSet = new HashSet<>(Arrays.asList(headVariables));
-        headVariablesMutableSet.retainAll(Set.of(bodyVariables));
-        return ImmutableSet.copyOf(headVariablesMutableSet);
+        return SetLikeExtensions.intersection(Arrays.asList(headVariables), Arrays.asList(bodyVariables));
     }
 
     public static ConjunctiveQuery bodyAsCQ(final TGD tgd) {
