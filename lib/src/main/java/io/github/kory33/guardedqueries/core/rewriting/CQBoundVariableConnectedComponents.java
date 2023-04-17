@@ -36,7 +36,7 @@ public class CQBoundVariableConnectedComponents {
         final var cqBoundVariables = ImmutableSet.copyOf(cq.getBoundVariables());
         this.boundVariableFreeAtoms = ImmutableSet.copyOf(
                 Arrays.stream(cq.getAtoms())
-                        .filter(atom -> Arrays.stream(atom.getVariables()).anyMatch(cqBoundVariables::contains))
+                        .filter(atom -> Arrays.stream(atom.getVariables()).noneMatch(cqBoundVariables::contains))
                         .iterator()
         );
 
