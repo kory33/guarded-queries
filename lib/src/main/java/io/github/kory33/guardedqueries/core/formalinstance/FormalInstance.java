@@ -8,6 +8,7 @@ import uk.ac.ox.cs.pdq.fol.Term;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -58,6 +59,18 @@ public class FormalInstance<TermAlphabet> {
 
     public boolean containsFact(final FormalFact<TermAlphabet> fact) {
         return this.facts.contains(fact);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FormalInstance<?> that)) return false;
+        return Objects.equals(facts, that.facts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(facts);
     }
 
     public static ImmutableList<Atom> asAtoms(final FormalInstance<Term> instance) {
