@@ -48,10 +48,18 @@ public class CQBoundVariableConnectedComponents {
         }
         final var boundVariableConnectedComponents = boundVariableUFTree.getEquivalenceClasses();
 
+        //noinspection OptionalGetWithoutIsPresent
         this.maximallyConnectedSubqueries = ImmutableSet.copyOf(
                 boundVariableConnectedComponents
                         .stream()
-                        .map(component -> ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(cq, component))
+                        .map(component ->
+                                // this .get() call succeeds because
+                                // we are strictly inducing a subquery by
+                                // a maximally connected component of bound variables
+                                ConjunctiveQueryExtensions
+                                        .strictlyInduceSubqueryByVariables(cq, component)
+                                        .get()
+                        )
                         .iterator()
         );
     }

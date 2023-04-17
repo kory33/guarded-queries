@@ -248,7 +248,9 @@ public record GuardedRuleAndQueryRewriter(
                             .strictlyInduceSubqueryByVariables(
                                     boundVariableConnectedQuery,
                                     baseWitnessVariables
-                            ).getAtoms();
+                            )
+                            .map(ConjunctiveQuery::getAtoms)
+                            .orElseGet(() -> new Atom[0]);
 
                     final var neighbourhoodsSubgoals = ConjunctiveQueryExtensions
                             .connectedComponents(

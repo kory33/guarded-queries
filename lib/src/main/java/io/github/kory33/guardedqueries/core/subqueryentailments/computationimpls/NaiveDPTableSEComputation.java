@@ -40,16 +40,16 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         private final HashMap<SubqueryEntailmentInstance, Boolean> table = new HashMap<>();
         private final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet;
         private final FunctionFreeSignature folSignature;
-        private final ConjunctiveQuery conjunctiveQuery;
+        private final ConjunctiveQuery connectedConjunctiveQuery;
 
         public DPTable(
                 final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,
                 final FunctionFreeSignature folSignature,
-                final ConjunctiveQuery conjunctiveQuery
+                final ConjunctiveQuery connectedConjunctiveQuery
         ) {
             this.saturatedRuleSet = saturatedRuleSet;
             this.folSignature = folSignature;
-            this.conjunctiveQuery = conjunctiveQuery;
+            this.connectedConjunctiveQuery = connectedConjunctiveQuery;
         }
 
         private boolean isYesInstance(final SubqueryEntailmentInstance instance) {
@@ -182,11 +182,15 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         /**
          * Fill the DP table up to the given instance.
          */
-        public void fillTableUpto(final SubqueryEntailmentInstance instance) {
+        private void fillTableUpto(final SubqueryEntailmentInstance instance) {
+            // The subquery for which we are trying to decide the entailment problem.
+            // If the instance is well-formed, the variable set is non-empty and connected,
+            // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
+            //noinspection OptionalGetWithoutIsPresent
             final var relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                    conjunctiveQuery,
+                    connectedConjunctiveQuery,
                     instance.coexistentialVariables()
-            );
+            ).get();
 
             final ImmutableSet<FormalInstance<LocalInstanceTerm>> instancesWithGuessedVariablesPreserved =
                     chaseLocalInstance(
@@ -260,10 +264,13 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                             instance.ruleConstantWitnessGuess().keySet()
                                     );
 
+                                    // For the same reason as .get() call in the beginning of the method,
+                                    // this .get() call succeeds.
+                                    //noinspection OptionalGetWithoutIsPresent
                                     final var newRelevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
                                             relevantSubquery,
                                             splitCoexistentialVariablesComponent
-                                    );
+                                    ).get();
 
                                     final SubqueryEntailmentInstance inducedInstance = new SubqueryEntailmentInstance(
                                             instance.ruleConstantWitnessGuess(),
@@ -371,10 +378,18 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 allLocalInstances(signature, ruleConstants).flatMap(localInstance -> {
                     final var allCoexistentialVariableSets = SetLikeExtensions
                             .powerset(queryVariables)
+                            .filter(variableSet -> !variableSet.isEmpty())
                             .filter(variableSet -> SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet()))
                             .filter(variableSet -> ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet));
 
                     return allCoexistentialVariableSets.flatMap(coexistentialVariables -> {
+                        // As coexistentialVariables is a nonempty subset of queryVariables,
+                        // we expect to see a non-empty optional.
+                        //noinspection OptionalGetWithoutIsPresent
+                        final var relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
+                                conjunctiveQuery, coexistentialVariables
+                        ).get();
+
                         final ImmutableSet<Variable> nonConstantNeighbourhood = SetLikeExtensions.difference(
                                 ConjunctiveQueryExtensions.neighbourhoodVariables(conjunctiveQuery, coexistentialVariables),
                                 ruleConstantWitnessGuess.keySet()
@@ -386,9 +401,6 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                         );
 
                         return allLocalWitnessGuesses.flatMap(localWitnessGuess -> {
-                            final var relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                                    conjunctiveQuery, coexistentialVariables
-                            );
                             final var subqueryConstants = ConjunctiveQueryExtensions.constantsIn(relevantSubquery);
                             final var nonWitnessingActiveLocalNames = SetLikeExtensions.difference(
                                     localInstance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class),
@@ -414,11 +426,12 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
     @Override
     public Stream<SubqueryEntailmentInstance> apply(
             final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,
-            final ConjunctiveQuery conjunctiveQuery) {
-        final var signature = FunctionFreeSignature.encompassingRuleQuery(saturatedRuleSet.allRules, conjunctiveQuery);
+            final ConjunctiveQuery connectedConjunctiveQuery) {
+        final var signature =
+                FunctionFreeSignature.encompassingRuleQuery(saturatedRuleSet.allRules, connectedConjunctiveQuery);
         final var ruleConstants = saturatedRuleSet.constants();
 
-        final var dpTable = new DPTable(saturatedRuleSet, signature, conjunctiveQuery);
+        final var dpTable = new DPTable(saturatedRuleSet, signature, connectedConjunctiveQuery);
 
         // NOTE:
         //   This algorithm is massively inefficient as-is.
@@ -458,7 +471,11 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //     - keeping track of only "maximally subsuming true instances" and "minimally subsuming false instances"
         //     - efficiently matching a problem instance to other subsuming instances using indexing techniques
         //    which we shall explore in another implementation.
-        allWellFormedSubqueryEntailmentInstancesFor(signature, ruleConstants, conjunctiveQuery).forEach(dpTable::fillTableUpto);
+        allWellFormedSubqueryEntailmentInstancesFor(
+                signature,
+                ruleConstants,
+                connectedConjunctiveQuery
+        ).forEach(dpTable::fillTableUpto);
 
         return dpTable.getKnownYesInstances();
     }

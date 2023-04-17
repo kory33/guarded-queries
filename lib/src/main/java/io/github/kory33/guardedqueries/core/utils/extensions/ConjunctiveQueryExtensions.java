@@ -9,6 +9,7 @@ import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -19,8 +20,11 @@ public class ConjunctiveQueryExtensions {
     /**
      * Computes a subquery of a given {@code ConjunctiveQuery} that includes only the atoms
      * satisfying a specified predicate.
+     * <p>
+     * Since {@code ConjunctiveQuery} cannot be empty, an empty {@code Optional} is returned
+     * if the predicate is not satisfied by any atom in the given {@code ConjunctiveQuery}.
      */
-    public static ConjunctiveQuery filterAtoms(
+    public static Optional<ConjunctiveQuery> filterAtoms(
             final ConjunctiveQuery conjunctiveQuery,
             final Predicate<? super Atom> atomPredicate
     ) {
@@ -36,7 +40,11 @@ public class ConjunctiveQueryExtensions {
                 .filter(originalFreeVariables::contains)
                 .toArray(Variable[]::new);
 
-        return ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms);
+        if (filteredAtoms.length == 0) {
+            return Optional.empty();
+        } else {
+            return Optional.of(ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms));
+        }
     }
 
     /**
@@ -49,12 +57,15 @@ public class ConjunctiveQueryExtensions {
      * For example, if {@code conjunctiveQuery} is {@code ∃x,y,z. T(x,y,z) ∧ T(x,y,w) ∧ T(x,c,z)}
      * and {@code boundVariableSet} is {@code {x,y}}, then the returned subquery is
      * {@code ∃x,y. T(x,y,w)}.
+     * <p>
+     * If no atom in the given {@code ConjunctiveQuery} has variable set entirely contained in
+     * {@code variables}, an empty {@code Optional} is returned.
      *
      * @param conjunctiveQuery The Conjunctive Query to compute the subquery from
      * @param variables        The filter of variables that should be included in the subquery.
      * @return The computed subquery.
      */
-    public static ConjunctiveQuery strictlyInduceSubqueryByVariables(
+    public static Optional<ConjunctiveQuery> strictlyInduceSubqueryByVariables(
             final ConjunctiveQuery conjunctiveQuery,
             final Collection<? extends Variable> variables
     ) {
@@ -78,8 +89,11 @@ public class ConjunctiveQueryExtensions {
      * For example, if {@code conjunctiveQuery} is {@code ∃x,y,z. T(x,y,w) ∧ T(x,c,z)}
      * and {@code boundVariableSet} is {@code {y}}, then the returned subquery is
      * {@code ∃x,y. T(x,y,w)}.
+     * <p>
+     * If no atom in the given {@code ConjunctiveQuery} has variable set intersecting with
+     * {@code variables}, an empty {@code Optional} is returned.
      */
-    public static ConjunctiveQuery subqueryRelevantToVariables(
+    public static Optional<ConjunctiveQuery> subqueryRelevantToVariables(
             final ConjunctiveQuery conjunctiveQuery,
             final Collection<? extends Variable> variables
     ) {
@@ -111,9 +125,13 @@ public class ConjunctiveQueryExtensions {
             final Collection<? extends Variable> variables
     ) {
         final var subquery = subqueryRelevantToVariables(conjunctiveQuery, variables);
+        if (subquery.isEmpty()) {
+            return ImmutableSet.of();
+        }
+
         final var subqueryVariables = SetLikeExtensions.union(
-                Arrays.asList(subquery.getBoundVariables()),
-                Arrays.asList(subquery.getFreeVariables())
+                Arrays.asList(subquery.get().getBoundVariables()),
+                Arrays.asList(subquery.get().getFreeVariables())
         );
 
         return SetLikeExtensions.difference(subqueryVariables, variables);
