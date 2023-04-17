@@ -13,4 +13,6 @@ dependencies {
 application {
     // Define the main class for the application.
     mainClass.set("io.github.kory33.guardedqueries.app.App")
+
+    tasks.run.get().workingDir = rootProject.projectDir
 }
