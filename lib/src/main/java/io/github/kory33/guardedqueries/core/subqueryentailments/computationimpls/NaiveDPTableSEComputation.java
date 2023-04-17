@@ -372,12 +372,13 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             final ImmutableSet<Constant> ruleConstants,
             final ConjunctiveQuery conjunctiveQuery
     ) {
-        final var queryVariables = ImmutableSet.copyOf(conjunctiveQuery.getVariablesRecursive());
+        final var queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery);
+        final var queryExistentialVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables());
 
         return allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(ruleConstantWitnessGuess ->
                 allLocalInstances(signature, ruleConstants).flatMap(localInstance -> {
                     final var allCoexistentialVariableSets = SetLikeExtensions
-                            .powerset(queryVariables)
+                            .powerset(queryExistentialVariables)
                             .filter(variableSet -> !variableSet.isEmpty())
                             .filter(variableSet -> SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet()))
                             .filter(variableSet -> ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet));
