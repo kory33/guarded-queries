@@ -96,51 +96,43 @@ public sealed abstract class NormalGTGD extends GTGD {
 
         final var fullRulesStream = fullRules.stream().map(FullGTGD::tryFromGTGD);
 
-        final Stream<NormalGTGD> splitExistentialRules;
-        {
-            final var frontierVariablesList = existentialRules
-                    .stream()
-                    .map(TGDExtensions::frontierVariables)
-                    .toList();
+        final Stream<NormalGTGD> splitExistentialRules = IntStream
+                .range(0, existentialRules.size())
+                .boxed()
+                .flatMap(index -> {
+                    final var originalRule = existentialRules.get(index);
 
-            splitExistentialRules = IntStream
-                    .range(0, existentialRules.size())
-                    .boxed()
-                    .flatMap(index -> {
-                        final var originalRule = existentialRules.get(index);
+                    final Variable[] intermediaryPredicateVariables;
+                    {
+                        final var frontierVariables = TGDExtensions.frontierVariables(originalRule);
+                        final var existentialVariables = Arrays.asList(originalRule.getExistential());
 
-                        final Variable[] intermediaryPredicateVariables;
-                        {
-                            final var frontierVariables = frontierVariablesList.get(index);
-                            final var existentialVariables = Arrays.asList(originalRule.getExistential());
+                        intermediaryPredicateVariables = ImmutableSet
+                                .<Variable>builder()
+                                .addAll(frontierVariables)
+                                .addAll(existentialVariables)
+                                .build()
+                                .toArray(Variable[]::new);
+                    }
 
-                            intermediaryPredicateVariables = ImmutableSet
-                                    .<Variable>builder()
-                                    .addAll(frontierVariables)
-                                    .addAll(existentialVariables)
-                                    .build()
-                                    .toArray(Variable[]::new);
-                        }
+                    final Predicate intermediaryPredicate;
+                    {
+                        final var predicateName = intermediaryPredicatePrefix + "_" + Integer.toUnsignedString(index);
+                        final var predicateArity = intermediaryPredicateVariables.length;
+                        intermediaryPredicate = Predicate.create(predicateName, predicateArity);
+                    }
 
-                        final Predicate intermediaryPredicate;
-                        {
-                            final var predicateName = intermediaryPredicatePrefix + "_" + Integer.toUnsignedString(index);
-                            final var predicateArity = intermediaryPredicateVariables.length;
-                            intermediaryPredicate = Predicate.create(predicateName, predicateArity);
-                        }
+                    final var splitExistentialRule = new SingleHeadedGTGD(
+                            Set.of(originalRule.getBodyAtoms()),
+                            Atom.create(intermediaryPredicate, intermediaryPredicateVariables)
+                    );
+                    final var splitFullRule = new FullGTGD(
+                            Set.of(Atom.create(intermediaryPredicate, intermediaryPredicateVariables)),
+                            Set.of(originalRule.getHeadAtoms())
+                    );
 
-                        final var splitExistentialRule = new SingleHeadedGTGD(
-                                Set.of(originalRule.getBodyAtoms()),
-                                Atom.create(intermediaryPredicate, intermediaryPredicateVariables)
-                        );
-                        final var splitFullRule = new FullGTGD(
-                                Set.of(Atom.create(intermediaryPredicate, intermediaryPredicateVariables)),
-                                Set.of(originalRule.getHeadAtoms())
-                        );
-
-                        return Stream.of(splitExistentialRule, splitFullRule);
-                    });
-        }
+                    return Stream.of(splitExistentialRule, splitFullRule);
+                });
 
         final var normalizedRules = Stream.concat(fullRulesStream, splitExistentialRules);
         return ImmutableSet.copyOf(normalizedRules.toList());
