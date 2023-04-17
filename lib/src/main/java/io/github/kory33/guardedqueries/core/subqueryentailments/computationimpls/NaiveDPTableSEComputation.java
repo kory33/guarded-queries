@@ -211,6 +211,13 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 );
 
                 for (final var localWitnessGuessExtension : StreamExtensions.intoIterableOnce(localWitnessGuessExtensions)) {
+                    if (localWitnessGuessExtension.isEmpty()) {
+                        // we do not allow "empty split"; whenever we split (i.e. make some progress
+                        // in the chase automaton), we must pick a nonempty set of coexistential variables
+                        // to map to local names in the chased instance.
+                        continue;
+                    }
+
                     final var newlyCoveredVariables = localWitnessGuessExtension.keySet();
                     final var extendedLocalWitnessGuess = ImmutableMapExtensions.union(
                             instance.localWitnessGuess(),
@@ -241,6 +248,10 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                         newlyCoveredAtomsOccurInChasedInstance = newlyCoveredAtoms
                                 .map(atom -> LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess::get))
                                 .allMatch(chasedInstance::containsFact);
+                    }
+
+                    if (!newlyCoveredAtomsOccurInChasedInstance) {
+                        continue;
                     }
 
                     final boolean allSplitInstancesAreYesInstances;
@@ -290,7 +301,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                 });
                     }
 
-                    if (allSplitInstancesAreYesInstances && newlyCoveredAtomsOccurInChasedInstance) {
+                    if (allSplitInstancesAreYesInstances) {
                         this.table.put(instance, true);
                         return;
                     }
