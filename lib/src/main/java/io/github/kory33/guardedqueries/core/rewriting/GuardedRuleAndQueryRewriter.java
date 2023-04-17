@@ -207,7 +207,7 @@ public record GuardedRuleAndQueryRewriter(
 
         final var subgoalAtoms = new SubgoalAtomGenerator(
                 boundVariableConnectedQuery,
-                intentionalPredicatePrefix + "_SGL_"
+                intentionalPredicatePrefix + "_SGL"
         );
 
         final Collection<DatalogRule> subgoalDerivationRules =
