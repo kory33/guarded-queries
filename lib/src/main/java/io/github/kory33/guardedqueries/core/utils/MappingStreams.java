@@ -34,9 +34,12 @@ public class MappingStreams {
          */
         class RangeIndexArray {
             final int[] rangeElementIndices = new int[orderedDomain.size()];
-            // boolean indicating whether we have emitted the last map
-            // which corresponds to all entries in rangeElementIndices being rangeSize - 1
-            private boolean hasReachedEndAndIncrementAttempted = false;
+
+            // if we have reached the end of the stream
+            private boolean reachedEnd = orderedDomain.size() == 0;
+
+            // if we have invoked toMap() after reaching the end of the stream
+            private boolean alreadyEmittedLastMap = reachedEnd && rangeSize == 0;
 
             /**
              * Increment index array. For example, if the array is [5, 4, 2] and rangeSize is 6,
@@ -54,14 +57,18 @@ public class MappingStreams {
                         return;
                     }
                 }
-                hasReachedEndAndIncrementAttempted = true;
+                reachedEnd = true;
             }
 
-            public boolean hasReachedEndAndIncrementAttempted() {
-                return hasReachedEndAndIncrementAttempted;
+            public boolean alreadyEmittedLastMap() {
+                return alreadyEmittedLastMap;
             }
 
-            public ImmutableMap<K, V> toMap() {
+            public ImmutableMap<K, V> currentToMap() {
+                if (reachedEnd) {
+                    alreadyEmittedLastMap = true;
+                }
+
                 return ImmutableMapExtensions.consumeAndCopy(IntStream
                         .range(0, rangeElementIndices.length)
                         .mapToObj(i -> Pair.of(orderedDomain.get(i), orderedRange.get(rangeElementIndices[i])))
@@ -72,10 +79,10 @@ public class MappingStreams {
         return StreamExtensions.unfoldMutable(
                 new RangeIndexArray(),
                 indexArray -> {
-                    if (indexArray.hasReachedEndAndIncrementAttempted()) {
+                    if (indexArray.alreadyEmittedLastMap()) {
                         return Optional.empty();
                     } else {
-                        final var output = indexArray.toMap();
+                        final var output = indexArray.currentToMap();
                         indexArray.increment();
                         return Optional.of(output);
                     }
