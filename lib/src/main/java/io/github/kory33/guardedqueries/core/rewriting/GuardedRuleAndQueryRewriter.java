@@ -237,11 +237,11 @@ public record GuardedRuleAndQueryRewriter(
                     // the second conjunct "neighbourhoodsSubgoals".
 
                     final var baseWitnessVariables = SetLikeExtensions.difference(
-                            existentialWitnessCandidate,
                             SetLikeExtensions.union(
                                     Arrays.asList(boundVariableConnectedQuery.getBoundVariables()),
                                     Arrays.asList(boundVariableConnectedQuery.getFreeVariables())
-                            )
+                            ),
+                            existentialWitnessCandidate
                     );
 
                     final var baseWitnessJoinConditions = ConjunctiveQueryExtensions
