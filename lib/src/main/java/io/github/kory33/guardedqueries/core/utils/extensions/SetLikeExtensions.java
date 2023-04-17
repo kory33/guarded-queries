@@ -116,17 +116,30 @@ public class SetLikeExtensions {
     ) {
         final var hashSet = new HashSet<T>(initialCollection);
 
-        var addedElements = ImmutableSet.copyOf(hashSet);
-        while (!addedElements.isEmpty()) {
-            final ImmutableSet<T> generatedElements;
+        var elementsAddedInPreviousIteration = ImmutableSet.copyOf(hashSet);
+        while (!elementsAddedInPreviousIteration.isEmpty()) {
+            final ImmutableSet<T> newlyGeneratedElements;
             {
                 final var builder = ImmutableSet.<T>builder();
-                addedElements.forEach(newElements -> builder.addAll(generator.apply(newElements)));
-                generatedElements = builder.build();
+
+                // assuming that the generator function is pure,
+                // it is only meaningful to generate new elements
+                // from elements that have been newly added to the set
+                // in the previous iteration
+                elementsAddedInPreviousIteration.forEach(newElementToConsider -> {
+                    for (final var generatedElement : generator.apply(newElementToConsider)) {
+                        // we only add elements that are not already in the set
+                        if (!hashSet.contains(generatedElement)) {
+                            builder.add(generatedElement);
+                        }
+                    }
+                });
+
+                newlyGeneratedElements = builder.build();
             }
 
-            hashSet.addAll(generatedElements);
-            addedElements = generatedElements;
+            hashSet.addAll(newlyGeneratedElements);
+            elementsAddedInPreviousIteration = newlyGeneratedElements;
         }
 
         return ImmutableSet.copyOf(hashSet);
