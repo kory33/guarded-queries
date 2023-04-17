@@ -97,7 +97,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
                     // An ordering of variables that appear in the head of the existential rule
                     final var orderedHeadVariables =
-                            ImmutableList.copyOf(ImmutableSet.copyOf(existentialRule.getHead().getFreeVariables()));
+                            ImmutableList.copyOf(ImmutableSet.copyOf(existentialRule.getHead().getBoundVariables()));
 
                     // An ordering of all variables that appear in the existential rule
                     final var extendedVariableOrdering = ImmutableList.<Variable>builder()
