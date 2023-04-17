@@ -49,7 +49,8 @@ public class ConjunctiveQueryExtensions {
 
     /**
      * Computes a subquery of a given Conjunctive Query that includes only the atoms
-     * where all bound variables in the atom are present in a specified set of variables.
+     * that contains at least one bound variable and all bound variables in the atom
+     * are present in a specified set of variables.
      * <p>
      * The set of variables in the returned subquery is a subset of {@code variables},
      * and a variable is bound in the returned subquery if and only if it is bound in {@code conjunctiveQuery}.
@@ -78,7 +79,7 @@ public class ConjunctiveQueryExtensions {
                     Arrays.asList(atom.getVariables()),
                     cqBoundVariables
             );
-            return variableSet.containsAll(atomBoundVariables);
+            return variableSet.containsAll(atomBoundVariables) && atomBoundVariables.size() > 0;
         });
     }
 
