@@ -77,4 +77,8 @@ public class FormalInstance<TermAlphabet> {
         instances.forEach(instance -> factSetBuilder.addAll(instance.facts));
         return new FormalInstance<>(factSetBuilder.build());
     }
+
+    public static <TermAlphabet> FormalInstance<TermAlphabet> empty() {
+        return new FormalInstance<>(ImmutableSet.of());
+    }
 }

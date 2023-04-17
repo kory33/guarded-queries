@@ -124,7 +124,7 @@ public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, Formal
                         queryAtoms.stream(),
                         atom -> SingleAtomMatching.allMatches(
                                 atom,
-                                relevantRelationsToInstancesMap.get(atom.getPredicate())
+                                relevantRelationsToInstancesMap.getOrDefault(atom.getPredicate(), FormalInstance.empty())
                         )
                 ).iterator()
         );
