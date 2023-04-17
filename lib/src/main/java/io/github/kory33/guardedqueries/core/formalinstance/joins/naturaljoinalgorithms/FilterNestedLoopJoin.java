@@ -86,10 +86,10 @@ public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, Formal
             // at this point the match must have been extended to cover all variables in the atom,
             // so proceed
             visitAllJoinResults(
-                    remainingAtomsToJoin.subList(0, remainingAtomsToJoin.size()),
+                    remainingAtomsToJoin.subList(1, remainingAtomsToJoin.size()),
                     atomToMatches,
                     resultVariableOrdering,
-                    ImmutableList.copyOf(partialHomomorphism),
+                    ImmutableList.copyOf(homomorphismExtension),
                     visitEachCompleteHomomorphism
             );
         }
