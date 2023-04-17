@@ -81,4 +81,9 @@ public class FormalInstance<TermAlphabet> {
     public static <TermAlphabet> FormalInstance<TermAlphabet> empty() {
         return new FormalInstance<>(ImmutableSet.of());
     }
+
+    @Override
+    public String toString() {
+        return facts.toString();
+    }
 }

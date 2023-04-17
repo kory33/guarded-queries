@@ -12,12 +12,22 @@ public sealed interface LocalInstanceTerm {
         public Term mapLocalNamesToTerm(Function<? super LocalName, ? extends Term> mapper) {
             return mapper.apply(this);
         }
+
+        @Override
+        public String toString() {
+            return "LocalName[" + value + "]";
+        }
     }
 
     record RuleConstant(Constant constant) implements LocalInstanceTerm {
         @Override
         public Term mapLocalNamesToTerm(Function<? super LocalName, ? extends Term> mapper) {
             return this.constant;
+        }
+
+        @Override
+        public String toString() {
+            return "RuleConstant[" + constant + "]";
         }
     }
 

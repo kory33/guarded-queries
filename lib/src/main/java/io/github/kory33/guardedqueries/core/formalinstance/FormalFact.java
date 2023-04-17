@@ -22,4 +22,11 @@ public record FormalFact<TermAlphabet>(Predicate predicate, ImmutableList<TermAl
     public static FormalFact<Term> fromAtom(final Atom atom) {
         return new FormalFact<>(atom.getPredicate(), ImmutableList.copyOf(atom.getTerms()));
     }
+
+    @Override
+    public String toString() {
+        return predicate.toString() + "(" + String.join(", ",
+                appliedTerms.stream().map(Object::toString).toList()
+        ) + ")";
+    }
 }
