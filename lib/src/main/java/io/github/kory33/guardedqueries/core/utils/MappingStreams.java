@@ -36,10 +36,10 @@ public class MappingStreams {
             final int[] rangeElementIndices = new int[orderedDomain.size()];
 
             // if we have reached the end of the stream
-            private boolean reachedEnd = orderedDomain.size() == 0;
+            private boolean reachedEnd = rangeSize == 0;
 
             // if we have invoked toMap() after reaching the end of the stream
-            private boolean alreadyEmittedLastMap = reachedEnd && rangeSize == 0;
+            private boolean alreadyEmittedLastMap = reachedEnd && !orderedDomain.isEmpty();
 
             /**
              * Increment index array. For example, if the array is [5, 4, 2] and rangeSize is 6,
