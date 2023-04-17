@@ -197,7 +197,7 @@ public record GuardedRuleAndQueryRewriter(
             final var queryFreeVariables = boundVariableConnectedQuery.getFreeVariables();
             final var goalPredicate = Predicate.create(
                     intentionalPredicatePrefix + "_GOAL",
-                    queryFreeVariables.length
+                    ImmutableSet.copyOf(queryFreeVariables).size()
             );
             final var sortedFreeVariables = VariableSetExtensions
                     .sortBySymbol(Arrays.asList(queryFreeVariables))
