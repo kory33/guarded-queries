@@ -129,12 +129,7 @@ public class ConjunctiveQueryExtensions {
             return ImmutableSet.of();
         }
 
-        final var subqueryVariables = SetLikeExtensions.union(
-                Arrays.asList(subquery.get().getBoundVariables()),
-                Arrays.asList(subquery.get().getFreeVariables())
-        );
-
-        return SetLikeExtensions.difference(subqueryVariables, variables);
+        return SetLikeExtensions.difference(variablesIn(subquery.get()), variables);
     }
 
     /**
@@ -181,6 +176,15 @@ public class ConjunctiveQueryExtensions {
                 StreamExtensions
                         .filterSubtype(Arrays.stream(conjunctiveQuery.getTerms()), Constant.class)
                         .iterator()
+        );
+    }
+
+    public static ImmutableSet<Variable> variablesIn(
+            final ConjunctiveQuery conjunctiveQuery
+    ) {
+        return SetLikeExtensions.union(
+                Arrays.asList(conjunctiveQuery.getBoundVariables()),
+                Arrays.asList(conjunctiveQuery.getFreeVariables())
         );
     }
 }
