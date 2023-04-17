@@ -16,8 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SubgoalAtomGenerator {
     private final CachingFunction</* query-connected */ImmutableSet</* query-bound */ Variable>, Atom> subgoalAtoms;
-    public final ConjunctiveQuery boundVariableConnectedQuery;
-    public final String intentionalPredicatePrefix;
 
     public SubgoalAtomGenerator(
             final ConjunctiveQuery boundVariableConnectedQuery,
@@ -39,6 +37,8 @@ public class SubgoalAtomGenerator {
 
         final var queryBoundVariables = ImmutableSet.copyOf(boundVariableConnectedQuery.getBoundVariables());
         final var predicateGeneratingCounter = new AtomicInteger(0);
+
+        //noinspection Convert2Diamond (IDEA erronously gives an error if we remove explicit arguments)
         this.subgoalAtoms = new CachingFunction<ImmutableSet<Variable>, Atom>(variableSet -> {
             // by the contract, we can (and should) reject variable sets that
             //  - are not connected, or
@@ -49,7 +49,7 @@ public class SubgoalAtomGenerator {
                                 + boundVariableConnectedQuery + ")."
                 );
             }
-            if (!variableSet.stream().allMatch(queryBoundVariables::contains)) {
+            if (!queryBoundVariables.containsAll(variableSet)) {
                 throw new IllegalArgumentException(
                         "The given set of variables (" + variableSet + ") contains non-bound variables in the given query ("
                                 + boundVariableConnectedQuery + ")."
@@ -65,8 +65,6 @@ public class SubgoalAtomGenerator {
             final var orderedNeighbourhood = VariableSetExtensions.sortBySymbol(neighbourhood);
             return Atom.create(subgoalPredicate, orderedNeighbourhood.toArray(Term[]::new));
         });
-        this.boundVariableConnectedQuery = boundVariableConnectedQuery;
-        this.intentionalPredicatePrefix = intentionalPredicatePrefix;
     }
 
     /**

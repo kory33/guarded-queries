@@ -9,7 +9,7 @@ public interface ImmutableStack<T> extends Iterable<T> {
     record Cons<T>(T head, ImmutableStack<T> tail) implements ImmutableStack<T> {
         @Override
         public Iterator<T> iterator() {
-            return new Iterator<T>() {
+            return new Iterator<>() {
                 private ImmutableStack<T> current = Cons.this;
 
                 @Override

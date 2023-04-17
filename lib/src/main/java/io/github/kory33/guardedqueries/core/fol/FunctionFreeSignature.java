@@ -52,6 +52,6 @@ public record FunctionFreeSignature(ImmutableSet<Predicate> predicates) {
         return predicates.stream()
                 .mapToInt(Predicate::getArity)
                 .max()
-                .orElseGet(() -> 0);
+                .orElse(0);
     }
 }

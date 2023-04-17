@@ -49,7 +49,7 @@ public class StreamExtensions {
             final MutableState mutableState,
             final Function<? super MutableState, Optional<Output>> mutateAndYieldNext
     ) {
-        final Iterator<Output> iterator = new Iterator<Output>() {
+        final Iterator<Output> iterator = new Iterator<>() {
             private final MutableState nextState;
             @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
             private Optional<Output> nextOutput;

@@ -1,8 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils;
 
 
-import com.google.common.collect.ImmutableSet;
-
 import java.util.HashMap;
 import java.util.function.Function;
 
@@ -24,13 +22,5 @@ public final class CachingFunction<T, R> implements Function<T, R> {
             cache.put(t, result);
             return result;
         }
-    }
-
-    public ImmutableSet<T> computedDomain() {
-        return ImmutableSet.copyOf(cache.keySet());
-    }
-
-    public ImmutableSet<R> computedRange() {
-        return ImmutableSet.copyOf(cache.values());
     }
 }
