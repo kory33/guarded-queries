@@ -24,19 +24,16 @@ public class DatalogRule extends TGD {
     private static boolean notConjunctionOfAtoms(final Formula formula) {
         if (formula instanceof Atom) {
             return false;
-        }
-
-        if (!(formula instanceof Conjunction)) {
+        } else if (formula instanceof Conjunction conjunction) {
+            for (final var childFormula : conjunction.getChildren()) {
+                if (notConjunctionOfAtoms(childFormula)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
             return true;
         }
-
-        for (final var childFormula : ((Conjunction) formula).getChildren()) {
-            if (notConjunctionOfAtoms(childFormula)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
