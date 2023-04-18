@@ -91,17 +91,30 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                             instance
                     );
 
-                    // An ordering of variables that appear in the body of the existential rule,
-                    // as specified by the join algorithm
-                    final var variableOrdering = bodyHomomorphisms.variableOrdering();
+                    // An ordering, as specified by the join algorithm, of variables
+                    // that appear in the body of the existential rule
+                    final var bodyVariableOrdering = bodyHomomorphisms.variableOrdering();
 
-                    // An ordering of variables that appear in the head of the existential rule
+                    // An ordering of variables that are bound in the
+                    // existential quantifier of the existential rule
                     final var orderedHeadVariables =
                             ImmutableList.copyOf(ImmutableSet.copyOf(existentialRule.getHead().getBoundVariables()));
 
+                    // Set of (universally quantified) variables in the rule that are
+                    // shared across the body and the head
+                    final var exportedVariables =
+                            ImmutableSet.copyOf(ImmutableSet.copyOf(existentialRule.getHead().getFreeVariables()));
+
+                    final var indicesOfExportedVariablesInHeadVariableOrdering =
+                            ImmutableList.copyOf(
+                                    exportedVariables.stream()
+                                            .mapToInt(bodyVariableOrdering::indexOf)
+                                            .iterator()
+                            );
+
                     // An ordering of all variables that appear in the existential rule
                     final var extendedVariableOrdering = ImmutableList.<Variable>builder()
-                            .addAll(variableOrdering)
+                            .addAll(bodyVariableOrdering)
                             .addAll(orderedHeadVariables)
                             .build();
 
@@ -127,10 +140,17 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                 .addAll(headVariableHomomorphism)
                                 .build();
 
+                        final var localNamesInHead = ImmutableList.copyOf(
+                                indicesOfExportedVariablesInHeadVariableOrdering
+                                        .stream()
+                                        .map(homomorphism::get)
+                                        .iterator()
+                        );
+
                         // the set of facts in the parent instance that are
                         // "guarded" by the head of the existential rule
                         final var inheritedFactsInstance = instance.restrictToAlphabetsWith(t ->
-                                (t instanceof LocalInstanceTerm.RuleConstant) || (homomorphism.contains(t))
+                                (t instanceof LocalInstanceTerm.RuleConstant) || (localNamesInHead.contains(t))
                         );
 
                         // The instance containing only the head atom produced by the existential rule.
