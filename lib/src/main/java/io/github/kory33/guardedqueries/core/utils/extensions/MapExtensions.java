@@ -62,7 +62,8 @@ public class MapExtensions {
             final ImmutableBiMap<K, V> map,
             final Collection<K> keys
     ) {
-        // this does not lose any entry since a restriction of an injective map is again injective
+        // this call to ImmutableBiMap.copyOf never throws since
+        // a restriction of an injective map is again injective
         return ImmutableBiMap.copyOf(restrictToKeys((Map<K, V>) map, keys));
     }
 }
