@@ -17,7 +17,7 @@ object ImmutableStackSpec extends Properties("SimpleUnionFindTree") {
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(1000)
 
-  property("iterator of ImmutableStack created from a list should traverse the given list in a reverse order") = forAll { (list: List[Int]) =>
+  property("iterator should traverse the construction list in a reverse order") = forAll { (list: List[Int]) =>
     val stack = ImmutableStack.fromIterable(list.asJava)
     stack.iterator.asScala.toList == list.reverse
   }

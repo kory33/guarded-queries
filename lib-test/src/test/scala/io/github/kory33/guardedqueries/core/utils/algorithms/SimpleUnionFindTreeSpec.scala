@@ -35,7 +35,7 @@ object SimpleUnionFindTreeSpec extends Properties("SimpleUnionFindTree") {
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(800)
 
-  property("output equivalence classes must be disjoint") = forAll(genUnionFindInput) { input =>
+  property("getEquivalenceClasses should output disjoint sets") = forAll(genUnionFindInput) { input =>
     val tree = input.runOnFreshUnionFindTree
     val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
@@ -46,14 +46,14 @@ object SimpleUnionFindTreeSpec extends Properties("SimpleUnionFindTree") {
     }
   }
 
-  property("output equivalence classes must cover the input") = forAll(genUnionFindInput) { input =>
+  property("getEquivalenceClasses should output sets that cover the input") = forAll(genUnionFindInput) { input =>
     val tree = input.runOnFreshUnionFindTree
     val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
     equivalenceClasses.flatten == input.collection
   }
 
-  property("output equivalence classes must contain all edges") = forAll(genUnionFindInput) { input =>
+  property("getEquivalenceClasses should output equivalence classes that contain all identification edges") = forAll(genUnionFindInput) { input =>
     val tree = input.runOnFreshUnionFindTree
     val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
@@ -64,7 +64,7 @@ object SimpleUnionFindTreeSpec extends Properties("SimpleUnionFindTree") {
     }
   }
 
-  property("every pair of elements of an output equivalence class must be connected by a zig-zag of edges") = forAll(genUnionFindInput) { input =>
+  property("getEquivalenceClasses should output equivalence classes in which every pair of elements from the same class are connected by a zig-zag of edges") = forAll(genUnionFindInput) { input =>
     val bidirectionalIdentification = input.identifications.flatMap { case (a, b) => Set((a, b), (b, a)) }
 
     def existsZigZagPathConnecting(a: Int, b: Int): Boolean = {

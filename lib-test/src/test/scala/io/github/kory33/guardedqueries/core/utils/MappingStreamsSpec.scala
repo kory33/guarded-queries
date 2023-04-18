@@ -26,7 +26,7 @@ object MappingStreamsSpec extends Properties("MappingStreams") {
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(500)
 
-  property("every function produced by allTotalFunctionsBetween should respect domain and codomain") =
+  property("allTotalFunctionsBetween should produce maps that respect domain and codomain") =
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val domain = javaSetOfSize(domainSize)
       val codomain = javaSetOfSize(codomainSize)
@@ -50,7 +50,7 @@ object MappingStreamsSpec extends Properties("MappingStreams") {
       }
     }
   
-  property("every function produced by allPartialFunctionsBetween should respect domain and codomain") =
+  property("allPartialFunctionsBetween should produce maps that respect domain and codomain") =
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val domain = javaSetOfSize(domainSize)
       val codomain = javaSetOfSize(codomainSize)
@@ -69,7 +69,7 @@ object MappingStreamsSpec extends Properties("MappingStreams") {
       allFunctions.size == Math.pow(codomainSize + 1, domainSize).toInt
     }
 
-  property("every function produced by allInjectiveTotalFunctionsBetween should respect domain and codomain") =
+  property("allInjectiveTotalFunctionsBetween should produce maps that respect domain and codomain") =
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val domain = javaSetOfSize(domainSize)
       val codomain = javaSetOfSize(codomainSize)

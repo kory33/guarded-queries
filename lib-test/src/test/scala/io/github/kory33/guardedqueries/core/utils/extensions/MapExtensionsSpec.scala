@@ -15,14 +15,14 @@ object MapExtensionsSpec extends Properties("MapExtensions") {
     MapExtensions.composeWithFunction(xs.asJava, (x: Int) => x * 3).asScala == xs.view.mapValues(_ * 3).toMap
   }
 
-  property("every entry in preimages(map, ys) should have a value all of whose elements are mapped to the key by map") =
+  property("preimages(map, ys): every entry in output should have a value all of whose elements are mapped to the key by map") =
     forAll { (map: Map[String, Int], ys: Set[Int]) =>
       MapExtensions.preimages(map.asJava, ys.asJava).asScala.forall { case (key, value) =>
         value.asScala.forall(map(_) == key)
       }
     }
 
-  property("if a value is mapped by map to some value in the range ys, it must appear in some value in the map returned by preimages(map, ys)") =
+  property("preimages(map, ys): if a value is mapped by map to some value in the range ys, it must appear in some value in the output map") =
     forAll { (map: Map[String, Int], ys: Set[Int]) =>
       val preimageMap = MapExtensions.preimages(map.asJava, ys.asJava).asScala
 

@@ -14,7 +14,7 @@ object ListExtensionsSpec extends Properties("ListExtensions") {
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(1000)
 
-  property("size of result of productMappedCollectionsToStacks should be the product of size of input family") =
+  property("productMappedCollectionsToStacks: size of result must be the product of size of input family") =
     forAll(smallListOfSmallInts) { xs =>
       val result = ListExtensions.productMappedCollectionsToStacks(
         xs.indices.asJava,
@@ -27,7 +27,7 @@ object ListExtensionsSpec extends Properties("ListExtensions") {
     }
 
   property(
-    "every n'th element in every reversed stack from productMappedCollectionsToStacks " + 
+    "productMappedCollectionsToStacks: every n'th element in every reversed output stack " + 
     "should be in the collection obtained by applying n'th element in the input list to the input function"
   ) = forAll(smallListOfSmallInts) { xs =>
     val result = ListExtensions.productMappedCollectionsToStacks(
