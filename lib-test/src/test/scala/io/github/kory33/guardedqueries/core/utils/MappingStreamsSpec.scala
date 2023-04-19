@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableSet
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-object MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallSetSize = Gen.chooseNum(0, 5)
   def javaSetOfSize(size: Int) = ImmutableSet.copyOf((1 to size).map(Integer.valueOf).asJava)
 
