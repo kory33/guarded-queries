@@ -33,9 +33,11 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         index => (1 to xs(index)).asJava
       )
 
-      result.asScala.forall { stack =>
-        stack.asScala.toList.reverse.zipWithIndex.forall { case (element, index) =>
-          (1 to xs(index)).contains(element)
+      assert {
+        result.asScala.forall { stack =>
+          stack.asScala.toList.reverse.zipWithIndex.forall { case (element, index) =>
+            (1 to xs(index)).contains(element)
+          }
         }
       }
     }

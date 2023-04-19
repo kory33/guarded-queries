@@ -17,19 +17,19 @@ class ImmutableStackSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".iterator" should "traverse the construction list in a reverse order" in {
     forAll(minSuccessful(1000)) { (list: List[Int]) =>
       val stack = ImmutableStack.fromIterable(list.asJava)
-      stack.iterator.asScala.toList == list.reverse
+      assert(stack.iterator.asScala.toList == list.reverse)
     }
   }
 
   ".reverse" should "reverse the stack" in {
     forAll(arbitraryImmutableStack, minSuccessful(1000)) { stack =>
-      stack.reverse.iterator.asScala.toList == stack.iterator.asScala.toList.reverse
+      assert(stack.reverse.iterator.asScala.toList == stack.iterator.asScala.toList.reverse)
     }
   }
 
   ".dropHead" should "reduce the size by 1, unless the input is empty" in {
     forAll(arbitraryImmutableStack, minSuccessful(1000)) { stack =>
-      stack.dropHead.asScala.size == Math.max(0, stack.asScala.size - 1)
+      assert(stack.dropHead.asScala.size == Math.max(0, stack.asScala.size - 1))
     }
   }
 }

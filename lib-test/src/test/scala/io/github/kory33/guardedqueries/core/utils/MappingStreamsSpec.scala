@@ -30,7 +30,7 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
       val allFunctions = MappingStreams.allTotalFunctionsBetween(domain, codomain).iterator().asScala
 
-      allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain))
+      assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
   }
 
@@ -40,12 +40,12 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         .allTotalFunctionsBetween(javaSetOfSize(domainSize), javaSetOfSize(codomainSize))
         .iterator().asScala.toSet
 
-      allFunctions.size == {
+      assert(allFunctions.size == {
         if (codomainSize == 0 && domainSize == 0)
           1
         else
           Math.pow(codomainSize, domainSize).toInt
-      }
+      })
     }
   }
   
@@ -56,7 +56,7 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
       val allFunctions = MappingStreams.allPartialFunctionsBetween(domain, codomain).iterator().asScala
 
-      allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain))
+      assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
   }
 
@@ -66,7 +66,7 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         .allPartialFunctionsBetween(javaSetOfSize(domainSize), javaSetOfSize(codomainSize))
         .iterator().asScala.toSet
 
-      allFunctions.size == Math.pow(codomainSize + 1, domainSize).toInt
+      assert(allFunctions.size == Math.pow(codomainSize + 1, domainSize).toInt)
     }
   }
 
@@ -77,7 +77,7 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
       val allFunctions = MappingStreams.allInjectiveTotalFunctionsBetween(domain, codomain).iterator().asScala
 
-      allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain))
+      assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
   }
   
@@ -91,9 +91,11 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         .allTotalFunctionsBetween(javaSetOfSize(domainSize), javaSetOfSize(codomainSize))
         .iterator().asScala.toSet
 
-      allTotalFunctions
-        .filter(function => function.keySet().size == function.entrySet().asScala.map(_.getValue()).toSet.size)
-        .forall(function => allInjectiveTotalFunctions.contains(ImmutableBiMap.copyOf(function)))
+      assert {
+        allTotalFunctions
+          .filter(function => function.keySet().size == function.entrySet().asScala.map(_.getValue()).toSet.size)
+          .forall(function => allInjectiveTotalFunctions.contains(ImmutableBiMap.copyOf(function)))
+      }
     }
   }
 }

@@ -37,9 +37,11 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
       val tree = input.runOnFreshUnionFindTree
       val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-      equivalenceClasses.forall { classA =>
-        equivalenceClasses.forall { classB =>
-          classA == classB || classA.intersect(classB).isEmpty
+      assert {
+        equivalenceClasses.forall { classA =>
+          equivalenceClasses.forall { classB =>
+            classA == classB || classA.intersect(classB).isEmpty
+          }
         }
       }
     }
@@ -50,7 +52,7 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
       val tree = input.runOnFreshUnionFindTree
       val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-      equivalenceClasses.flatten == input.collection
+      assert(equivalenceClasses.flatten == input.collection)
     }
   }
 
@@ -59,9 +61,11 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
       val tree = input.runOnFreshUnionFindTree
       val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-      input.identifications.forall { case (a, b) =>
-        equivalenceClasses.exists { equivalenceClass =>
-          equivalenceClass.contains(a) && equivalenceClass.contains(b)
+      assert {
+        input.identifications.forall { case (a, b) =>
+          equivalenceClasses.exists { equivalenceClass =>
+            equivalenceClass.contains(a) && equivalenceClass.contains(b)
+          }
         }
       }
     }
@@ -94,10 +98,12 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
       val tree = input.runOnFreshUnionFindTree
       val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-      equivalenceClasses.forall { equivalenceClass =>
-        equivalenceClass.forall { a =>
-          equivalenceClass.forall { b =>
-            existsZigZagPathConnecting(a, b)
+      assert {
+        equivalenceClasses.forall { equivalenceClass =>
+          equivalenceClass.forall { a =>
+            equivalenceClass.forall { b =>
+              existsZigZagPathConnecting(a, b)
+            }
           }
         }
       }

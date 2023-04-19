@@ -49,8 +49,10 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   ".powerset" should "only produce subsets of input set" in {
     forAll(smallSet) { (xs: Set[Int]) =>
-      SetLikeExtensions.powerset(xs.asJava).iterator().asScala.forall { set =>
-        set.asScala.subsetOf(xs)
+      assert {
+        SetLikeExtensions.powerset(xs.asJava).iterator().asScala.forall { set =>
+          set.asScala.subsetOf(xs)
+        }
       }
     }
   }
@@ -66,7 +68,7 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".generateFromElementsUntilFixpoint" should "output a set containing the initial set" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
       val generatedSet = SetLikeExtensions.generateFromElementsUntilFixpoint(xs.asJava, simpleGeneratorFunction).asScala
-      xs.subsetOf(generatedSet)
+      assert(xs.subsetOf(generatedSet))
     }
 }
 
@@ -98,7 +100,7 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".generateFromSetUntilFixpoint" should "output a set containing the initial set" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
       val generatedSet = SetLikeExtensions.generateFromSetUntilFixpoint(xs.asJava, simpleSetGeneratorFunction).asScala
-      xs.subsetOf(generatedSet)
+      assert(xs.subsetOf(generatedSet))
     }
   }
 

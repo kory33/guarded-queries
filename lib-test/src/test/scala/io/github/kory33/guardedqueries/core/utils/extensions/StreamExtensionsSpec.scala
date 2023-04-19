@@ -58,10 +58,12 @@ class StreamExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   ".unfold" should "be the same as Scala's unfold" in {
     forAll(minSuccessful(1000)) { (initial: BigInt) =>
-      initial != 0 ==> {
-        StreamExtensions
-          .unfold(initial, x => if (x.abs < 1000) Optional.of(Pair.of(x.toString(), x * 2)) else Optional.empty())
-          .toList.asScala.toList == List.unfold(initial)(x => if (x.abs < 1000) Some((x.toString(), x * 2)) else None)
+      whenever(initial != 0) {
+        assert {
+          StreamExtensions
+            .unfold(initial, x => if (x.abs < 1000) Optional.of(Pair.of(x.toString(), x * 2)) else Optional.empty())
+            .toList.asScala.toList == List.unfold(initial)(x => if (x.abs < 1000) Some((x.toString(), x * 2)) else None)
+        }
       }
     }
   }
