@@ -7,6 +7,8 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 
 import scala.jdk.CollectionConverters.*
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 /**
  * An input for union-find algorithm;
@@ -29,71 +31,74 @@ private[this] val genUnionFindInput = for {
   edges <- GenSet.chooseSubset(squareOfDomain.toSet)
 } yield UnionFindInput(domainToIdentify.toSet, edges)
 
-object SimpleUnionFindTreeSpec extends Properties("SimpleUnionFindTree") {
+class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  ".getEquivalenceClasses" should "output disjoint sets" in {
+    forAll(genUnionFindInput, minSuccessful(1000)) { input =>
+      val tree = input.runOnFreshUnionFindTree
+      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-  import Prop.forAll
-
-  override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(800)
-
-  property("getEquivalenceClasses should output disjoint sets") = forAll(genUnionFindInput) { input =>
-    val tree = input.runOnFreshUnionFindTree
-    val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
-
-    equivalenceClasses.forall { classA =>
-      equivalenceClasses.forall { classB =>
-        classA == classB || classA.intersect(classB).isEmpty
+      equivalenceClasses.forall { classA =>
+        equivalenceClasses.forall { classB =>
+          classA == classB || classA.intersect(classB).isEmpty
+        }
       }
     }
   }
 
-  property("getEquivalenceClasses should output sets that cover the input") = forAll(genUnionFindInput) { input =>
-    val tree = input.runOnFreshUnionFindTree
-    val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+  ".getEquivalenceClasses" should "output sets that cover the input" in {
+    forAll(genUnionFindInput, minSuccessful(1000)) { input =>
+      val tree = input.runOnFreshUnionFindTree
+      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-    equivalenceClasses.flatten == input.collection
+      equivalenceClasses.flatten == input.collection
+    }
   }
 
-  property("getEquivalenceClasses should output equivalence classes that contain all identification edges") = forAll(genUnionFindInput) { input =>
-    val tree = input.runOnFreshUnionFindTree
-    val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+  ".getEquivalenceClasses" should "output equivalence classes that contain all identification edges" in {
+    forAll(genUnionFindInput, minSuccessful(1000)) { input =>
+      val tree = input.runOnFreshUnionFindTree
+      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
 
-    input.identifications.forall { case (a, b) =>
-      equivalenceClasses.exists { equivalenceClass =>
-        equivalenceClass.contains(a) && equivalenceClass.contains(b)
+      input.identifications.forall { case (a, b) =>
+        equivalenceClasses.exists { equivalenceClass =>
+          equivalenceClass.contains(a) && equivalenceClass.contains(b)
+        }
       }
     }
   }
 
-  property("getEquivalenceClasses should output equivalence classes in which every pair of elements from the same class are connected by a zig-zag of edges") = forAll(genUnionFindInput) { input =>
-    val bidirectionalIdentification = input.identifications.flatMap { case (a, b) => Set((a, b), (b, a)) }
+  ".getEquivalenceClasses" should "output equivalence classes in which every pair of elements from the same class are connected by a zig-zag of edges" in {
+    forAll(genUnionFindInput, minSuccessful(1000)) { input =>
+      val bidirectionalIdentification = input.identifications.flatMap { case (a, b) => Set((a, b), (b, a)) }
 
-    def existsZigZagPathConnecting(a: Int, b: Int): Boolean = {
-      val visited = collection.mutable.Set[Int](a)
-      var seenNewElement = true
+      def existsZigZagPathConnecting(a: Int, b: Int): Boolean = {
+        val visited = collection.mutable.Set[Int](a)
+        var seenNewElement = true
 
-      // perform simple BFS
-      while (seenNewElement) {
-        seenNewElement = false
-        visited.toSet.foreach(node =>
-          val adjacentElements = bidirectionalIdentification.filter(_._1 == node).map(_._2)
-          val unvisitedAdjacentElements = adjacentElements.diff(visited)
-          if (unvisitedAdjacentElements.nonEmpty) {
-            seenNewElement = true
-            visited ++= unvisitedAdjacentElements
+        // perform simple BFS
+        while (seenNewElement) {
+          seenNewElement = false
+          visited.toSet.foreach(node =>
+            val adjacentElements = bidirectionalIdentification.filter(_._1 == node).map(_._2)
+            val unvisitedAdjacentElements = adjacentElements.diff(visited)
+            if (unvisitedAdjacentElements.nonEmpty) {
+              seenNewElement = true
+              visited ++= unvisitedAdjacentElements
+            }
+          )
+        }
+
+        visited.contains(b)
+      }
+
+      val tree = input.runOnFreshUnionFindTree
+      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+
+      equivalenceClasses.forall { equivalenceClass =>
+        equivalenceClass.forall { a =>
+          equivalenceClass.forall { b =>
+            existsZigZagPathConnecting(a, b)
           }
-        )
-      }
-
-      visited.contains(b)
-    }
-
-    val tree = input.runOnFreshUnionFindTree
-    val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
-
-    equivalenceClasses.forall { equivalenceClass =>
-      equivalenceClass.forall { a =>
-        equivalenceClass.forall { b =>
-          existsZigZagPathConnecting(a, b)
         }
       }
     }
