@@ -2,7 +2,7 @@ package io.github.kory33.guardedqueries.testutils.scalacheck
 
 import org.scalacheck.Gen
 
-object SetGen {
+object GenSet {
   def chooseSubset[T](set: Set[T]): Gen[Set[T]] = {
     val orderedSet = set.toVector
     val representationOfFullSet = (BigInt(1) << orderedSet.size) - 1

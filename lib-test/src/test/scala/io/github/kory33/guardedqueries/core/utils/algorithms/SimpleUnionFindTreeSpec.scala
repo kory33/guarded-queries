@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils.algorithms
 
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
-import io.github.kory33.guardedqueries.testutils.scalacheck.SetGen
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
 import org.scalacheck.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
@@ -26,7 +26,7 @@ private[this] val genUnionFindInput = for {
   upperBound <- Gen.chooseNum(0, 6)
   domainToIdentify = 1 to upperBound
   squareOfDomain = domainToIdentify.flatMap(a => domainToIdentify.map(b => (a, b)))
-  edges <- SetGen.chooseSubset(squareOfDomain.toSet)
+  edges <- GenSet.chooseSubset(squareOfDomain.toSet)
 } yield UnionFindInput(domainToIdentify.toSet, edges)
 
 object SimpleUnionFindTreeSpec extends Properties("SimpleUnionFindTree") {
