@@ -5,17 +5,23 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 
 import scala.jdk.CollectionConverters.*
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-object ImmutableMapExtensionsSpec extends Properties("ImmutableMapExtensions") {
-  import Prop.forAll
-
-  override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(1000)
-
-  property("consumeAndCopy should be identity") = forAll { (map: Map[String, Int]) =>
-    ImmutableMapExtensions.consumeAndCopy(map.asJava.entrySet().iterator()).asScala.toMap == map
+class ImmutableMapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  "ImmutableMapExtensions.consumeAndCopy" should "be identity" in {
+    forAll(minSuccessful(1000)) { (map: Map[String, Int]) =>
+      assert {
+        ImmutableMapExtensions.consumeAndCopy(map.asJava.entrySet().iterator()).asScala.toMap == map
+      }
+    }
   }
 
-  property("union should be equivalent to .fold(empty)(_ ++ _)") = forAll { (xs: List[Map[Int, Int]]) =>
-    ImmutableMapExtensions.union(xs.map(_.asJava).toArray*).asScala.toMap == xs.foldLeft(Map.empty[Int, Int])(_ ++ _)
+  "ImmutableMapExtensions.union" should "be equivalent to .fold(empty)(_ ++ _)" in {
+    forAll(minSuccessful(1000)) { (xs: List[Map[Int, Int]]) =>
+      assert {
+        ImmutableMapExtensions.union(xs.map(_.asJava).toArray*).asScala.toMap == xs.foldLeft(Map.empty[Int, Int])(_ ++ _)
+      }
+    }
   }
 }

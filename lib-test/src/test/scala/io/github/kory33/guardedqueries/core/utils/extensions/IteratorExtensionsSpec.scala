@@ -5,30 +5,40 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 
 import scala.jdk.CollectionConverters.*
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.flatspec.AnyFlatSpec
 
-object IteratorExtensionsSpec extends Properties("IteratorExtensions") {
-  import Prop.forAll
-
-  override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(1000)
-
-  property("zip should be equivalent to Scala's zip") = forAll { (xs: List[Int], ys: List[Int]) =>
-    IteratorExtensions
-      .zip(xs.asJava.iterator(), ys.asJava.iterator())
-      .asScala.map(p => (p.getKey(), p.getValue()))
-      .toList == xs.zip(ys)
+class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  "IteratorExtensions.zip" should "be equivalent to Scala's zip" in {
+    forAll(minSuccessful(1000)) { (xs: List[Int], ys: List[Int]) =>
+      assert {
+        IteratorExtensions
+          .zip(xs.asJava.iterator(), ys.asJava.iterator())
+          .asScala.map(p => (p.getKey(), p.getValue()))
+          .toList == xs.zip(ys)
+      }
+    }
   }
 
-  property("zipWithIndex should be equivalent to Scala's zipWithIndex") = forAll { (xs: List[Int]) =>
-    IteratorExtensions
-      .zipWithIndex(xs.asJava.iterator())
-      .asScala.map(p => (p.getKey(), p.getValue()))
-      .toList == xs.zipWithIndex
+  "IteratorExtensions.zipWithIndex" should "be equivalent to Scala's zipWithIndex" in {
+    forAll(minSuccessful(1000)) { (xs: List[Int]) =>
+      assert {
+        IteratorExtensions
+          .zipWithIndex(xs.asJava.iterator())
+          .asScala.map(p => (p.getKey(), p.getValue()))
+          .toList == xs.zipWithIndex
+      }
+    }
   }
 
-  property("mapInto and then toList should be the same as map") = forAll { (xs: List[Int]) =>
-    IteratorExtensions
-      .mapInto(xs.asJava.iterator(), (x: Int) => x * 2)
-      .asScala
-      .toList == xs.map(_ * 2)
+  "IteratorExtensions.mapInto and then toList" should "be the same as map" in {
+    forAll(minSuccessful(1000)) { (xs: List[Int]) =>
+      assert {
+        IteratorExtensions
+          .mapInto(xs.asJava.iterator(), (x: Int) => x * 2)
+          .asScala
+          .toList == xs.map(_ * 2)
+      }
+    }
   }
 }
