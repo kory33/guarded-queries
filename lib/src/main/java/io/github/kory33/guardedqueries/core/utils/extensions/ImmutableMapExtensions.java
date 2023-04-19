@@ -2,8 +2,7 @@ package io.github.kory33.guardedqueries.core.utils.extensions;
 
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class ImmutableMapExtensions {
     private ImmutableMapExtensions() {
@@ -23,12 +22,27 @@ public class ImmutableMapExtensions {
      */
     @SafeVarargs
     public static <K, V> ImmutableMap<K, V> union(
-            final ImmutableMap<? extends K, ? extends V>... maps
+            final Map<? extends K, ? extends V>... maps
     ) {
+        // because ImmutableMap.Builder#putAll does not override existing entries
+        // (and instead throws IllegalArgumentException), we need to keep track
+        // the keys we have added so far
+
+        // we reverse the input array so that we can "throw away" key-conflicting entries
+        // that appear first in the input array
+        final var inputMaps = new ArrayList<>(Arrays.asList(maps));
+        Collections.reverse(inputMaps);
+
+        final var keysWitnessed = new HashSet<K>();
         final var builder = ImmutableMap.<K, V>builder();
-        for (final var map : maps) {
-            builder.putAll(map);
+        for (final var map : inputMaps) {
+            for (final var entry : map.entrySet()) {
+                if (keysWitnessed.add(entry.getKey())) {
+                    builder.put(entry.getKey(), entry.getValue());
+                }
+            }
         }
+
         return builder.build();
     }
 }
