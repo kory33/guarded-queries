@@ -8,6 +8,8 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkList
+import uk.ac.ox.cs.pdq.fol.Conjunction
+import uk.ac.ox.cs.pdq.fol.Term
 
 object GenFormula {
   val genNumberedVariable: Gen[Variable] = for {
@@ -59,9 +61,15 @@ object FormulaShrink {
     case _ => LazyList.empty
   }
 
+  given Shrink[Term] = Shrink.withLazyList {
+    case variable: Variable => LazyList.from(Shrink.shrink(variable))
+    case constant: Constant => LazyList.from(Shrink.shrink(constant))
+    case _ => LazyList.empty
+  }
+
   given Shrink[Predicate] = Shrink.withLazyList { predicate =>
     for {
-      shrunkArity <- LazyList.from(Shrink.shrink(predicate.getArity()))
+      shrunkArity <- LazyList.from(Shrink.shrink(predicate.getArity())).filter(_ >= 0)
     } yield Predicate.create(predicate.getName(), shrunkArity)
   }
 
