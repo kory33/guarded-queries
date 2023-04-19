@@ -9,7 +9,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.flatspec.AnyFlatSpec
 
 class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  "IteratorExtensions.zip" should "be equivalent to Scala's zip" in {
+  ".zip" should "be equivalent to Scala's zip" in {
     forAll(minSuccessful(1000)) { (xs: List[Int], ys: List[Int]) =>
       assert {
         IteratorExtensions
@@ -20,7 +20,7 @@ class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  "IteratorExtensions.zipWithIndex" should "be equivalent to Scala's zipWithIndex" in {
+  ".zipWithIndex" should "be equivalent to Scala's zipWithIndex" in {
     forAll(minSuccessful(1000)) { (xs: List[Int]) =>
       assert {
         IteratorExtensions
@@ -31,7 +31,7 @@ class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  "IteratorExtensions.mapInto and then toList" should "be the same as map" in {
+  ".mapInto and then toList" should "be the same as map" in {
     forAll(minSuccessful(1000)) { (xs: List[Int]) =>
       assert {
         IteratorExtensions

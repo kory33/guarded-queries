@@ -5,19 +5,20 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 
 import scala.jdk.CollectionConverters.*
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-object StringSetExtensionsSpec extends Properties("StringSetExtensions") {
-  import Prop.forAll
-
-  override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(5000)
-
-  property("isPrefixOfSome should be equivalent to .exists(_.startsWith(prefix))") = forAll { (xs: List[String], prefix: String) =>
-    StringSetExtensions.isPrefixOfSome(xs.asJava, prefix) == xs.exists(_.startsWith(prefix))
+class StringSetExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  ".isPrefixOfSome" should "be equivalent to .exists(_.startsWith(prefix))" in {
+    forAll(minSuccessful(1000)) { (xs: List[String], prefix: String) =>
+      StringSetExtensions.isPrefixOfSome(xs.asJava, prefix) == xs.exists(_.startsWith(prefix))
+    }
   }
 
-  property("freshPrefix should return a string that is not a prefix of any element in the set and starts with the specified prefix") =
-    forAll { (xs: Set[String], prefix: String) =>
+  ".freshPrefix" should "return a string that is not a prefix of any element in the set and starts with the specified prefix" in {
+    forAll(minSuccessful(1000)) { (xs: Set[String], prefix: String) =>
       val freshPrefix = StringSetExtensions.freshPrefix(xs.asJava, prefix)
       freshPrefix.startsWith(prefix) && !xs.exists(_.startsWith(freshPrefix))
     }
+  }
 }

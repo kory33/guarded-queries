@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  "MapExtensions.composeWithFunction" should "be equivalent to Scala's view.mapValues.toMap" in {
+  ".composeWithFunction" should "be equivalent to Scala's view.mapValues.toMap" in {
     forAll(minSuccessful(1000)) { (xs: Map[String, Int]) =>
       assert {
         MapExtensions.composeWithFunction(xs.asJava, (x: Int) => x * 3).asScala == xs.view.mapValues(_ * 3).toMap
@@ -17,7 +17,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  "every entry in MapExtensions.preimages(map, ys)" should "have a value all of whose elements are mapped to the key by map" in {
+  "every entry in .preimages(map, ys)" should "have a value all of whose elements are mapped to the key by map" in {
     forAll(minSuccessful(1000)) { (map: Map[String, Int], ys: Set[Int]) =>
       assert {
         MapExtensions.preimages(map.asJava, ys.asJava).asScala.forall { case (key, value) =>
@@ -43,7 +43,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  "MapExtensions.restrictToKeys" should "be equivalent to Scala's filterKeys(contains).toMap" in {
+  ".restrictToKeys" should "be equivalent to Scala's filterKeys(contains).toMap" in {
     forAll(minSuccessful(1000)) { (xs: Map[Int, String], ys: Set[Int]) =>
       assert {
         MapExtensions.restrictToKeys(xs.asJava, ys.asJava).asScala == xs.view.filterKeys(ys.contains).toMap
