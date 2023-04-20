@@ -43,9 +43,13 @@ Unfortunately, however, OMQA problems with general TGDs turned out to be undecid
 Despite OMQA problems over GTGDs being known to be decidable for several years, only a small number of work have been done to develop computationally tractable algorithms for these problems. A recent work by (TODO: cite https://arxiv.org/abs/1911.03679) suggested that we can efficiently rewrite a set of GTGD rules into a so-called \emph{Datalog saturation} of it, which is a set of existential-free TGDs that is "equivalent" to the original rule set for existential-free queries. The rewriting algorithm has been improved, implemented and evaluated in (TODO: cite https://krr-oxford.github.io/Guarded-saturation/files/p2537-benedikt-long.pdf)
 % Maybe include the diagram indicating the "scheme" of how Datalog rewriting is incorporated into OMQA?
 
+Even though the implementation by (TODO: cite https://krr-oxford.github.io/Guarded-saturation/files/p2537-benedikt-long.pdf) only supports atomic queries out-of-the-box, we can reduce any \emph{acyclic} existential queries into a few guarded rules and a single goal atom containing just the free variables in the original query. For the (TODO: reference to the example given at the beginning of Section 1.1) query, we can add a (TODO)-ary goal predicate $\mathrm{Goal}(-, -)$ and rules (TODO: apply the reduction).
+
+However, such reduction does not apply to cyclic queries. \emph{To the best of my knowledge, no work has implemented a query answering procedure for generic conjunctive queries under GTGDs}. Given that many real-life database queries are cyclic, limiting ourselves to acyclic existential queries may pose issues on smooth adoptation of OMQA systems. % citation needed
+
 \subsection{Contribution of This Work}
 
-% TODO: Write what Kappelmann's and Benedikt's implementation is capable of doing out-of-box (i.e. atomic queries) and how it can naturally handle *acyclic* conjunctive queries by applying a variant of GYO algorithm, but we cannot perform the same reduction for cyclic queries (has somebody actually argued this before?? I would rather cite a result than expand it here). Then write how my work extends their result to the entire class of conjunctive queries (and therefore naturally to UCQs)
+% TODO: Write how my work extends their result to the entire class of conjunctive queries (and therefore naturally to UCQs)
 
 \subsection{Outline of This Thesis}
 
