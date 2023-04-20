@@ -1,5 +1,11 @@
-\documentclass[11pt]{article}
+\documentclass[12pt]{article}
+
 \usepackage[a4paper, margin=1.3in]{geometry}
+\usepackage{biblatex}
+\usepackage{setspace}
+\usepackage{amstext}
+
+\addbibresource{references.bib}
 
 \title{Querying Infinite GTGD Chases}
 \author{Ryosuke Kondo}
@@ -17,19 +23,59 @@
 \newpage
 \section{Introduction}
 
+\subsection{Background}
+
+Consider the following situation: (TODO; Think about some OMQA instance where two independent parties provide a data over which we would like to perform an existential join query.)
+
+We would now like to find out (TODO; insert here the query content in English). This amounts to finding all \emph{answers} to a first-order existential sentence (TODO; insert here the query in first-order language), where each answer is a \emph{substitution} mapping free variables (TODO) to constants in data sources that make the sentence true.
+
+Unlike querying a single relational database, it is not sufficient to perform a non-existential join query (TODO; insert here the query with existentials stripped away) and project the resulting tuples to ignore uninteresting components. Even though no constant in the input database matches variables in the partially-applied query (TODO; insert here a partially-applied query), we can deduce from the constraints that there must be some \emph{unknown} values that matches (TODO; insert here a partially-applied query).
+
+In general, the problem of answering queries given (1) a collection of \emph{incomplete} data sources, (2) a finite set of \emph{data integration rules} that can derive facts and (3) a conjunctive query is called Ontology-Mediated Query Answering (OMQA) (TODO: cite https://www.ijcai.org/Proceedings/16/Papers/600.pdf).
+
+Data integration rules in OMQA problem instances are often written as Tuple-Generating Dependencies (TGDs), which are first-order sentences of the form $\forall \vec{x}. \Phi(\vec{x}, \vec{c}) \rightarrow \exists \vec{y}. \Psi(\vec{x}, \vec{y}, \vec{c}')$. In the example above, for instance, the rules can be translated into logical formulae (TODO: translate the rules into TGDs). Formulated this way, we can think of OMQA problems as finding all assignments $\sigma$ of free variables in the input query that validate the logical entailment relation $\mathcal{D} \land \Sigma \models \sigma(Q)$, where $\mathcal{D}$ is the conjunction of all records present in data sources, $\Sigma$ is the data integration rules and $Q$ is the input conjunctive query.
+
+Unfortunately, however, OMQA problems with general TGDs turned out to be undecidable. In response to this, (TODO: cite https://arxiv.org/abs/1212.3357) identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that is expressive enough to contain several classes of description logics, yet leaves OMQA problems decidable.
+% TODO: cite the result stating that OMQA on general TGDs is undecidable
+
+\subsection{Previous Works}
+
+Despite OMQA problems over GTGDs being known to be decidable for several years, only a small number of work have been done to develop computationally tractable algorithms for these problems. A recent work by (TODO: cite https://arxiv.org/abs/1911.03679) suggested that we can efficiently rewrite a set of GTGD rules into a so-called \emph{Datalog saturation} of it, which is a set of existential-free TGDs that is "equivalent" to the original rule set for existential-free queries. The rewriting algorithm has been improved, implemented and evaluated in (TODO: cite https://krr-oxford.github.io/Guarded-saturation/files/p2537-benedikt-long.pdf)
+% Maybe include the diagram indicating the "scheme" of how Datalog rewriting is incorporated into OMQA?
+
+\subsection{Contribution of This Work}
+
+% TODO: Write what Kappelmann's and Benedikt's implementation is capable of doing out-of-box (i.e. atomic queries) and how it can naturally handle *acyclic* conjunctive queries by applying a variant of GYO algorithm, but we cannot perform the same reduction for cyclic queries (has somebody actually argued this before?? I would rather cite a result than expand it here). Then write how my work extends their result to the entire class of conjunctive queries (and therefore naturally to UCQs)
+
+\subsection{Outline of This Thesis}
+
+% The current plan is to have the following chapters:
+%  - Preliminaries
+%    We briefly introduce basic terminologies that will be used throughout the paper, including some vocabularies from logic, and formal definitions on the class of formulae we are interested in.
+%  - Chase Trees
+%    In this chapter, I revisit the notion of "tree-like chase proof" and introduce the notion of "shortcut chases" (which I'm sure have been defined elsewhere) with a bunch of visual explanations (so I should be drawing a lot of chase trees). After having done this, I provide a simple analysis of how homomorphisms of the input query into the chase tree must be structured, and argue that for rewriting purpose it is sufficient to decide whether a given rule plus a guarded set is "large enough" to derive a partially-substituted subquery strongly induced by a set of connected variables in the original query.
+%  - Deriving a Decision Procedure
+%    In this chapter, we first look at how nondeterministic finitely-branching-tree automatons function in general, and then discuss the most obvious way to decide the subquery entailment problem using a product automaton of "wildly nondeterministic branching query automaton" and "chase automaton". I then argue that it is possible to "offload" some nondeterminism in the query automaton to chase automaton, and how the resulting "query automaton"'s state is stratified. Using the stratified structure in the query automaton, I argue that we can "compress" *all* nondeterminism in the chase automaton to instance reachability test, thereby making the compressed-chase automaton deterministic, and argue that we can directly translate the so-obtained product automaton into a recursive decision algorithm, which we can memoize to improve performance.
+%  - Implementation, Verification and Evaluation
+%    I explain the technologies used (Java for the main implementation for ease of future integration, Scala + ScalaCheck + ScalaTest for thorough property-based testing on GitHub Actions, Gradle Kotlin DSL for build script to manage a rather complex set of dependencies). I briefly recall how acyclic queries are still "solvable" by GSat, and mention that I heavily tested the equivalence between the simplest DP algorithm and GSat on acyclic queries. Finally, we provide some benchmarks to see how the runtime increases as the input becomes larger.
+%  - Conclusion
+%    We conclude the paper with what we have achieved through the project, and discuss the obvious weakness of the algorithm (exponential blowups caused by having constants in rules).
+
 \newpage
 \section{Preliminaries}
 
 \newpage
-\section{Tree-Like Chases}
+\section{Chase-Trees}
 
 \newpage
-\section{Decision Procedure using Automaton}
+\section{Deriving a Decision Procedure}
 
 \newpage
-\section{Evaluation}
+\section{Implementation, Verification and Evaluation}
 
 \newpage
 \section{Conclusion}
+
+\printbibliography
 
 \end{document}
