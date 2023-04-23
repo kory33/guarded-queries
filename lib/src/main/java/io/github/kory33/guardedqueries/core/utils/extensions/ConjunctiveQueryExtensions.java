@@ -134,22 +134,29 @@ public class ConjunctiveQueryExtensions {
     }
 
     /**
-     * Given a conjunctive query {@code conjunctiveQuery} and a set of variables {@code variables},
-     * returns a stream of all {@code conjunctiveQuery}-connected components of {@code variables}.
+     * Given a conjunctive query {@code conjunctiveQuery} and a set {@code boundVariables} of variables
+     * bound in {@code conjunctiveQuery}, returns a stream of all {@code conjunctiveQuery}-connected
+     * components of {@code variables}.
      */
     public static Stream</* nonempty */ImmutableSet<Variable>> connectedComponents(
             final ConjunctiveQuery conjunctiveQuery,
-            final Collection<? extends Variable> variables
+            final Collection<? extends Variable> boundVariables
     ) {
-        if (variables.isEmpty()) {
+        if (boundVariables.isEmpty()) {
             return Stream.empty();
         }
 
-        final var unionFindTree = new SimpleUnionFindTree<Variable>(variables);
+        for (final var variable : boundVariables) {
+            if (!Arrays.asList(conjunctiveQuery.getBoundVariables()).contains(variable)) {
+                throw new IllegalArgumentException("Variable " + variable + " is not bound in the given CQ");
+            }
+        }
+
+        final var unionFindTree = new SimpleUnionFindTree<Variable>(boundVariables);
         for (final var atom : conjunctiveQuery.getAtoms()) {
             final var variablesToUnion = SetLikeExtensions.intersection(
                     ImmutableSet.copyOf(atom.getVariables()),
-                    variables
+                    boundVariables
             );
             unionFindTree.unionAll(variablesToUnion);
         }
