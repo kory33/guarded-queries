@@ -13,16 +13,16 @@ import uk.ac.ox.cs.pdq.fol.Term
 
 object GenFormula {
   val genNumberedVariable: Gen[Variable] = for {
-    number <- Gen.choose(0, 5000)
+    number <- Gen.choose(0, 50)
   } yield Variable.create(s"x_$number")
 
   val genConstant: Gen[Constant] = for {
-    number <- Gen.choose(0, 5000)
+    number <- Gen.choose(0, 50)
   } yield TypedConstant.create(s"c_$number")
 
   def genPredicate(maxArity: Int): Gen[Predicate] = for {
     arity <- Gen.choose(0, maxArity)
-    number <- Gen.choose(0, 3000)
+    number <- Gen.choose(0, 30)
   } yield Predicate.create(s"P_$number", arity)
 
   def genAtom(maxArity: Int): Gen[Atom] = for {
