@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.datalog.saturationengines;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram;
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine;
@@ -10,7 +9,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions;
 import uk.ac.ox.cs.pdq.fol.Constant;
-import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,28 +28,19 @@ public class NaiveSaturationEngine implements DatalogSaturationEngine {
             final ImmutableSet<FormalFact<TA>> facts,
             final Function<Constant, TA> includeConstantsToTA
     ) {
+        final var inputInstance = new FormalInstance<>(facts);
         final var producedFacts = new ArrayList<FormalFact<TA>>();
         final var joinAlgorithm = new FilterNestedLoopJoin<TA>();
 
         for (final var rule : program.rules()) {
-            final var ruleHeadAtoms = ImmutableList.copyOf(rule.getHeadAtoms());
-            final var joinResult = joinAlgorithm.join(TGDExtensions.bodyAsCQ(rule), new FormalInstance<>(facts));
+            final var joinResult = joinAlgorithm.join(TGDExtensions.bodyAsCQ(rule), inputInstance);
 
-            final var variableOrdering = joinResult.variableOrdering();
-            for (final var homomorphism : joinResult.allHomomorphisms()) {
-                for (final var ruleHeadAtom : ruleHeadAtoms) {
-                    final var producedFormalFact = FormalFact.fromAtom(ruleHeadAtom).map(term -> {
-                        if (term instanceof Constant constant) {
-                            return includeConstantsToTA.apply(constant);
-                        } else if (term instanceof Variable variable) {
-                            return homomorphism.get(variableOrdering.indexOf(variable));
-                        } else {
-                            throw new IllegalArgumentException("Term " + term + " is neither constant nor variable");
-                        }
-                    });
-
-                    producedFacts.add(producedFormalFact);
-                }
+            for (final var ruleHeadAtom : rule.getHeadAtoms()) {
+                producedFacts.addAll(
+                        // because we are dealing with Datalog rules, we can materialize every head atom
+                        // using the join result (and its variable ordering)
+                        joinResult.materializeFunctionFreeAtom(ruleHeadAtom, includeConstantsToTA)
+                );
             }
         }
 
