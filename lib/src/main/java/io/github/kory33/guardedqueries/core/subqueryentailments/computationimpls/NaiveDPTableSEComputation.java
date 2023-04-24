@@ -85,51 +85,41 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 // the existential rule to the instance by a join algorithm,
                 // and then filter out those that do not preserve the names.
                 final Function<NormalGTGD, Stream<FormalInstance<LocalInstanceTerm>>> allChasesWithRule = (NormalGTGD existentialRule) -> {
-                    final var bodyHomomorphisms = new FilterNestedLoopJoin<LocalInstanceTerm>().join(
+                    final var headAtom = existentialRule.getHeadAtoms()[0];
+
+                    // A set of existential variables in the existential rule
+                    final var existentialVariables =
+                            ImmutableSet.copyOf(existentialRule.getHead().getBoundVariables());
+
+                    // An assignment existential variables into "fresh" local names not used in the parent
+                    final var headVariableHomomorphism = ImmutableMapExtensions.consumeAndCopy(
+                            StreamExtensions
+                                    .zipWithIndex(existentialVariables.stream())
+                                    .map(pair -> {
+                                        // for i'th head variable, we use localNamesUsableInChildren(i)
+                                        final var variable = pair.getKey();
+                                        final var index = pair.getValue().intValue();
+                                        final LocalInstanceTerm localName = localNamesUsableInChildren.get(index);
+
+                                        return Map.<Variable, LocalInstanceTerm>entry(variable, localName);
+                                    }).iterator()
+                    );
+
+                    final var bodyJoinResult = new FilterNestedLoopJoin<LocalInstanceTerm>().join(
                             TGDExtensions.bodyAsCQ(existentialRule),
                             instance
                     );
 
-                    // An ordering, as specified by the join algorithm, of variables
-                    // that appear in the body of the existential rule
-                    final var bodyVariableOrdering = bodyHomomorphisms.variableOrdering();
+                    final var extendedJoinResult =
+                            bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism);
 
-                    // An ordering of variables that are bound in the
-                    // existential quantifier of the existential rule
-                    final var orderedHeadVariables =
-                            ImmutableList.copyOf(ImmutableSet.copyOf(existentialRule.getHead().getBoundVariables()));
+                    final var allSubstitutedHeadAtoms =
+                            extendedJoinResult.materializeFunctionFreeAtom(headAtom, LocalInstanceTerm.RuleConstant::new);
 
-                    // An ordering of all variables that appear in the existential rule
-                    final var extendedVariableOrdering = ImmutableList.<Variable>builder()
-                            .addAll(bodyVariableOrdering)
-                            .addAll(orderedHeadVariables)
-                            .build();
-
-                    // An assignment of names to the variables in the head
-                    final var headVariableHomomorphism = ImmutableList.copyOf(
-                            IntStream.range(0, orderedHeadVariables.size())
-                                    .mapToObj(localNamesUsableInChildren::get)
-                                    .iterator()
-                    );
-
-                    return bodyHomomorphisms.allHomomorphisms().stream().flatMap(homomorphism -> {
-                        final var extendedHomomorphism = ImmutableList.<LocalInstanceTerm>builder()
-                                .addAll(homomorphism)
-                                .addAll(headVariableHomomorphism)
-                                .build();
-
+                    return allSubstitutedHeadAtoms.stream().flatMap(substitutedHead -> {
                         // The instance containing only the head atom produced by the existential rule.
                         // This should be a singleton instance because the existential rule is normal.
-                        final var headInstance = new FormalInstance<>(
-                                Arrays.stream(existentialRule.getHeadAtoms())
-                                        .map(FormalFact::fromAtom)
-                                        .map(fact -> fact.map(term ->
-                                                LocalInstanceTerm.fromTermWithVariableMap(term, variable ->
-                                                        extendedHomomorphism.get(extendedVariableOrdering.indexOf(variable))
-                                                )
-                                        ))
-                                        .iterator()
-                        );
+                        final var headInstance = FormalInstance.of(substitutedHead);
 
                         final var localNamesInHead = headInstance
                                 .getActiveTermsInClass(LocalInstanceTerm.LocalName.class);

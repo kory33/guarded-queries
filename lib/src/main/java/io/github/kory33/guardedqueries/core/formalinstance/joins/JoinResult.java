@@ -1,6 +1,7 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Constant;
@@ -61,5 +62,53 @@ public record JoinResult<Term>(
         });
 
         return result.build();
+    }
+
+    /**
+     * Extend the join result by adjoining a constant homomorphism.
+     * <p>
+     * For instance, suppose that this join result is obtained as an answer to a query {@code Q(x, y), R(y, z)}
+     * and has the following data:
+     * <ol>
+     *     <li>{@code variableOrdering = [x, y, z]}</li>
+     *     <li>{@code allHomomorphisms = [[a, b, c], [a, c, d]]}</li>
+     * </ol>
+     * We can "extend" this result by adjoining a constant homomorphism {@code {w -> e}},
+     * so that the variables covered by the extended join result includes {@code w} and
+     * homomorphisms are extended by appending {@code e} to the position corresponding to {@code w}.
+     * The result of the extension operation should therefore be:
+     * <ol>
+     *     <li>{@code variableOrdering = [x, y, z, w]}</li>
+     *     <li>{@code allHomomorphisms = [[a, b, c, e], [a, c, d, e]]}</li>
+     * </ol>
+     *
+     * @param constantHomomorphism The homomorphism with which the join result is to be extended
+     * @return the extended join result
+     * @throws IllegalArgumentException if the given homomorphism maps a variable in {@code variableOrdering}
+     */
+    public JoinResult<Term> extendWithConstantHomomorphism(
+            final ImmutableMap<Variable, Term> constantHomomorphism
+    ) {
+        if (constantHomomorphism.keySet().stream().anyMatch(variableOrdering::contains)) {
+            throw new IllegalArgumentException("The given constant homomorphism has a conflicting variable mapping");
+        }
+
+        final var extensionVariableOrdering = ImmutableList.copyOf(constantHomomorphism.keySet());
+        final var extensionHomomorphism = ImmutableList.copyOf(
+                extensionVariableOrdering.stream().map(constantHomomorphism::get).iterator()
+        );
+
+        final var extendedVariableOrdering = ImmutableList.<Variable>builder()
+                .addAll(variableOrdering)
+                .addAll(extensionVariableOrdering)
+                .build();
+
+        final var extendedHomomorphisms = allHomomorphisms.stream().map(homomorphism -> ImmutableList.<Term>builder()
+                .addAll(homomorphism)
+                .addAll(extensionHomomorphism)
+                .build()
+        );
+
+        return new JoinResult<>(extendedVariableOrdering, ImmutableList.copyOf(extendedHomomorphisms.iterator()));
     }
 }

@@ -95,6 +95,11 @@ public class FormalInstance<TermAlphabet> {
         return new FormalInstance<>(ImmutableSet.of());
     }
 
+    @SafeVarargs
+    public static <TermAlphabet> FormalInstance<TermAlphabet> of(final FormalFact<TermAlphabet>... facts) {
+        return new FormalInstance<>(ImmutableSet.copyOf(facts));
+    }
+
     @Override
     public String toString() {
         return facts.toString();
