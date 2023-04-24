@@ -76,11 +76,10 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                 );
 
                 // We need to chase the instance with all existential rules
-                // while preserving the names in namesToBePreservedDuringChase.
+                // while preserving all names in namesToBePreservedDuringChase.
                 //
-                // For a chase step to preserve names, it must injectively map the
-                // names in namesToBePreservedDuringChase to universally quantified variables
-                // because those values are what get passed down to the chase child.
+                // A name is preserved by a chase step if and only if
+                // it appears in the substituted head of the existential rule.
                 //
                 // We can first find all possible homomorphisms from the body of
                 // the existential rule to the instance by a join algorithm,
@@ -126,32 +125,10 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                     );
 
                     return bodyHomomorphisms.allHomomorphisms().stream().flatMap(homomorphism -> {
-                        // We need to first check that all names in namesToBePreservedDuringChase
-                        // appear in the homomorphism exactly once.
-                        for (final var name : namesToBePreservedDuringChase) {
-                            final var nameCount = homomorphism.stream().filter(term -> term.equals(name)).count();
-                            if (nameCount != 1) {
-                                return Stream.empty();
-                            }
-                        }
-
                         final var extendedHomomorphism = ImmutableList.<LocalInstanceTerm>builder()
                                 .addAll(homomorphism)
                                 .addAll(headVariableHomomorphism)
                                 .build();
-
-                        final var localNamesInHead = ImmutableList.copyOf(
-                                indicesOfExportedVariablesInHeadVariableOrdering
-                                        .stream()
-                                        .map(homomorphism::get)
-                                        .iterator()
-                        );
-
-                        // the set of facts in the parent instance that are
-                        // "guarded" by the head of the existential rule
-                        final var inheritedFactsInstance = instance.restrictToAlphabetsWith(t ->
-                                (t instanceof LocalInstanceTerm.RuleConstant) || (localNamesInHead.contains(t))
-                        );
 
                         // The instance containing only the head atom produced by the existential rule.
                         // This should be a singleton instance because the existential rule is normal.
@@ -164,6 +141,20 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                                 )
                                         ))
                                         .iterator()
+                        );
+
+                        final var localNamesInHead = headInstance
+                                .getActiveTermsInClass(LocalInstanceTerm.LocalName.class);
+
+                        // if names are not preserved, we reject this homomorphism
+                        if (!localNamesInHead.containsAll(namesToBePreservedDuringChase)) {
+                            return Stream.empty();
+                        }
+
+                        // the set of facts in the parent instance that are
+                        // "guarded" by the head of the existential rule
+                        final var inheritedFactsInstance = instance.restrictToAlphabetsWith(term ->
+                                term.isConstantOrSatisfies(localNamesInHead::contains)
                         );
 
                         // The child instance, which is the saturation of the union of
@@ -371,7 +362,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                             .iterator()
                             );
 
-                            return new FormalFact<>(predicate, parameterList);
+                            //noinspection Convert2Diamond (IDEA fails to infer this)
+                            return new FormalFact<LocalInstanceTerm>(predicate, parameterList);
                         }).iterator()
                 );
 

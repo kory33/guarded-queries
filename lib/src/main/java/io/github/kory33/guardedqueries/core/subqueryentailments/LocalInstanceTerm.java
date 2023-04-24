@@ -5,6 +5,7 @@ import uk.ac.ox.cs.pdq.fol.Term;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public sealed interface LocalInstanceTerm {
     record LocalName(int value) implements LocalInstanceTerm {
@@ -28,6 +29,16 @@ public sealed interface LocalInstanceTerm {
         @Override
         public String toString() {
             return "RuleConstant[" + constant + "]";
+        }
+    }
+
+    default boolean isConstantOrSatisfies(final Predicate<? super LocalName> predicate) {
+        if (this instanceof RuleConstant) {
+            return true;
+        } else if (this instanceof LocalName localName) {
+            return predicate.test(localName);
+        } else {
+            throw new IllegalStateException("Unreachable: " + this);
         }
     }
 
