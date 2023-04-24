@@ -30,7 +30,7 @@ public class NaiveSaturationEngine implements DatalogSaturationEngine {
     ) {
         final var inputInstance = new FormalInstance<>(facts);
         final var producedFacts = new ArrayList<FormalFact<TA>>();
-        final var joinAlgorithm = new FilterNestedLoopJoin<TA>();
+        final var joinAlgorithm = new FilterNestedLoopJoin<>(includeConstantsToTA);
 
         for (final var rule : program.rules()) {
             final var joinResult = joinAlgorithm.join(TGDExtensions.bodyAsCQ(rule), inputInstance);

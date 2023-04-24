@@ -105,10 +105,9 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                     }).iterator()
                     );
 
-                    final var bodyJoinResult = new FilterNestedLoopJoin<LocalInstanceTerm>().join(
-                            TGDExtensions.bodyAsCQ(existentialRule),
-                            instance
-                    );
+                    final var bodyJoinResult =
+                            new FilterNestedLoopJoin<LocalInstanceTerm>(LocalInstanceTerm.RuleConstant::new)
+                                    .join(TGDExtensions.bodyAsCQ(existentialRule), instance);
 
                     final var extendedJoinResult =
                             bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism);

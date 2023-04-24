@@ -11,22 +11,26 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.SingleAtomMatch
 import io.github.kory33.guardedqueries.core.utils.extensions.ImmutableMapExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions;
-import uk.ac.ox.cs.pdq.fol.Atom;
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
-import uk.ac.ox.cs.pdq.fol.Predicate;
-import uk.ac.ox.cs.pdq.fol.Variable;
+import uk.ac.ox.cs.pdq.fol.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * A join algorithm that first filters tuples matching query atoms and then joins them in a nested loop fashion.
  */
 public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, FormalInstance<TA>> {
+    private final Function<Constant, TA> includeConstantsToTA;
+
+    public FilterNestedLoopJoin(final Function<Constant, TA> includeConstantsToTA) {
+        this.includeConstantsToTA = includeConstantsToTA;
+    }
+
     /**
      * Recursively nest matching loops to extend the given partial homomorphism,
      * in the order specified by {@code remainingAtomsToJoin}.
@@ -96,7 +100,7 @@ public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, Formal
     }
 
     @Override
-    public JoinResult<TA> join(ConjunctiveQuery query, FormalInstance<TA> formalInstance) {
+    public JoinResult<TA> join(final ConjunctiveQuery query, final FormalInstance<TA> formalInstance) {
         final var queryAtoms = ImmutableSet.copyOf(query.getAtoms());
 
         // we throw IllegalArgumentException if the query contains existential atoms
@@ -124,7 +128,8 @@ public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, Formal
                         queryAtoms.stream(),
                         atom -> SingleAtomMatching.allMatches(
                                 atom,
-                                relevantRelationsToInstancesMap.getOrDefault(atom.getPredicate(), FormalInstance.empty())
+                                relevantRelationsToInstancesMap.getOrDefault(atom.getPredicate(), FormalInstance.empty()),
+                                includeConstantsToTA
                         )
                 ).iterator()
         );

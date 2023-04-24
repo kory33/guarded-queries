@@ -9,6 +9,7 @@ import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class SingleAtomMatching {
     private SingleAtomMatching() {
@@ -17,7 +18,8 @@ public class SingleAtomMatching {
     private static <TA> Optional<ImmutableList<TA>> tryMatch(
             final Atom atomicQuery,
             final ImmutableList<Variable> orderedQueryVariables,
-            final ImmutableList<TA> appliedTerms
+            final ImmutableList<TA> appliedTerms,
+            final Function<Constant, TA> includeConstantsToTA
     ) {
         final var homomorphism = new ArrayList<Optional<TA>>(orderedQueryVariables.size());
         for (int i = 0; i < orderedQueryVariables.size(); i++) {
@@ -28,9 +30,9 @@ public class SingleAtomMatching {
             final var termToMatch = atomicQuery.getTerms()[appliedTermIndex];
             final var appliedTerm = appliedTerms.get(appliedTermIndex);
 
-            if (termToMatch instanceof Constant) {
-                // if the term is a constant, we just check if that constant has been applied
-                if (!termToMatch.equals(appliedTerm)) {
+            if (termToMatch instanceof Constant constant) {
+                // if the term is a constant, we just check if that constant (considered as TA) has been applied
+                if (!includeConstantsToTA.apply(constant).equals(appliedTerm)) {
                     // and fail if not
                     return Optional.empty();
                 }
@@ -73,7 +75,8 @@ public class SingleAtomMatching {
      */
     public static <TA> JoinResult<TA> allMatches(
             final Atom atomicQuery,
-            final FormalInstance<TA> instance
+            final FormalInstance<TA> instance,
+            final Function<Constant, TA> includeConstantsToTA
     ) {
         final var orderedQueryVariables = ImmutableList.copyOf(ImmutableSet.copyOf(
                 atomicQuery.getVariables()
@@ -88,7 +91,8 @@ public class SingleAtomMatching {
             }
 
             // compute a homomorphism and add to the builder, or continue to the next fact if we cannot do so
-            tryMatch(atomicQuery, orderedQueryVariables, fact.appliedTerms()).ifPresent(homomorphisms::add);
+            tryMatch(atomicQuery, orderedQueryVariables, fact.appliedTerms(), includeConstantsToTA)
+                    .ifPresent(homomorphisms::add);
         }
 
         return new JoinResult<>(orderedQueryVariables, homomorphisms.build());
