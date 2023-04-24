@@ -12,33 +12,41 @@ import uk.ac.ox.cs.pdq.fol.Conjunction
 import uk.ac.ox.cs.pdq.fol.Term
 
 object GenFormula {
-  val genNumberedVariable: Gen[Variable] = for {
-    number <- Gen.choose(0, 50)
+  def genNumberedVariable(indexUpperLimit: Int): Gen[Variable] = for {
+    number <- Gen.choose(0, indexUpperLimit)
   } yield Variable.create(s"x_$number")
 
-  val genConstant: Gen[Constant] = for {
-    number <- Gen.choose(0, 50)
+  def genConstant(indexUpperLimit: Int): Gen[Constant] = for {
+    number <- Gen.choose(0, indexUpperLimit)
   } yield TypedConstant.create(s"c_$number")
 
-  def genPredicate(maxArity: Int): Gen[Predicate] = for {
+  def genPredicate(maxArity: Int, indexUpperLimit: Int): Gen[Predicate] = for {
     arity <- Gen.choose(0, maxArity)
-    number <- Gen.choose(0, 30)
+    number <- Gen.choose(0, indexUpperLimit)
   } yield Predicate.create(s"P_$number", arity)
 
-  def genAtom(maxArity: Int): Gen[Atom] = for {
-    predicate <- genPredicate(maxArity)
-    terms <- Gen.listOfN(predicate.getArity(), Gen.oneOf(genNumberedVariable, genConstant))
+  def genPrefixedVariableOrConstant: Gen[Term] = Gen.oneOf(genNumberedVariable(30), genConstant(30))
+
+  def genAtom(maxArity: Int, genTerm: Gen[Term]): Gen[Atom] = for {
+    predicate <- genPredicate(maxArity, 30)
+    terms <- Gen.listOfN(predicate.getArity(), genTerm)
   } yield Atom.create(predicate, terms: _*)
 
   def genConjunctiveQuery(maxAtoms: Int, maxArity: Int) = for {
     numberOfAtoms <- Gen.choose(1, maxAtoms)
-    atoms <- Gen.listOfN(numberOfAtoms, genAtom(maxArity))
+    atoms <- Gen.listOfN(numberOfAtoms, genAtom(maxArity, genPrefixedVariableOrConstant))
     variablesInAtoms = atoms.flatMap(_.getVariables()).toSet
     freeVariables <- GenSet.chooseSubset(variablesInAtoms)
   } yield ConjunctiveQuery.create(freeVariables.toArray, atoms.toArray)
+
+  def genExistentialFreeConjunctiveQuery(maxAtoms: Int, maxArity: Int) = for {
+    numberOfAtoms <- Gen.choose(1, maxAtoms)
+    atoms <- Gen.listOfN(numberOfAtoms, genAtom(maxArity, genPrefixedVariableOrConstant))
+    variablesInAtoms = atoms.flatMap(_.getVariables()).toSet
+  } yield ConjunctiveQuery.create(variablesInAtoms.toArray, atoms.toArray)
 }
 
-object FormulaShrink {
+object ShrinkFormula {
   def shrinkNumberInString(prefix: String, string: String): LazyList[String] =
     try {
       // shrink the number if the input string is of the form "$prefix$number"
