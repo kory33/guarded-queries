@@ -16,6 +16,9 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Atom
 import io.github.kory33.guardedqueries.core.formalinstance.joins.SingleAtomMatching
+import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
+import com.google.common.collect.ImmutableList
+import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 
 class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallAtom = GenFormula.genAtom(
@@ -76,13 +79,34 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
+  def genAtomAndHomomorphism: Gen[(Atom, HomomorphicMapping[Constant])] = for {
+    atom <- genSmallAtom
+    variablesInAtom = atom.getVariables().toSet.toList
+    homomorphism <- Gen.listOfN(variablesInAtom.size, GenFormula.genConstant(10))
+  } yield (atom, new HomomorphicMapping[Constant](ImmutableList.copyOf(variablesInAtom.asJava), ImmutableList.copyOf(homomorphism.asJava)))
+
   it should "find every valid answer" in {
-    // TODO: the test should look like the following:
-    // forAll(atomAndHomomorphism, minSuccessful(100)) { case (atom, homomorphism) =>
-    //   val instance = new FormalInstance(atom mapped with homomorphism)
-    //   SingleAtomMatching
-    //     .allMatches(atom, instance, c => c).
-    //     .materializeFunctionFreeAtom(atom, c => c)
-    //     // should contain a single homomorphism that results in the same tuple as the original homomorphism
+    // We test that for every pair of query and a homomorphism,
+    // the algorithm successfully finds the mapped tuple as the answer.
+    //
+    // For instance, for an atomic query A(x,c) we might prepare a homomorphism {x -> d}.
+    // When we run the matching algorithm on the instance {A(d,c)}, which is the result of
+    // materializing the atom according to the homomorphism, we expect the algorithm to
+    // return {x -> d} as the only answer, and that the instance materialized from the answer
+    // is equal to {A(d,c)}.
+    // 
+    // Assuming that the algorithm is monotonic and affine in the input instance (i.e. the
+    // presence of a homomorphism in the answer only depends on the existence of the corresponding
+    // tuple in the input instance), this test should be sufficient to show the correctness of
+    // the algorithm.
+    forAll(genAtomAndHomomorphism, minSuccessful(1000)) { case (atom, homomorphism) =>
+      val instanceContainingJustTheMaterializedAtom = FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom, c => c))
+      val matches = SingleAtomMatching
+        .allMatches(atom, instanceContainingJustTheMaterializedAtom, c => c)
+        .materializeFunctionFreeAtom(atom, c => c)
+      val matchInstance = new FormalInstance(matches)
+      
+      assert(matchInstance == instanceContainingJustTheMaterializedAtom)
+    }
   }
 }
