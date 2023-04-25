@@ -61,16 +61,16 @@ public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, Formal
         }
 
         final var nextAtomMatchResult = atomToMatches.get(remainingAtomsToJoin.get(0));
-        final var matchVariableOrdering = nextAtomMatchResult.variableOrdering();
-        final var nextAtomMatches = nextAtomMatchResult.allHomomorphisms();
 
         iterateThroughMatches:
-        for (final var match : nextAtomMatches) {
+        for (final var homomorphism : nextAtomMatchResult.allHomomorphisms) {
+            final var matchVariableOrdering = homomorphism.variableOrdering();
+
             final var homomorphismExtension = new ArrayList<>(partialHomomorphism);
 
             for (int matchVariableIndex = 0; matchVariableIndex < matchVariableOrdering.size(); matchVariableIndex++) {
                 final var nextVariableToCheck = matchVariableOrdering.get(matchVariableIndex);
-                final var extensionCandidate = match.get(matchVariableIndex);
+                final var extensionCandidate = homomorphism.orderedMapping().get(matchVariableIndex);
 
                 final var indexOfVariableInResultOrdering = resultVariableOrdering.indexOf(nextVariableToCheck);
                 final var mappingSoFar = homomorphismExtension.get(indexOfVariableInResultOrdering);
@@ -137,7 +137,7 @@ public class FilterNestedLoopJoin<TA> implements NaturalJoinAlgorithm<TA, Formal
         // we start joining from the outer
         final var queryAtomsOrderedByMatchSizes = ImmutableList.copyOf(
                 queryAtomsToMatches.keySet().stream()
-                        .sorted(Comparator.comparing(atom -> queryAtomsToMatches.get(atom).allHomomorphisms().size()))
+                        .sorted(Comparator.comparing(atom -> queryAtomsToMatches.get(atom).allHomomorphisms.size()))
                         .iterator()
         );
 
