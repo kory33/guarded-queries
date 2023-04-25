@@ -8,4 +8,5 @@ dependencies {
             "path" to ":guarded-saturation-wrapper",
             "configuration" to "gsatJar"
     )))
+    testImplementation("org.javafp:parsecj:0.6")
 }
