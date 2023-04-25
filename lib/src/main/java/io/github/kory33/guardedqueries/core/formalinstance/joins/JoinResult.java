@@ -50,7 +50,7 @@ public class JoinResult<Term> {
      * <p>
      * The returned list has the same length as {@code orderedMapping}.
      *
-     * @param atomWhoseVariablesAreInThisResult a function-free atom whose variables are in {@code variableOrdering}
+     * @param atomWhoseVariablesAreInThisResult a function-free atom whose variables are covered by this join result
      * @param constantInclusion                 a function that maps a constant in the input instance to a term
      * @return a list of formal facts that are the result of materializing the given atom
      */
@@ -58,22 +58,11 @@ public class JoinResult<Term> {
             final Atom atomWhoseVariablesAreInThisResult,
             final Function<Constant, Term> constantInclusion
     ) {
-        final var inputAtomAsFormalFact = FormalFact.fromAtom(atomWhoseVariablesAreInThisResult);
-        final var result = ImmutableList.<FormalFact<Term>>builder();
-
-        allHomomorphisms.forEach(homomorphism -> {
-            inputAtomAsFormalFact.map(term -> {
-                if (term instanceof Constant constant) {
-                    return constantInclusion.apply(constant);
-                } else if (term instanceof Variable variable) {
-                    return homomorphism.apply(variable);
-                } else {
-                    throw new IllegalArgumentException("Term " + term + " is neither constant nor variable");
-                }
-            });
-        });
-
-        return result.build();
+        return ImmutableList.copyOf(
+                this.allHomomorphisms.stream()
+                        .map(h -> h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion))
+                        .iterator()
+        );
     }
 
     /**

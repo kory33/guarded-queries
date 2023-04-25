@@ -1,6 +1,9 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins;
 
 import com.google.common.collect.ImmutableList;
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
+import uk.ac.ox.cs.pdq.fol.Atom;
+import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.function.Function;
@@ -39,5 +42,28 @@ public record HomomorphicMapping<Term>(
             throw new IllegalArgumentException("variable is not in variableOrdering");
         }
         return orderedMapping.get(index);
+    }
+
+    /**
+     * Materialize the given atom by mapping the variables in the atom into terms specified by this homomorphic mapping.
+     *
+     * @param atomWhoseVariablesAreInThisResult a function-free atom whose variables are in {@code variableOrdering}
+     * @param constantInclusion                 a function that maps a constant in the input instance to a term
+     */
+    public FormalFact<Term> materializeFunctionFreeAtom(
+            final Atom atomWhoseVariablesAreInThisResult,
+            final Function<Constant, Term> constantInclusion
+    ) {
+        final var inputAtomAsFormalFact = FormalFact.fromAtom(atomWhoseVariablesAreInThisResult);
+
+        return inputAtomAsFormalFact.map(term -> {
+            if (term instanceof Constant constant) {
+                return constantInclusion.apply(constant);
+            } else if (term instanceof Variable variable) {
+                return this.apply(variable);
+            } else {
+                throw new IllegalArgumentException("Term " + term + " is neither constant nor variable");
+            }
+        });
     }
 }
