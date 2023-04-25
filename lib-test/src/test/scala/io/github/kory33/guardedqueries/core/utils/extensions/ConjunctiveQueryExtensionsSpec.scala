@@ -14,7 +14,7 @@ import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
 import uk.ac.ox.cs.pdq.fol.Variable
 
 class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  import io.github.kory33.guardedqueries.testutils.scalacheck.FormulaShrink.given
+  import io.github.kory33.guardedqueries.testutils.scalacheck.ShrinkFormula.given
 
   val largeCQ: Gen[ConjunctiveQuery] = GenFormula.genConjunctiveQuery(50, 10)
 
