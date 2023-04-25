@@ -1,24 +1,15 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import org.scalacheck.*
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen.*
-
-import scala.jdk.CollectionConverters.*
+import com.google.common.collect.ImmutableList
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
+import io.github.kory33.guardedqueries.testutils.scalacheck.{GenFormalInstance, GenFormula}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
-import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
+import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate}
+import org.scalacheck.Gen
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
-import uk.ac.ox.cs.pdq.fol.Predicate
-import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormalInstance
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Atom
-import io.github.kory33.guardedqueries.core.formalinstance.joins.SingleAtomMatching
-import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
-import com.google.common.collect.ImmutableList
-import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
+import scala.jdk.CollectionConverters._
 
 class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallAtom = GenFormula.genAtom(
@@ -32,7 +23,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_${index}", arity) }
     }
     predicateSet = predicates.toSet
-    instance <- GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet) 
+    instance <- GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet)
   } yield (predicateSet, instance)
 
   val genInstanceAndQuery: Gen[(FormalInstance[Constant], Atom)] =
@@ -40,7 +31,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       for {
         predicate <- Gen.oneOf(predicateSet)
         terms <- Gen.listOfN(predicate.getArity(), Gen.oneOf(GenFormula.genNumberedVariable(4), GenFormula.genConstant(4)))
-      } yield (instance, Atom.create(predicate, terms*))
+      } yield (instance, Atom.create(predicate, terms *))
     }
 
   "SingleAtomMatching.allMatches.materializeFunctionFreeAtom" should "only include formal facts having the same atom as query atom" in {
@@ -68,9 +59,9 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   it should "be idempotent" in {
     forAll(genInstanceAndQuery, minSuccessful(100)) { case (instance, query) =>
       val firstMatch = SingleAtomMatching
-          .allMatches(query, instance, c => c)
-          .materializeFunctionFreeAtom(query, c => c)
-      
+        .allMatches(query, instance, c => c)
+        .materializeFunctionFreeAtom(query, c => c)
+
       val secondMatch = SingleAtomMatching
         .allMatches(query, new FormalInstance(firstMatch), c => c)
         .materializeFunctionFreeAtom(query, c => c)
@@ -105,7 +96,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         .allMatches(atom, instanceContainingJustTheMaterializedAtom, c => c)
         .materializeFunctionFreeAtom(atom, c => c)
       val matchInstance = new FormalInstance(matches)
-      
+
       assert(matchInstance == instanceContainingJustTheMaterializedAtom)
     }
   }

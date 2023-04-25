@@ -1,8 +1,9 @@
-package io.github.kory33.guardedqueries.core.formalinstance.joins;
+package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
+import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Variable;

@@ -7,7 +7,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult;
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm;
-import io.github.kory33.guardedqueries.core.formalinstance.joins.SingleAtomMatching;
 import io.github.kory33.guardedqueries.core.utils.extensions.ImmutableMapExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions;
