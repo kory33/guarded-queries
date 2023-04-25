@@ -1,2 +1,2 @@
 rootProject.name = "guarded-queries"
-include(":app", ":lib", ":lib-test", ":guarded-saturation-wrapper")
+include(":app", ":lib", ":lib-unit-tests", ":guarded-saturation-wrapper")
