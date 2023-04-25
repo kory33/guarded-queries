@@ -1,10 +1,11 @@
 package io.github.kory33.guardedqueries.core.rewriting;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram;
-import io.github.kory33.guardedqueries.core.datalog.DatalogQuery;
+import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult;
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
@@ -276,7 +277,7 @@ public record GuardedRuleAndQueryRewriter(
     /**
      * Compute a Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
      */
-    public DatalogQuery rewrite(final Collection<? extends GTGD> rules, final ConjunctiveQuery query) {
+    public DatalogRewriteResult rewrite(final Collection<? extends GTGD> rules, final ConjunctiveQuery query) {
         final var initialSignature = FunctionFreeSignature.encompassingRuleQuery(rules, query);
         final var intentionalPredicatePrefix = StringSetExtensions.freshPrefix(
                 initialSignature.predicateNames(),
@@ -310,10 +311,14 @@ public record GuardedRuleAndQueryRewriter(
                 })
                 .toList();
 
-        final Predicate goalPredicate = Predicate.create(
+        final var deduplicatedQueryVariables =
+                ImmutableList.copyOf(ImmutableSet.copyOf(query.getFreeVariables()));
+
+        final var goalPredicate = Predicate.create(
                 intentionalPredicatePrefix + "_GOAL",
-                query.getFreeVariables().length
+                deduplicatedQueryVariables.size()
         );
+        final var goalAtom = Atom.create(goalPredicate, deduplicatedQueryVariables.toArray(Variable[]::new));
 
         // the rule to "join" all subquery results
         final TGD finalJoinRule;
@@ -327,9 +332,7 @@ public record GuardedRuleAndQueryRewriter(
             ).toArray(Atom[]::new);
 
             // ... to derive the final goal predicate
-            final var headAtom = Atom.create(goalPredicate, query.getFreeVariables());
-
-            finalJoinRule = TGD.create(bodyAtoms, new Atom[]{headAtom});
+            finalJoinRule = TGD.create(bodyAtoms, new Atom[]{goalAtom});
         }
 
         final var allRules = ImmutableSet
@@ -344,6 +347,6 @@ public record GuardedRuleAndQueryRewriter(
                 .add(finalJoinRule)
                 .build();
 
-        return new DatalogQuery(DatalogProgram.tryFromDependencies(allRules), goalPredicate);
+        return new DatalogRewriteResult(DatalogProgram.tryFromDependencies(allRules), goalAtom);
     }
 }
