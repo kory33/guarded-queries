@@ -9,7 +9,7 @@ repositories {
 dependencies {
     testImplementation("org.scala-lang:scala3-library_3:3.2.2")
     testImplementation("org.scalatestplus:scalacheck-1-17_3:3.2.15.0")
-    testImplementation("org.scalatest:scalatest-flatspec_3:3.2.15")
+    testImplementation("org.scalatest:scalatest-flatspec_3:3.3.0-SNAP4")
 
     testImplementation(project(":lib"))
     testImplementation(project(mapOf(
