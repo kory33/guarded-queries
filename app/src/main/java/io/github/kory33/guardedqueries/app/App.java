@@ -34,14 +34,14 @@ public class App {
         System.out.println("=========== Rewrite Result ===========");
         System.out.println("Goal: " + result.goal());
 
-        final var rulesWithoutIP0NI0 = result.program().rules().stream()
+        final var rulesWithoutIP0NI0 = result.subgoalAndGoalDerivationRules().rules().stream()
                 .filter(r -> Arrays.stream(r.getBodyAtoms()).noneMatch(a -> a.getPredicate().getName().equals("IP0_NI_0")))
                 .toList();
 
-        System.out.println("Rules without IP0_NI_0: ");
+        System.out.println("Goal rules without IP0_NI_0: ");
         rulesWithoutIP0NI0.forEach(r -> System.out.println("  " + formatRule(r)));
-        System.out.println("Rule size without IP0_NI_0: " + rulesWithoutIP0NI0.size());
-        System.out.println("Rule size: " + result.program().rules().size());
+        System.out.println("Goal rule size without IP0_NI_0: " + rulesWithoutIP0NI0.size());
+        System.out.println("Goal rule size: " + result.subgoalAndGoalDerivationRules().rules().size());
 
         System.out.println("Time taken: " + (endTime - startTime) / 1e6 + "ms");
     }
