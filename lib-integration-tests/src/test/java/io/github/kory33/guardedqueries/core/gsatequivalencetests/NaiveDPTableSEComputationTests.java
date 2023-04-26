@@ -106,7 +106,7 @@ public class NaiveDPTableSEComputationTests {
         );
     }
 
-    private FormalInstance<Constant> randomInstanceOver(
+    private FormalInstance<Constant> allFactsOver(
             final Predicate predicate,
             final ImmutableSet<Constant> constantsToUse
     ) {
@@ -121,8 +121,7 @@ public class NaiveDPTableSEComputationTests {
                         ImmutableList.copyOf(predicateArgIndices.stream().map(mapping::get).iterator())
                 ));
 
-        // randomly select 35% of the facts
-        return new FormalInstance<>(allFormalFacts.filter(fact -> Math.random() < 0.35).iterator());
+        return new FormalInstance<>(allFormalFacts.iterator());
     }
 
     private FormalInstance<Constant> randomInstanceOver(final FunctionFreeSignature signature) {
@@ -132,9 +131,16 @@ public class NaiveDPTableSEComputationTests {
                         .iterator()
         );
 
+        final var allFactsOverSignature =
+                signature.predicates().stream().flatMap(p -> allFactsOver(p, constantsToUse).facts.stream());
+
+        // we first decide a selection rate and use it as a threshold
+        // to filter out some of the tuples in the instance
+        final var selectionRate = Math.random();
+
         return new FormalInstance<>(
-                signature.predicates().stream()
-                        .flatMap(p -> randomInstanceOver(p, constantsToUse).facts.stream())
+                allFactsOverSignature
+                        .filter(fact -> Math.random() < selectionRate)
                         .iterator()
         );
     }
