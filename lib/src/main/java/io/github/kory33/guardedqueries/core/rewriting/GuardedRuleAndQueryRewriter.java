@@ -342,9 +342,8 @@ public record GuardedRuleAndQueryRewriter(
             finalJoinRule = TGD.create(bodyAtoms, new Atom[]{goalAtom});
         }
 
-        final var allRules = ImmutableSet
+        final var allDerivationRules = ImmutableSet
                 .<TGD>builder()
-                .addAll(saturatedRuleSet.saturatedRules)
                 .addAll(bvccRewriteResults
                         .stream()
                         .map(BoundVariableConnectedComponentRewriteResult::goalDerivationRules)
@@ -354,6 +353,10 @@ public record GuardedRuleAndQueryRewriter(
                 .add(finalJoinRule)
                 .build();
 
-        return new DatalogRewriteResult(DatalogProgram.tryFromDependencies(allRules), goalAtom);
+        return new DatalogRewriteResult(
+                DatalogProgram.tryFromDependencies(saturatedRuleSet.saturatedRules),
+                DatalogProgram.tryFromDependencies(allDerivationRules),
+                goalAtom
+        );
     }
 }

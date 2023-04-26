@@ -47,8 +47,19 @@ public class NaiveDPTableSEComputationTests {
         public FormalInstance<Constant> answersToOurRewriting(
                 final FormalInstance<Constant> testInstance
         ) {
-            final var saturatedInstance = new NaiveSaturationEngine()
-                    .saturateInstance(ourRewriting.program(), testInstance, c -> c);
+            final var saturationEngine = new NaiveSaturationEngine();
+
+            // We run the output program in two steps:
+            // We first derive all facts other than subgoal/goals (i.e. with input predicates),
+            // and then derive subgoal / goal facts in one go.
+            // This should be much more efficient than saturating with
+            // all output rules at once, since we can rather quickly saturate the base data with
+            // input rules (output of GSat being relatively small, and after having done that
+            // we only need to go through subgoal derivation rules once.
+            final var inputRuleSaturatedInstance = saturationEngine
+                    .saturateInstance(ourRewriting.inputRuleSaturationRules(), testInstance, c -> c);
+            final var saturatedInstance = saturationEngine
+                    .saturateInstance(ourRewriting.subgoalAndGoalDerivationRules(), inputRuleSaturatedInstance, c -> c);
 
             final var rewrittenGoalQuery = ConjunctiveQuery.create(
                     ourRewriting.goal().getVariables(),
@@ -136,7 +147,7 @@ public class NaiveDPTableSEComputationTests {
 
         // we first decide a selection rate and use it as a threshold
         // to filter out some of the tuples in the instance
-        final var selectionRate = Math.random();
+        final var selectionRate = Math.pow(Math.random(), 2.5);
 
         return new FormalInstance<>(
                 allFactsOverSignature
@@ -162,7 +173,9 @@ public class NaiveDPTableSEComputationTests {
                         "[" + Date.from(Instant.now()) + "] Test " + i + " passed, " +
                                 "input size = " + testInstance.facts.size() + ", " +
                                 "answer size = " + gsatAnswer.facts.size() + ", " +
-                                "input = " + testInstance
+                                "input = " + testInstance + ", " +
+                                "gsatAnswer = " + gsatAnswer + ", " +
+                                "ourAnswer = " + ourAnswer
                 );
             }
         }
