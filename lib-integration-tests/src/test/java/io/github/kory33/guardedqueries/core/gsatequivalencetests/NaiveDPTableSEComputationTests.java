@@ -109,10 +109,12 @@ public class NaiveDPTableSEComputationTests {
                 deduplicatedFreeVariablesInQuery.toArray(Variable[]::new)
         );
 
+        final var minimizedRewriting = outRewriting.minimizeSubgoalDerivationRulesBySimpleSubsumption();
+
         return new RewriteResultsToBeCompared(
                 gsatRewriting,
                 gsatQuery,
-                outRewriting,
+                minimizedRewriting,
                 answerAtom
         );
     }
@@ -196,11 +198,11 @@ public class NaiveDPTableSEComputationTests {
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery_0() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_0, 5);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_0, 100);
     }
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery_1() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_1, 7);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_1, 100);
     }
 }
