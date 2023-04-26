@@ -155,7 +155,8 @@ public class NaiveDPTableSEComputationTests {
                 System.out.println(
                         "[" + Date.from(Instant.now()) + "] Test " + i + " passed, " +
                                 "input size = " + testInstance.facts.size() + ", " +
-                                "answer size = " + gsatAnswer.facts.size()
+                                "answer size = " + gsatAnswer.facts.size() + ", " +
+                                "input = " + testInstance
                 );
             }
         }
