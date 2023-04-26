@@ -47,7 +47,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
             )
     );
 
-    public static final GTGDRuleAndGTGDReducibleQuery simpleQuery_0_existentialJoinQuery = new GTGDRuleAndGTGDReducibleQuery(
+    public static final GTGDRuleAndGTGDReducibleQuery simpleQuery_0_existentialJoinQuery_0 = new GTGDRuleAndGTGDReducibleQuery(
             simpleRule_0,
             new GTGDReducibleConjunctiveQuery(
                     conjunctiveQuery.parse("EE y,z. R(w, y), R(y, z)"),
@@ -56,6 +56,18 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
                             gtgd.parse("R(w, y), I(y) -> Goal(w)")
                     ),
                     conjunctiveQuery.parse("Goal(w)")
+            )
+    );
+
+    public static final GTGDRuleAndGTGDReducibleQuery simpleQuery_0_existentialJoinQuery_1 = new GTGDRuleAndGTGDReducibleQuery(
+            simpleRule_0,
+            new GTGDReducibleConjunctiveQuery(
+                    conjunctiveQuery.parse("EE y,z. R(y, t), R(t, w), R(w, z), U(z)"),
+                    ImmutableList.of(
+                            gtgd.parse("R(y, t) -> I_1(t)"),
+                            gtgd.parse("R(w, z), U(z) -> I_2(w)")
+                    ),
+                    conjunctiveQuery.parse("I_1(t), R(t, w), I_2(w)")
             )
     );
 }

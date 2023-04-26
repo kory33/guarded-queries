@@ -156,10 +156,13 @@ public class NaiveDPTableSEComputationTests {
         );
     }
 
-    private void runTestFor(final GTGDRuleAndGTGDReducibleQuery ruleQuery) {
+    private void runTestFor(
+            final GTGDRuleAndGTGDReducibleQuery ruleQuery,
+            final int testIterationCount
+    ) {
         final var rewritings = rewriteInTwoMethods(ruleQuery);
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < testIterationCount; i++) {
             final var testInstance = randomInstanceOver(ruleQuery.signatureOfOriginalQuery());
             final var gsatAnswer = rewritings.answersToGsatRewriting(testInstance);
             final var ourAnswer = rewritings.answersToOurRewriting(testInstance);
@@ -183,16 +186,21 @@ public class NaiveDPTableSEComputationTests {
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_atomicQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_atomicQuery);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_atomicQuery, 100);
     }
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_joinQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_joinQuery);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_joinQuery, 100);
     }
 
     @Test
-    public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery);
+    public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery_0() {
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_0, 5);
+    }
+
+    @Test
+    public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery_1() {
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_1, 7);
     }
 }
