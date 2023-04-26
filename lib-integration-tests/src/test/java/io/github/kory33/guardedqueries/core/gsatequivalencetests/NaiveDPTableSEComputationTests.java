@@ -188,21 +188,21 @@ public class NaiveDPTableSEComputationTests {
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_atomicQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_atomicQuery, 100);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_atomicQuery, 1000);
     }
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_joinQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_joinQuery, 100);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_joinQuery, 1000);
     }
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery_0() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_0, 100);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_0, 300);
     }
 
     @Test
     public void testEquivalenceOn__simpleQuery_0_existentialJoinQuery_1() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_1, 100);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.simpleQuery_0_existentialJoinQuery_1, 300);
     }
 }

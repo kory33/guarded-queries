@@ -39,16 +39,19 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
     private final class DPTable {
         private final HashMap<SubqueryEntailmentInstance, Boolean> table = new HashMap<>();
         private final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet;
-        private final FunctionFreeSignature folSignature;
+        private final FunctionFreeSignature extensionalSignature;
+        private final int maxArityOfAllPredicatesUsedInRules;
         private final ConjunctiveQuery connectedConjunctiveQuery;
 
         public DPTable(
                 final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,
-                final FunctionFreeSignature folSignature,
+                final FunctionFreeSignature extensionalSignature,
+                final int maxArityOfAllPredicatesUsedInRules,
                 final ConjunctiveQuery connectedConjunctiveQuery
         ) {
             this.saturatedRuleSet = saturatedRuleSet;
-            this.folSignature = folSignature;
+            this.extensionalSignature = extensionalSignature;
+            this.maxArityOfAllPredicatesUsedInRules = maxArityOfAllPredicatesUsedInRules;
             this.connectedConjunctiveQuery = connectedConjunctiveQuery;
         }
 
@@ -68,7 +71,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             final var shortcutChaseOneStep = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) -> {
                 final var localNamesUsableInChildren = ImmutableList.copyOf(
                         SetLikeExtensions.difference(
-                                IntStream.range(0, folSignature.maxArity() * 2)
+                                IntStream.range(0, maxArityOfAllPredicatesUsedInRules * 2)
                                         .mapToObj(LocalInstanceTerm.LocalName::new)
                                         .toList(),
                                 instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
@@ -145,7 +148,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                 LocalInstanceTerm.RuleConstant::new
                         );
 
-                        return Stream.of(childInstance);
+                        // we only need to keep chasing with extensional signature
+                        return Stream.of(childInstance.restrictToSignature(extensionalSignature));
                     });
                 };
 
@@ -309,24 +313,30 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
     }
 
     private static Stream<FormalInstance<LocalInstanceTerm>> allLocalInstances(
-            final FunctionFreeSignature signature,
+            final FunctionFreeSignature extensionalSignature,
             final ImmutableSet<Constant> ruleConstants
     ) {
-        final var maxArity = signature.maxArity();
+        final var maxArityOfExtensionalSignature = extensionalSignature.maxArity();
         final var ruleConstantsAsLocalTerms = ImmutableSet.copyOf(
                 ruleConstants.stream().map(LocalInstanceTerm.RuleConstant::new).iterator()
         );
 
+        // We need to consider sufficiently large collection of set of active local names.
+        // As it is sufficient to check subquery entailments for all guarded instance
+        // over the extensional signature, and the extensional signature has
+        // maxArityOfExtensionalSignature as the maximal arity, we only need to
+        // consider a powerset of {0, ..., 2 * maxArityOfExtensionalSignature - 1}
+        // with size at most maxArityOfExtensionalSignature.
         final var allActiveLocalNames = SetLikeExtensions
-                .powerset(IntStream.range(0, maxArity * 2).boxed().toList())
-                .filter(localNameSet -> localNameSet.size() <= maxArity);
+                .powerset(IntStream.range(0, maxArityOfExtensionalSignature * 2).boxed().toList())
+                .filter(localNameSet -> localNameSet.size() <= maxArityOfExtensionalSignature);
 
         return allActiveLocalNames.flatMap(localNameSet -> {
             final var localNames = ImmutableSet.copyOf(
                     localNameSet.stream().map(LocalInstanceTerm.LocalName::new).iterator()
             );
             final var allLocalInstanceTerms = SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms);
-            final var predicateList = signature.predicates().stream().toList();
+            final var predicateList = extensionalSignature.predicates().stream().toList();
 
             final Function<Predicate, Iterable<FormalInstance<LocalInstanceTerm>>> allLocalInstancesOverThePredicate = predicate -> {
                 final var predicateParameterIndices = IntStream.range(0, predicate.getArity()).boxed().toList();
@@ -367,7 +377,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
     }
 
     private static Stream<SubqueryEntailmentInstance> allWellFormedSubqueryEntailmentInstancesFor(
-            final FunctionFreeSignature signature,
+            final FunctionFreeSignature extensionalSignature,
             final ImmutableSet<Constant> ruleConstants,
             final ConjunctiveQuery conjunctiveQuery
     ) {
@@ -375,7 +385,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         final var queryExistentialVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables());
 
         return allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(ruleConstantWitnessGuess ->
-                allLocalInstances(signature, ruleConstants).flatMap(localInstance -> {
+                allLocalInstances(extensionalSignature, ruleConstants).flatMap(localInstance -> {
                     final var allCoexistentialVariableSets = SetLikeExtensions
                             .powerset(queryExistentialVariables)
                             .filter(variableSet -> !variableSet.isEmpty())
@@ -425,13 +435,21 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
     @Override
     public Stream<SubqueryEntailmentInstance> apply(
+            final FunctionFreeSignature extensionalSignature,
             final SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,
-            final ConjunctiveQuery connectedConjunctiveQuery) {
-        final var signature =
-                FunctionFreeSignature.encompassingRuleQuery(saturatedRuleSet.allRules, connectedConjunctiveQuery);
+            final ConjunctiveQuery connectedConjunctiveQuery
+    ) {
         final var ruleConstants = saturatedRuleSet.constants();
+        final var maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature
+                .encompassingRuleQuery(saturatedRuleSet.allRules, connectedConjunctiveQuery)
+                .maxArity();
 
-        final var dpTable = new DPTable(saturatedRuleSet, signature, connectedConjunctiveQuery);
+        final var dpTable = new DPTable(
+                saturatedRuleSet,
+                extensionalSignature,
+                maxArityOfAllPredicatesUsedInRules,
+                connectedConjunctiveQuery
+        );
 
         // NOTE:
         //   This algorithm is massively inefficient as-is.
@@ -472,7 +490,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //     - efficiently matching a problem instance to other subsuming instances using indexing techniques
         //    which we shall explore in another implementation.
         allWellFormedSubqueryEntailmentInstancesFor(
-                signature,
+                extensionalSignature,
                 ruleConstants,
                 connectedConjunctiveQuery
         ).forEach(dpTable::fillTableUpto);

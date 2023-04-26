@@ -196,6 +196,7 @@ public record GuardedRuleAndQueryRewriter(
      * </ol>
      */
     private BoundVariableConnectedComponentRewriteResult rewriteBoundVariableConnectedComponent(
+            final FunctionFreeSignature extensionalSignature,
             final SaturatedRuleSet<? extends NormalGTGD> saturatedRules,
             final /* bound-variable-connected */ ConjunctiveQuery boundVariableConnectedQuery,
             final String intentionalPredicatePrefix
@@ -220,7 +221,7 @@ public record GuardedRuleAndQueryRewriter(
 
         final Collection<DatalogRule> subgoalDerivationRules =
                 subqueryEntailmentComputation
-                        .apply(saturatedRules, boundVariableConnectedQuery)
+                        .apply(extensionalSignature, saturatedRules, boundVariableConnectedQuery)
                         .map(subqueryEntailment -> subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms))
                         .toList();
 
@@ -285,9 +286,13 @@ public record GuardedRuleAndQueryRewriter(
      * Compute a Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
      */
     public DatalogRewriteResult rewrite(final Collection<? extends GTGD> rules, final ConjunctiveQuery query) {
-        final var initialSignature = FunctionFreeSignature.encompassingRuleQuery(rules, query);
+        // Set of predicates that may appear in the input database.
+        // Any predicate not in this signature can be considered as intentional predicates
+        // and may be ignored in certain cases, such as when generating "test" instances.
+        final var extensionalSignature = FunctionFreeSignature.encompassingRuleQuery(rules, query);
+
         final var intentionalPredicatePrefix = StringSetExtensions.freshPrefix(
-                initialSignature.predicateNames(),
+                extensionalSignature.predicateNames(),
                 // stands for Intentional Predicates
                 "IP"
         );
@@ -311,6 +316,7 @@ public record GuardedRuleAndQueryRewriter(
                             intentionalPredicatePrefix + "_SQ" + pair.getRight();
 
                     return this.rewriteBoundVariableConnectedComponent(
+                            extensionalSignature,
                             saturatedRuleSet,
                             maximallyConnectedSubquery,
                             subqueryIntentionalPredicatePrefix

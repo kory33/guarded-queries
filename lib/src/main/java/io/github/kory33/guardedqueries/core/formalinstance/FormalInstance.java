@@ -2,6 +2,7 @@ package io.github.kory33.guardedqueries.core.formalinstance;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Term;
@@ -50,9 +51,15 @@ public class FormalInstance<TermAlphabet> {
     public FormalInstance<TermAlphabet> restrictToAlphabetsWith(final Predicate<TermAlphabet> predicate) {
         return fromIterator(
                 this.facts.stream()
-                        .filter(fact ->
-                                fact.appliedTerms().stream().allMatch(predicate)
-                        )
+                        .filter(fact -> fact.appliedTerms().stream().allMatch(predicate))
+                        .iterator()
+        );
+    }
+
+    public FormalInstance<TermAlphabet> restrictToSignature(final FunctionFreeSignature signature) {
+        return fromIterator(
+                this.facts.stream()
+                        .filter(fact -> signature.predicates().contains(fact.predicate()))
                         .iterator()
         );
     }

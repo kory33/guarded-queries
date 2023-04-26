@@ -1,10 +1,10 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments;
 
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 /**
@@ -104,9 +104,11 @@ import java.util.stream.Stream;
  *  </li>
  * </ol>
  */
-public interface SubqueryEntailmentComputation extends BiFunction<
-        SaturatedRuleSet<? extends NormalGTGD>,
-        /* bound-variable-connected */ ConjunctiveQuery,
-        Stream<SubqueryEntailmentInstance>
-        > {
+@FunctionalInterface
+public interface SubqueryEntailmentComputation {
+    Stream<SubqueryEntailmentInstance> apply(
+            FunctionFreeSignature extensionalSignature,
+            SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,
+            ConjunctiveQuery boundVariableConnectedQuery
+    );
 }
