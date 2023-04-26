@@ -10,8 +10,8 @@ import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions;
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions;
 import uk.ac.ox.cs.pdq.fol.Constant;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.function.Function;
 
 /**
@@ -29,7 +29,7 @@ public class NaiveSaturationEngine implements DatalogSaturationEngine {
             final Function<Constant, TA> includeConstantsToTA
     ) {
         final var inputInstance = new FormalInstance<>(facts);
-        final var producedFacts = new ArrayList<FormalFact<TA>>();
+        final var producedFacts = new HashSet<FormalFact<TA>>();
         final var joinAlgorithm = new FilterNestedLoopJoin<>(includeConstantsToTA);
 
         for (final var rule : program.rules()) {
