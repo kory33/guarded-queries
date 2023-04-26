@@ -10,3 +10,8 @@ dependencies {
     )))
     testImplementation("org.javafp:parsecj:0.6")
 }
+
+tasks.test {
+    maxHeapSize = "10240m"
+    workingDir = rootProject.projectDir
+}
