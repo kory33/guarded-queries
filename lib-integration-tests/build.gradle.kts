@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 plugins {
     id("io.github.kory33.guardedqueries.java-library-conventions")
 }
@@ -14,4 +16,8 @@ dependencies {
 tasks.test {
     maxHeapSize = "10240m"
     workingDir = rootProject.projectDir
+
+    testLogging {
+        events = setOf(TestLogEvent.STANDARD_OUT)
+    }
 }
