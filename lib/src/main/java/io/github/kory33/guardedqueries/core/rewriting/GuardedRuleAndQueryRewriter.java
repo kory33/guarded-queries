@@ -8,6 +8,7 @@ import io.github.kory33.guardedqueries.core.datalog.DatalogProgram;
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult;
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
+import io.github.kory33.guardedqueries.core.fol.LocalVariableContext;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
@@ -69,6 +70,12 @@ public record GuardedRuleAndQueryRewriter(
         final var localInstance = subqueryEntailment.localInstance();
         final var queryConstantEmbeddingInverse = subqueryEntailment.queryConstantEmbedding().inverse();
 
+        // We prepare a variable context that is closed within the rule
+        // we are about to generate. This is essential to reduce the memory usage
+        // of generated rule set, because this way we are more likely to
+        // generate identical atoms which can be cached.
+        final var ruleLocalVariableContext = new LocalVariableContext("x_");
+
         final var activeLocalNames = localInstance.getActiveTerms().stream().flatMap(t -> {
             if (t instanceof LocalInstanceTerm.LocalName) {
                 return Stream.of((LocalInstanceTerm.LocalName) t);
@@ -88,7 +95,7 @@ public record GuardedRuleAndQueryRewriter(
         {
             final var unificationMapBuilder = ImmutableMap.<Variable, Variable>builder();
             for (final var equivalenceClass : neighbourhoodPreimages.values()) {
-                final var unifiedVariable = Variable.getFreshVariable();
+                final var unifiedVariable = ruleLocalVariableContext.getFreshVariable();
                 for (final var variable : equivalenceClass) {
                     unificationMapBuilder.put(variable, unifiedVariable);
                 }
@@ -112,7 +119,7 @@ public record GuardedRuleAndQueryRewriter(
                                 } else {
                                     // the local name is bound neither to a query constant nor
                                     // query-bound variable, so we assign a fresh variable to it
-                                    return Variable.getFreshVariable();
+                                    return ruleLocalVariableContext.getFreshVariable();
                                 }
                             } else {
                                 // the contract of SubqueryEntailmentComputation guarantees that
