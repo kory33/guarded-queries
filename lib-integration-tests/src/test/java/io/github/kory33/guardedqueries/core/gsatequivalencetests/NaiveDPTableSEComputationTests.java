@@ -11,6 +11,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
 import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.NaiveDPTableSEComputation;
+import io.github.kory33.guardedqueries.core.subsumption.datalog.MinimalBodyDatalogRuleSet;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQuery;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQueryTestCases;
 import io.github.kory33.guardedqueries.core.utils.MappingStreams;
@@ -109,7 +110,8 @@ public class NaiveDPTableSEComputationTests {
                 deduplicatedFreeVariablesInQuery.toArray(Variable[]::new)
         );
 
-        final var minimizedRewriting = outRewriting.minimizeSubgoalDerivationRulesBySimpleSubsumption();
+        final var minimizedRewriting = outRewriting
+                .minimizeSubgoalDerivationRulesUsing(MinimalBodyDatalogRuleSet::new);
 
         return new RewriteResultsToBeCompared(
                 gsatRewriting,
