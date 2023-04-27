@@ -24,6 +24,12 @@ public record DatalogRewriteResult(
 ) {
     /**
      * Optimize the set of subgoal derivation rules by removing rules that are subsumed by other rules.
+     * <p>
+     * It is recommended to apply multiple optimization passes,
+     * with the most efficient and the coarsest (i.e. the one that concludes
+     * the least number of subsumption relations) subsumption rule
+     * applied at the beginning so that we can minimize the total cost of minimization
+     * and maximize the effect of the optimization.
      */
     public <S extends MaximalDatalogRuleSet> DatalogRewriteResult minimizeSubgoalDerivationRulesUsing(
             final MaximalDatalogRuleSet.Factory<S> maximalDatalogRuleSetFactory
