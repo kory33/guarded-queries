@@ -5,6 +5,9 @@ import uk.ac.ox.cs.gsat.GTGD;
 
 import java.util.Collection;
 
+/**
+ * A test case containing GTGD rules and a GTGD-reducible query.
+ */
 public record GTGDRuleAndGTGDReducibleQuery(
         Collection<? extends GTGD> guardedRules,
         GTGDReducibleConjunctiveQuery reducibleQuery

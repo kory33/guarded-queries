@@ -6,7 +6,7 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 import java.util.Collection;
 
 /**
- * A conjunctive query that can be "GYO-reduced" to an atomic query with help
+ * A conjunctive query that can be "GTGD-reduced" to an atomic query with help
  * of additional GTGD rules.
  * <p>
  * An object of this class has the reduced query (and additional rules)
@@ -32,10 +32,10 @@ import java.util.Collection;
  * </pre>
  * equivalent to {@code Q_1} and hence {@code Q_0}.
  * <p>
- * Now that all existential variables
- * are eliminated from the query, GSat is able to Datalog-saturate the
- * rule (plus the additional two rules deducing {@code I_1} and {@code I_2}),
- * allowing us to extract all answers to {@code w} in {@code Q_0}.
+ * Now that all existential variables are eliminated from the query,
+ * GSat is able to Datalog-saturate the rule (plus the additional two rules
+ * deducing {@code I_1} and {@code I_2}), allowing us to extract all answers
+ * to {@code w} in {@code Q_0}.
  */
 public record GTGDReducibleConjunctiveQuery(
         ConjunctiveQuery originalQuery,
