@@ -87,6 +87,7 @@ public record GSatEquivalenceTestHarness(AbstractSaturation<? extends GTGD> gsat
     ) {
         logWithTime("Rewriting " + ruleQuery.reducibleQuery().originalQuery());
 
+        final var gsatRewritingStart = System.nanoTime();
         final var gsatRewriting = DatalogProgram.tryFromDependencies(
                 gsatImplementation.run(
                         ImmutableList.<Dependency>builder()
@@ -97,12 +98,13 @@ public record GSatEquivalenceTestHarness(AbstractSaturation<? extends GTGD> gsat
         );
         final var gsatQuery = ruleQuery.reducibleQuery().existentialFreeQuery();
 
-        logWithTime("Done Gsat rewriting");
+        logWithTime("Done Gsat rewriting in " + (System.nanoTime() - gsatRewritingStart) + " ns");
 
+        final var ourRewritingStart = System.nanoTime();
         final var ourRewriting = rewriterToBeTested
                 .rewrite(ruleQuery.guardedRules(), ruleQuery.reducibleQuery().originalQuery());
 
-        logWithTime("Done guarded-query rewriting");
+        logWithTime("Done guarded-query rewriting in " + (System.nanoTime() - ourRewritingStart) + " ns");
         logWithTime("# of subgoal derivation rules in original output: " +
                 ourRewriting.subgoalAndGoalDerivationRules().rules().size());
 
