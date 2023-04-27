@@ -14,6 +14,11 @@ import java.util.Arrays;
  * bound-variable-connected components. The decomposition consists of bound-variable-free atoms
  * and maximally bound-variable-connected subqueries.
  * <p>
+ * The query input to the {@link GuardedRuleAndQueryRewriter} is first "split" into
+ * bound-variable-connected components using this class, whose components are
+ * rewritten separately and then combined (by the "subgoal binding rule") to
+ * derive the final goal atom.
+ * <p>
  * For example, given a conjunctive query {@code ∃x,y,z. U(c) ∧ U(w) ∧ U(x) ∧ R(x,w) ∧ T(z,c,w) ∧ R(y,z)}
  * with a free variable {@code w} and a constant {@code c},
  * <ul>

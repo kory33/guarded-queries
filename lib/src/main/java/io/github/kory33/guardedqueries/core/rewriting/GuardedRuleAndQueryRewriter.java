@@ -23,10 +23,33 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+/**
+ * The algorithm to compute the Datalog program that is equivalent to the
+ * given set of guarded rules and the given conjunctive query.
+ * <p>
+ * Each object of this class makes use of a {@link AbstractSaturation} from
+ * Guarded-Saturation and a {@link SubqueryEntailmentComputation} object.
+ * The former is used to compute the guarded saturation of the given guarded rules,
+ * and the latter is used to compute the entailment relation of "small test instances"
+ * to subqueries of the given query.
+ * <p>
+ * We convert each outcome of {@link SubqueryEntailmentComputation} into a
+ * Datalog rule deriving a "subgoal", which is then combined into the final
+ * goal predicate using what we call the "subgoal binding rule".
+ * <p>
+ * Depending on the implementation of the {@link SubqueryEntailmentComputation} used,
+ * the outcome of the rewriting could be huge, so it is highly recommended to
+ * "minimize" the outcome using {@link DatalogRewriteResult#minimizeSubgoalDerivationRulesUsing}
+ * before running the output program on a database instance.
+ */
 public record GuardedRuleAndQueryRewriter(
         AbstractSaturation<? extends GTGD> saturation,
         SubqueryEntailmentComputation subqueryEntailmentComputation
 ) {
+    /**
+     * A result of rewriting a single maximally bound-variable-connected component of the
+     * input query.
+     */
     private record BoundVariableConnectedComponentRewriteResult(
             Atom goalAtom,
             ImmutableCollection<? extends DatalogRule> goalDerivationRules
@@ -334,7 +357,7 @@ public record GuardedRuleAndQueryRewriter(
         final var goalAtom = Atom.create(goalPredicate, deduplicatedQueryVariables.toArray(Variable[]::new));
 
         // the rule to "join" all subquery results
-        final TGD finalJoinRule;
+        final TGD subgoalBindingRule;
         {
             // we have to join all of
             //  - bound-variable-free atoms
@@ -345,7 +368,7 @@ public record GuardedRuleAndQueryRewriter(
             ).toArray(Atom[]::new);
 
             // ... to derive the final goal predicate
-            finalJoinRule = TGD.create(bodyAtoms, new Atom[]{goalAtom});
+            subgoalBindingRule = TGD.create(bodyAtoms, new Atom[]{goalAtom});
         }
 
         final var allDerivationRules = ImmutableSet
@@ -356,7 +379,7 @@ public record GuardedRuleAndQueryRewriter(
                         .flatMap(Collection::stream)
                         .toList()
                 )
-                .add(finalJoinRule)
+                .add(subgoalBindingRule)
                 .build();
 
         return new DatalogRewriteResult(
