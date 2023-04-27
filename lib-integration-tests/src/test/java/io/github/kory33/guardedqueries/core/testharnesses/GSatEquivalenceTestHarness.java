@@ -142,15 +142,15 @@ public record GSatEquivalenceTestHarness(AbstractSaturation<? extends GTGD> gsat
      * the equivalent Datalog rewritings on the given {@link GTGDRuleAndGTGDReducibleQuery}.
      * <p>
      * The test is repeatedly performed on randomly generated database instances
-     * (with the number of test rounds being specified by {@code testInstanceGenerationCount}).
+     * (with the number of test rounds being specified by {@code instanceGenerationRoundCount}).
      */
-    public void runTestOn(
+    public void checkThatGSatAndTheRewriterAgreeOn(
             final GTGDRuleAndGTGDReducibleQuery ruleQuery,
-            final int testInstanceGenerationCount
+            final int instanceGenerationRoundCount
     ) {
         final var rewritings = rewriteInTwoMethods(ruleQuery);
 
-        for (int i = 0; i < testInstanceGenerationCount; i++) {
+        for (int i = 0; i < instanceGenerationRoundCount; i++) {
             final var testInstance = randomInstanceOver(ruleQuery.signatureOfOriginalQuery());
 
             final var gsatAnswer = rewritings.answersWithGsatRewriting(testInstance);
