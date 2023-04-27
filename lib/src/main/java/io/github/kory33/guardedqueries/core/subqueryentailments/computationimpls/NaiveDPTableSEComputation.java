@@ -411,7 +411,10 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                         );
 
                         return allLocalWitnessGuesses.flatMap(localWitnessGuess -> {
-                            final var subqueryConstants = ConjunctiveQueryExtensions.constantsIn(relevantSubquery);
+                            final var subqueryConstants = SetLikeExtensions.difference(
+                                    ConjunctiveQueryExtensions.constantsIn(relevantSubquery),
+                                    ruleConstants
+                            );
                             final var nonWitnessingActiveLocalNames = SetLikeExtensions.difference(
                                     localInstance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class),
                                     localWitnessGuess.values()
