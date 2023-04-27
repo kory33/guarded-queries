@@ -28,7 +28,7 @@ public class FormulaParsers {
     //               the parsing context does not judge as constant>
     //
     // terms ::= term | term ',' terms
-    // atom ::= predicate '(' terms ')'
+    // atom ::= predicate '()' | predicate '(' terms ')'
     // atoms ::= atom | atom ',' atoms
     // variables ::= variable | variable ',' variables
 
