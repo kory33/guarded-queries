@@ -24,7 +24,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
     private static final FormulaParsers.WhitespaceIgnoringParser<GTGD> gtgd =
             new FormulaParsers.WhitespaceIgnoringParser<>(FormulaParsers.gtgdParser(commonParsingContext));
 
-    // A rule set together with queries, adapted from
+    // An arity-2 rule set together with queries, adapted from
     // https://github.com/KRR-Oxford/Guarded-saturation/blob/bde32223ae4bc8ce084d233e7eede5ed1021adc7/src/test/java/uk/ac/ox/cs/gsat/SimpleSatTest.java#L49-L51
     public static class SimpleArity2Rule_0 {
         public static final ImmutableList<GTGD> rule = ImmutableList.of(
@@ -87,7 +87,46 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
         );
     }
 
-    // A rule set together with queries, adapted from
+    // A rule set containing constants together with queries
+    public static class ConstantRule {
+        public static final ImmutableList<GTGD> rule = ImmutableList.of(
+                gtgd.parse("R(x_1, c_1) -> EE y_1. R(c_1, y_1), R(y_1, x_1)"),
+                gtgd.parse("R(c_1, x_1) -> R(x_1, c_1), P(x_1)")
+        );
+
+        public static final GTGDRuleAndGTGDReducibleQuery atomicQuery = new GTGDRuleAndGTGDReducibleQuery(
+                rule,
+                new GTGDReducibleConjunctiveQuery(
+                        conjunctiveQuery.parse("R(c_3, x)"),
+                        ImmutableList.of(),
+                        conjunctiveQuery.parse("R(c_3, x)")
+                )
+        );
+
+        public static final GTGDRuleAndGTGDReducibleQuery existentialBooleanQueryWithConstant = new GTGDRuleAndGTGDReducibleQuery(
+                rule,
+                new GTGDReducibleConjunctiveQuery(
+                        conjunctiveQuery.parse("EE y. R(c_3, y)"),
+                        ImmutableList.of(
+                                gtgd.parse("R(c_3, y) -> Goal()")
+                        ),
+                        conjunctiveQuery.parse("Goal()")
+                )
+        );
+
+        public static final GTGDRuleAndGTGDReducibleQuery existentialGuardedWithConstant = new GTGDRuleAndGTGDReducibleQuery(
+                rule,
+                new GTGDReducibleConjunctiveQuery(
+                        conjunctiveQuery.parse("EE y. R(c_1, y), R(y, w), R(w, c_3)"),
+                        ImmutableList.of(
+                                gtgd.parse("R(c_1, y), R(y, w), R(w, c_3) -> Goal(w)")
+                        ),
+                        conjunctiveQuery.parse("Goal(w)")
+                )
+        );
+    }
+
+    // An arity-4 rule set together with queries, adapted from
     // https://github.com/KRR-Oxford/Guarded-saturation/blob/bde32223ae4bc8ce084d233e7eede5ed1021adc7/src/test/java/uk/ac/ox/cs/gsat/SimpleSatTest.java#L81-L83
     public static class Arity4Rule {
         public static final ImmutableList<GTGD> higherArityRule_0 = ImmutableList.of(

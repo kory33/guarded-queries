@@ -218,4 +218,19 @@ public class NaiveDPTableSEComputationTests {
     public void testEquivalenceOn__Arity4Rule__atomicQuery() {
         runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.Arity4Rule.atomicQuery, 30);
     }
+
+    @Test
+    public void testEquivalenceOn__ConstantRule__atomicQuery() {
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.atomicQuery, 1000);
+    }
+
+    @Test
+    public void testEquivalenceOn__ConstantRule__existentialBooleanQueryWithConstant() {
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.existentialBooleanQueryWithConstant, 1000);
+    }
+
+    @Test
+    public void testEquivalenceOn__ConstantRule__existentialGuardedWithConstant() {
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.existentialGuardedWithConstant, 200);
+    }
 }
