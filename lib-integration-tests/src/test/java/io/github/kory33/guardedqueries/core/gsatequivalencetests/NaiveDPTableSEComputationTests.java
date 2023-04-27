@@ -11,8 +11,8 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
 import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.NaiveDPTableSEComputation;
-import io.github.kory33.guardedqueries.core.subsumption.datalog.MinimalExactBodyDatalogRuleSet;
-import io.github.kory33.guardedqueries.core.subsumption.datalog.MinimallyUnifiedDatalogRuleSet;
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet;
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQuery;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQueryTestCases;
 import io.github.kory33.guardedqueries.core.utils.MappingStreams;
@@ -99,6 +99,8 @@ public class NaiveDPTableSEComputationTests {
         ).rewrite(ruleQuery.guardedRules(), ruleQuery.reducibleQuery().originalQuery());
 
         System.out.println("[" + Date.from(Instant.now()) + "] Done guarded-query rewriting");
+        System.out.println("[" + Date.from(Instant.now()) + "] # of subgoal derivation rules in original output: " +
+                ourRewriting.subgoalAndGoalDerivationRules().rules().size());
 
         final var deduplicatedFreeVariablesInQuery = ImmutableList.copyOf(ImmutableSet.copyOf(ruleQuery
                 .reducibleQuery()
@@ -111,9 +113,17 @@ public class NaiveDPTableSEComputationTests {
                 deduplicatedFreeVariablesInQuery.toArray(Variable[]::new)
         );
 
-        final var minimizedRewriting = ourRewriting
-                .minimizeSubgoalDerivationRulesUsing(MinimalExactBodyDatalogRuleSet::new)
+        final var minimalExactBodyMinimizedRewriting = ourRewriting
+                .minimizeSubgoalDerivationRulesUsing(MinimalExactBodyDatalogRuleSet::new);
+
+        System.out.println("[" + Date.from(Instant.now()) + "] # of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " +
+                minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
+
+        final var minimizedRewriting = minimalExactBodyMinimizedRewriting
                 .minimizeSubgoalDerivationRulesUsing(MinimallyUnifiedDatalogRuleSet::new);
+
+        System.out.println("[" + Date.from(Instant.now()) + "] # of subgoal derivation rules in minimizedRewriting: " +
+                minimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
 
         return new RewriteResultsToBeCompared(
                 gsatRewriting,
@@ -184,10 +194,7 @@ public class NaiveDPTableSEComputationTests {
                 System.out.println(
                         "[" + Date.from(Instant.now()) + "] Test " + i + " passed, " +
                                 "input size = " + testInstance.facts.size() + ", " +
-                                "answer size = " + gsatAnswer.facts.size() + ", " +
-                                "input = " + testInstance + ", " +
-                                "gsatAnswer = " + gsatAnswer + ", " +
-                                "ourAnswer = " + ourAnswer
+                                "answer size = " + gsatAnswer.facts.size()
                 );
             }
         }

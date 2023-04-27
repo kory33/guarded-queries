@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.subsumption.datalog;
+package io.github.kory33.guardedqueries.core.subsumption.formula;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 /**
- * An implementation of {@link MaximalDatalogRuleSet} that keeps track of
+ * An implementation of {@link MaximallySubsumingTGDSet} that keeps track of
  * a set of datalog rules which are "maximal" with respect to the following subsumption relation:
  * <p>
  * A rule R1 subsumes a rule R2 (according to this implementation) if
@@ -37,7 +37,7 @@ import java.util.HashSet;
  * (considered as a formal instance of constants and variables) and then
  * materializing the head of {@code A} to check the supset condition.
  */
-public class MinimallyUnifiedDatalogRuleSet implements MaximalDatalogRuleSet {
+public class MinimallyUnifiedDatalogRuleSet implements MaximallySubsumingTGDSet<DatalogRule> {
     private final HashSet<DatalogRule> rulesKnownToBeMaximalSoFar = new HashSet<>();
 
     private sealed interface VariableOrConstant {

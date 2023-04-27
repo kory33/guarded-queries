@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.datalog;
 
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
-import io.github.kory33.guardedqueries.core.subsumption.datalog.MaximalDatalogRuleSet;
+import io.github.kory33.guardedqueries.core.subsumption.formula.MaximallySubsumingTGDSet;
 import uk.ac.ox.cs.pdq.fol.Atom;
 
 /**
@@ -31,8 +31,8 @@ public record DatalogRewriteResult(
      * applied at the beginning so that we can minimize the total cost of minimization
      * and maximize the effect of the optimization.
      */
-    public <S extends MaximalDatalogRuleSet> DatalogRewriteResult minimizeSubgoalDerivationRulesUsing(
-            final MaximalDatalogRuleSet.Factory<S> maximalDatalogRuleSetFactory
+    public <S extends MaximallySubsumingTGDSet<DatalogRule>> DatalogRewriteResult minimizeSubgoalDerivationRulesUsing(
+            final MaximallySubsumingTGDSet.Factory<DatalogRule, S> maximalDatalogRuleSetFactory
     ) {
         final var maximalRuleSet = maximalDatalogRuleSetFactory.emptyRuleSet();
         for (DatalogRule rule : this.subgoalAndGoalDerivationRules.rules()) {
