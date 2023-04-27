@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
@@ -9,7 +8,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions;
 
 import java.util.Arrays;
-import java.util.HashSet;
 
 /**
  * An implementation of {@link MaximallySubsumingTGDSet} that keeps track of
@@ -37,9 +35,7 @@ import java.util.HashSet;
  * (considered as a formal instance of constants and variables) and then
  * materializing the head of {@code A} to check the supset condition.
  */
-public class MinimallyUnifiedDatalogRuleSet implements MaximallySubsumingTGDSet<DatalogRule> {
-    private final HashSet<DatalogRule> rulesKnownToBeMaximalSoFar = new HashSet<>();
-
+public final class MinimallyUnifiedDatalogRuleSet extends IndexlessMaximallySubsumingTGDSet<DatalogRule> {
     private sealed interface VariableOrConstant {
         record Variable(uk.ac.ox.cs.pdq.fol.Variable variable) implements VariableOrConstant {
         }
@@ -76,11 +72,8 @@ public class MinimallyUnifiedDatalogRuleSet implements MaximallySubsumingTGDSet<
         );
     }
 
-    /**
-     * See if we can conclude that the first rule subsumes the second rule,
-     * according to the subsumption relation defined in this class.
-     */
-    private static boolean firstRuleSubsumesSecond(DatalogRule first, DatalogRule second) {
+    @Override
+    protected boolean firstRuleSubsumesSecond(DatalogRule first, DatalogRule second) {
         final var joinAlgorithm = new FilterNestedLoopJoin<VariableOrConstant>(VariableOrConstant.Constant::new);
 
         return joinAlgorithm
@@ -96,23 +89,5 @@ public class MinimallyUnifiedDatalogRuleSet implements MaximallySubsumingTGDSet<
 
                     return substitutedFirstHead.isSuperInstanceOf(secondHead);
                 });
-    }
-
-    private boolean isSubsumedByExistingRule(DatalogRule rule) {
-        return rulesKnownToBeMaximalSoFar.stream()
-                .anyMatch(existingRule -> firstRuleSubsumesSecond(existingRule, rule));
-    }
-
-    @Override
-    public void addRule(DatalogRule rule) {
-        if (!isSubsumedByExistingRule(rule)) {
-            rulesKnownToBeMaximalSoFar.removeIf(existingRule -> firstRuleSubsumesSecond(rule, existingRule));
-            rulesKnownToBeMaximalSoFar.add(rule);
-        }
-    }
-
-    @Override
-    public ImmutableSet<DatalogRule> getRules() {
-        return ImmutableSet.copyOf(rulesKnownToBeMaximalSoFar);
     }
 }

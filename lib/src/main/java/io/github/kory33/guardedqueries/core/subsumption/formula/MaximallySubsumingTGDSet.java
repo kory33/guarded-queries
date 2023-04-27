@@ -28,6 +28,6 @@ public interface MaximallySubsumingTGDSet<F extends TGD> {
 
     @FunctionalInterface
     interface Factory<F extends TGD, S extends MaximallySubsumingTGDSet<F>> {
-        S emptyRuleSet();
+        S emptyTGDSet();
     }
 }

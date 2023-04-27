@@ -31,10 +31,10 @@ public record DatalogRewriteResult(
      * applied at the beginning so that we can minimize the total cost of minimization
      * and maximize the effect of the optimization.
      */
-    public <S extends MaximallySubsumingTGDSet<DatalogRule>> DatalogRewriteResult minimizeSubgoalDerivationRulesUsing(
-            final MaximallySubsumingTGDSet.Factory<DatalogRule, S> maximalDatalogRuleSetFactory
+    public DatalogRewriteResult minimizeSubgoalDerivationRulesUsing(
+            final MaximallySubsumingTGDSet.Factory<DatalogRule, ? extends MaximallySubsumingTGDSet<DatalogRule>> maximalDatalogRuleSetFactory
     ) {
-        final var maximalRuleSet = maximalDatalogRuleSetFactory.emptyRuleSet();
+        final var maximalRuleSet = maximalDatalogRuleSetFactory.emptyTGDSet();
         for (DatalogRule rule : this.subgoalAndGoalDerivationRules.rules()) {
             maximalRuleSet.addRule(rule);
         }
