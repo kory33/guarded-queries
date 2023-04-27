@@ -463,13 +463,14 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //        Once we mark a problem instance as a true instance, we no longer have to fill the table
         //        for "larger" local instances due to the subsumption.
         //        It is easy to see that, for problems instances `sqei1` and `sqei2`, if
-        //         - `sqei2.coexistentialVariables` is a superset of `sqei1.coexistentialVariables`
-        //         - there exists a function θ (a "matching" between local names) that sends active local names
+        //         - `sqei2.coexistentialVariables` equals `sqei1.coexistentialVariables`
+        //         - there exists a function θ (a "matching" of local names) that sends active local names
         //           in `sqei1.localInstance` to active terms (so either local names or rule constants)
         //           in `sqei2.localInstance`, such that
         //           - `θ(sqei1.localInstance)` is a subinstance of `sqei2.localInstance`
-        //           - all of `ruleConstantWitnessGuess`, `localWitnessGuess`, and `queryConstantEmbedding`
-        //             of `sqei1` are "matched" to `sqei2` by θ (TODO: make this precise?)
+        //           - `θ . (sqei1.ruleConstantWitnessGuess union sqei1.localWitnessGuess)`
+        //             equals `sqei2.ruleConstantWitnessGuess union sqei2.localWitnessGuess` as a map
+        //           - `θ . (sqei1.queryConstantEmbedding)` equals `sqei2.queryConstantEmbedding` as a map
         //        then `sqei1` being a true instance implies `sqei2` being a true instance.
         //    - Problem 3:
         //        During the chase phase, we can always "normalize" local instances so that active values are
@@ -486,9 +487,12 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //        The implementation in this class completely ignores this aspect of the tree-structure of the chase.
         //
         //    The challenge to solve these problems essentially boils down to
+        //     - dynamically pruning the search space,
+        //       i.e. not generating problem instances that are already known to be
+        //        - false, which we will not add to the DP table anyway
+        //        - true, which is subsumed by some other instance already marked as true
         //     - keeping track of only "maximally subsuming true instances" and "minimally subsuming false instances"
         //     - efficiently matching a problem instance to other subsuming instances using indexing techniques
-        //    which we shall explore in another implementation.
         allWellFormedSubqueryEntailmentInstancesFor(
                 extensionalSignature,
                 ruleConstants,
