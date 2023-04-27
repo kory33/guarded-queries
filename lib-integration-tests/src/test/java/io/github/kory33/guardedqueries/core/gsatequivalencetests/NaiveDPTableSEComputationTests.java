@@ -60,6 +60,9 @@ public class NaiveDPTableSEComputationTests {
     public void testEquivalenceOn__Arity4Rule__atomicQuery() {
         harness.checkThatGSatAndTheRewriterAgreeOn(
                 GTGDRuleAndGTGDReducibleQueryTestCases.Arity4Rule.atomicQuery,
+                // This query, although atomic, takes about 300 ms to evaluate on average
+                // partly because instance size is large (typically about 40K) due to high arity
+                // in the input signature. So we only run 30 rounds.
                 30
         );
     }
