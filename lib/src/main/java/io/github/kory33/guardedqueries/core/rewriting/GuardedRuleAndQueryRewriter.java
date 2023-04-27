@@ -307,6 +307,9 @@ public record GuardedRuleAndQueryRewriter(
 
     /**
      * Compute a Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
+     * <p>
+     * Variables in the goal atom of the returned {@link DatalogRewriteResult}
+     * do correspond to the free variables of the input query.
      */
     public DatalogRewriteResult rewrite(final Collection<? extends GTGD> rules, final ConjunctiveQuery query) {
         // Set of predicates that may appear in the input database.
