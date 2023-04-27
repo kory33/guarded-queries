@@ -171,7 +171,10 @@ public class NaiveDPTableSEComputationTests {
 
             if (!gsatAnswer.equals(ourAnswer)) {
                 throw new AssertionError(
-                        "GSat and our answer differ, GSat answer: " + gsatAnswer + ", our answer: " + ourAnswer
+                        "GSat and our answer differ! " +
+                                "input = " + testInstance + ", " +
+                                "gsatAnswer: " + gsatAnswer + ", " +
+                                "ourAnswer: " + ourAnswer
                 );
             } else {
                 System.out.println(
