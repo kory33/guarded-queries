@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.subsumption.datalog;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 
@@ -41,14 +40,6 @@ public class MinimalBodyDatalogRuleSet implements MaximalDatalogRuleSet {
         return true;
     }
 
-    private ImmutableList<DatalogRule> rulesSubsumedBy(DatalogRule rule) {
-        return ImmutableList.copyOf(
-                rulesKnownToBeMaximalSoFar.stream()
-                        .filter(otherRule -> firstRuleSubsumesSecond(otherRule, rule))
-                        .iterator()
-        );
-    }
-
     private boolean isSubsumedByExistingRule(DatalogRule rule) {
         return rulesKnownToBeMaximalSoFar.stream()
                 .anyMatch(existingRule -> firstRuleSubsumesSecond(existingRule, rule));
@@ -57,7 +48,7 @@ public class MinimalBodyDatalogRuleSet implements MaximalDatalogRuleSet {
     @Override
     public void addRule(DatalogRule rule) {
         if (!isSubsumedByExistingRule(rule)) {
-            rulesSubsumedBy(rule).forEach(rulesKnownToBeMaximalSoFar::remove);
+            rulesKnownToBeMaximalSoFar.removeIf(existingRule -> firstRuleSubsumesSecond(rule, existingRule));
             rulesKnownToBeMaximalSoFar.add(rule);
         }
     }
