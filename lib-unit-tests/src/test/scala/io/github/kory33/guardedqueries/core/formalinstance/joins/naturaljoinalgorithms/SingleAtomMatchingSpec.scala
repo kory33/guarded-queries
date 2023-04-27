@@ -10,6 +10,7 @@ import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate}
 import org.scalacheck.Gen
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
 import scala.jdk.CollectionConverters._
+import uk.ac.ox.cs.pdq.fol.TypedConstant
 
 class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallAtom = GenFormula.genAtom(
@@ -23,7 +24,11 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_${index}", arity) }
     }
     predicateSet = predicates.toSet
-    instance <- GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet)
+    
+    constantsCount = predicates.map(_.getArity()).maxOption.getOrElse(2) * 3
+    constantsToUse = (1 to constantsCount).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
+    
+    instance <- GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet, constantsToUse)
   } yield (predicateSet, instance)
 
   val genInstanceAndQuery: Gen[(FormalInstance[Constant], Atom)] =

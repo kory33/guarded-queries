@@ -32,12 +32,8 @@ object GenFormalInstance {
     } yield new FormalInstance[Constant](factSet.asJava)
   }
 
-  def genFormalInstanceContainingPredicates(predicates: Set[Predicate]): Gen[FormalInstance[Constant]] = {
+  def genFormalInstanceContainingPredicates(predicates: Set[Predicate], constantsToUse: Set[Constant]): Gen[FormalInstance[Constant]] = {
     import TraverseListGen.traverse
-
-    val constantsCount = predicates.map(_.getArity()).maxOption.getOrElse(2) * 3
-    val constantsToUse = (1 to constantsCount).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
-
     predicates.toList
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
       .map { instanceList => new FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava) }
