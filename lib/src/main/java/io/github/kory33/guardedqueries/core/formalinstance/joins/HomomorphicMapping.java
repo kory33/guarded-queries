@@ -2,10 +2,12 @@ package io.github.kory33.guardedqueries.core.formalinstance.joins;
 
 import com.google.common.collect.ImmutableList;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import uk.ac.ox.cs.pdq.fol.Atom;
 import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
+import java.util.Collection;
 import java.util.function.Function;
 
 /**
@@ -65,5 +67,23 @@ public record HomomorphicMapping<Term>(
                 throw new IllegalArgumentException("Term " + term + " is neither constant nor variable");
             }
         });
+    }
+
+    /**
+     * Materialize the given set of atoms by applying {@link #materializeFunctionFreeAtom(Atom, Function)}
+     * to each atom.
+     *
+     * @param atomsWhoseVariablesAreInThisResult a set of function-free atoms whose variables are in {@code variableOrdering}
+     * @param constantInclusion                  a function that maps a constant in the input instance to a term
+     */
+    public FormalInstance<Term> materializeFunctionFreeAtoms(
+            final Collection<Atom> atomsWhoseVariablesAreInThisResult,
+            final Function<Constant, Term> constantInclusion
+    ) {
+        return FormalInstance.fromIterator(
+                atomsWhoseVariablesAreInThisResult.stream()
+                        .map(atom -> this.materializeFunctionFreeAtom(atom, constantInclusion))
+                        .iterator()
+        );
     }
 }

@@ -11,7 +11,8 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
 import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.NaiveDPTableSEComputation;
-import io.github.kory33.guardedqueries.core.subsumption.datalog.MinimalBodyDatalogRuleSet;
+import io.github.kory33.guardedqueries.core.subsumption.datalog.MinimalExactBodyDatalogRuleSet;
+import io.github.kory33.guardedqueries.core.subsumption.datalog.MinimallyUnifiedDatalogRuleSet;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQuery;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQueryTestCases;
 import io.github.kory33.guardedqueries.core.utils.MappingStreams;
@@ -92,7 +93,7 @@ public class NaiveDPTableSEComputationTests {
 
         System.out.println("[" + Date.from(Instant.now()) + "] Done Gsat rewriting");
 
-        final var outRewriting = new GuardedRuleAndQueryRewriter(
+        final var ourRewriting = new GuardedRuleAndQueryRewriter(
                 GSat.getInstance(),
                 new NaiveDPTableSEComputation(new NaiveSaturationEngine())
         ).rewrite(ruleQuery.guardedRules(), ruleQuery.reducibleQuery().originalQuery());
@@ -110,8 +111,9 @@ public class NaiveDPTableSEComputationTests {
                 deduplicatedFreeVariablesInQuery.toArray(Variable[]::new)
         );
 
-        final var minimizedRewriting = outRewriting
-                .minimizeSubgoalDerivationRulesUsing(MinimalBodyDatalogRuleSet::new);
+        final var minimizedRewriting = ourRewriting
+                .minimizeSubgoalDerivationRulesUsing(MinimalExactBodyDatalogRuleSet::new)
+                .minimizeSubgoalDerivationRulesUsing(MinimallyUnifiedDatalogRuleSet::new);
 
         return new RewriteResultsToBeCompared(
                 gsatRewriting,
@@ -193,27 +195,27 @@ public class NaiveDPTableSEComputationTests {
 
     @Test
     public void testEquivalenceOn__SimpleArity2Rule_0__atomicQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.atomicQuery, 1000);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.atomicQuery, 4000);
     }
 
     @Test
     public void testEquivalenceOn__SimpleArity2Rule_0__joinQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.joinQuery, 1000);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.joinQuery, 4000);
     }
 
     @Test
     public void testEquivalenceOn__SimpleArity2Rule_0__existentialGuardedQuery_0() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.existentialGuardedQuery_0, 300);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.existentialGuardedQuery_0, 4000);
     }
 
     @Test
     public void testEquivalenceOn__SimpleArity2Rule_0__existentialJoinQuery_0() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.existentialJoinQuery_0, 300);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.existentialJoinQuery_0, 4000);
     }
 
     @Test
     public void testEquivalenceOn__SimpleArity2Rule_0__existentialJoinQuery_1() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.existentialJoinQuery_1, 300);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.SimpleArity2Rule_0.existentialJoinQuery_1, 4000);
     }
 
     @Test
@@ -223,16 +225,16 @@ public class NaiveDPTableSEComputationTests {
 
     @Test
     public void testEquivalenceOn__ConstantRule__atomicQuery() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.atomicQuery, 1000);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.atomicQuery, 4000);
     }
 
     @Test
     public void testEquivalenceOn__ConstantRule__existentialBooleanQueryWithConstant() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.existentialBooleanQueryWithConstant, 1000);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.existentialBooleanQueryWithConstant, 4000);
     }
 
     @Test
     public void testEquivalenceOn__ConstantRule__existentialGuardedWithConstant() {
-        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.existentialGuardedWithConstant, 200);
+        runTestFor(GTGDRuleAndGTGDReducibleQueryTestCases.ConstantRule.existentialGuardedWithConstant, 4000);
     }
 }

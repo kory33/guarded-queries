@@ -68,6 +68,10 @@ public class FormalInstance<TermAlphabet> {
         return this.facts.contains(fact);
     }
 
+    public boolean isSuperInstanceOf(final FormalInstance<TermAlphabet> other) {
+        return other.facts.stream().allMatch(this::containsFact);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -15,7 +15,7 @@ import java.util.HashSet;
  *     <li>the head of R1 is equal to the head of R2</li>
  * </ul>
  */
-public class MinimalBodyDatalogRuleSet implements MaximalDatalogRuleSet {
+public class MinimalExactBodyDatalogRuleSet implements MaximalDatalogRuleSet {
     private final HashSet<DatalogRule> rulesKnownToBeMaximalSoFar = new HashSet<>();
 
     /**
