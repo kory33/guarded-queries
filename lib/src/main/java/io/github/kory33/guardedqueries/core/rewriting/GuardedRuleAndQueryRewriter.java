@@ -391,4 +391,12 @@ public record GuardedRuleAndQueryRewriter(
                 goalAtom
         );
     }
+
+    @Override
+    public String toString() {
+        return "GuardedRuleAndQueryRewriter{" +
+                "saturation=" + saturation +
+                ", subqueryEntailmentComputation=" + subqueryEntailmentComputation +
+                '}';
+    }
 }

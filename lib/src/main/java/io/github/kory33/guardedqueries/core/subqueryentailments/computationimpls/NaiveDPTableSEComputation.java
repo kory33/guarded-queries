@@ -504,4 +504,11 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
         return dpTable.getKnownYesInstances();
     }
+
+    @Override
+    public String toString() {
+        return "NaiveDPTableSEComputation{" +
+                "datalogSaturationEngine=" + datalogSaturationEngine +
+                '}';
+    }
 }
