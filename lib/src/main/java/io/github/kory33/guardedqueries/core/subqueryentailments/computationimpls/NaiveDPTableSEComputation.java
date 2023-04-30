@@ -69,14 +69,12 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
             final var datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram;
 
             final var shortcutChaseOneStep = FunctionExtensions.asFunction((FormalInstance<LocalInstanceTerm> instance) -> {
-                final var localNamesUsableInChildren = ImmutableList.copyOf(
-                        SetLikeExtensions.difference(
-                                IntStream.range(0, maxArityOfAllPredicatesUsedInRules * 2)
-                                        .mapToObj(LocalInstanceTerm.LocalName::new)
-                                        .toList(),
-                                instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
-                        ).stream().iterator()
-                );
+                final var localNamesUsableInChildren = SetLikeExtensions.difference(
+                        IntStream.range(0, maxArityOfAllPredicatesUsedInRules * 2)
+                                .mapToObj(LocalInstanceTerm.LocalName::new)
+                                .toList(),
+                        instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
+                ).asList();
 
                 // We need to chase the instance with all existential rules
                 // while preserving all names in namesToBePreservedDuringChase.
