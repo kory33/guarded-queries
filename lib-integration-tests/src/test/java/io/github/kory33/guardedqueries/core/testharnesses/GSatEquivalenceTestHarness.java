@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.testharnesses;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram;
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult;
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine;
@@ -55,31 +54,29 @@ public record GSatEquivalenceTestHarness(AbstractSaturation<? extends GTGD> gsat
         public FormalInstance<Constant> answersWithOurRewriting(
                 final FormalInstance<Constant> testInstance
         ) {
-            final var saturationEngine = new NaiveSaturationEngine();
-
-            // We run the output program in two steps:
-            // We first derive all facts other than subgoal/goals (i.e. with input predicates),
-            // and then derive subgoal / goal facts in one go.
-            // This should be much more efficient than saturating with
-            // all output rules at once, since we can rather quickly saturate the base data with
-            // input rules (output of GSat being relatively small, and after having done that
-            // we only need to go through subgoal derivation rules once.
-            final var inputRuleSaturatedInstance = saturationEngine
-                    .saturateInstance(ourRewriting.inputRuleSaturationRules(), testInstance, c -> c);
-            final var saturatedInstance = saturationEngine
-                    .saturateInstance(ourRewriting.subgoalAndGoalDerivationRules(), inputRuleSaturatedInstance, c -> c);
-
-            final var rewrittenGoalQuery = ConjunctiveQuery.create(
-                    ourRewriting.goal().getVariables(),
-                    new Atom[]{ourRewriting.goal()}
-            );
-
-            return new FormalInstance<>(
-                    new FilterNestedLoopJoin<>(c -> c)
-                            .join(rewrittenGoalQuery, saturatedInstance)
-                            .materializeFunctionFreeAtom(answerAtom, c -> c)
-            );
+            return RunOutputDatalogProgram.answersOn(testInstance, ourRewriting, answerAtom, c -> c);
         }
+    }
+
+    private DatalogRewriteResult minimizeRewriteResultAndLogIntermediateCounts(
+            DatalogRewriteResult originalRewriteResult
+    ) {
+        logWithTime("# of subgoal derivation rules in original output: " +
+                originalRewriteResult.subgoalAndGoalDerivationRules().rules().size());
+
+        final var minimalExactBodyMinimizedRewriting = originalRewriteResult
+                .minimizeSubgoalDerivationRulesUsing(MinimalExactBodyDatalogRuleSet::new);
+
+        logWithTime("# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " +
+                minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
+
+        final var minimizedRewriting = minimalExactBodyMinimizedRewriting
+                .minimizeSubgoalDerivationRulesUsing(MinimallyUnifiedDatalogRuleSet::new);
+
+        logWithTime("# of subgoal derivation rules in minimizedRewriting: " +
+                minimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
+
+        return minimizedRewriting;
     }
 
     private RewriteResultsToBeCompared rewriteInTwoMethods(
@@ -96,47 +93,21 @@ public record GSatEquivalenceTestHarness(AbstractSaturation<? extends GTGD> gsat
                                 .build()
                 )
         );
-        final var gsatQuery = ruleQuery.reducibleQuery().existentialFreeQuery();
-
         logWithTime("Done Gsat rewriting in " + (System.nanoTime() - gsatRewritingStart) + " ns");
 
         final var ourRewritingStart = System.nanoTime();
         final var ourRewriting = rewriterToBeTested
                 .rewrite(ruleQuery.guardedRules(), ruleQuery.reducibleQuery().originalQuery());
-
         logWithTime("Done guarded-query rewriting in " + (System.nanoTime() - ourRewritingStart) + " ns");
-        logWithTime("# of subgoal derivation rules in original output: " +
-                ourRewriting.subgoalAndGoalDerivationRules().rules().size());
 
-        final var deduplicatedFreeVariablesInQuery = ImmutableList.copyOf(ImmutableSet.copyOf(ruleQuery
-                .reducibleQuery()
-                .existentialFreeQuery()
-                .getFreeVariables()
-        ));
-
+        final var gsatQuery = ruleQuery.reducibleQuery().existentialFreeQuery();
+        final var minimizedRewriting = minimizeRewriteResultAndLogIntermediateCounts(ourRewriting);
         final var answerAtom = Atom.create(
-                Predicate.create("Answer", deduplicatedFreeVariablesInQuery.size()),
-                deduplicatedFreeVariablesInQuery.toArray(Variable[]::new)
+                Predicate.create("Answer", ruleQuery.deduplicatedQueryFreeVariables().size()),
+                ruleQuery.deduplicatedQueryFreeVariables().toArray(Variable[]::new)
         );
 
-        final var minimalExactBodyMinimizedRewriting = ourRewriting
-                .minimizeSubgoalDerivationRulesUsing(MinimalExactBodyDatalogRuleSet::new);
-
-        logWithTime("# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " +
-                minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
-
-        final var minimizedRewriting = minimalExactBodyMinimizedRewriting
-                .minimizeSubgoalDerivationRulesUsing(MinimallyUnifiedDatalogRuleSet::new);
-
-        logWithTime("# of subgoal derivation rules in minimizedRewriting: " +
-                minimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
-
-        return new RewriteResultsToBeCompared(
-                gsatRewriting,
-                gsatQuery,
-                minimizedRewriting,
-                answerAtom
-        );
+        return new RewriteResultsToBeCompared(gsatRewriting, gsatQuery, minimizedRewriting, answerAtom);
     }
 
     /**
