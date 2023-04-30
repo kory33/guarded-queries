@@ -8,6 +8,7 @@ import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -85,5 +86,42 @@ public record HomomorphicMapping<Term>(
                         .map(atom -> this.materializeFunctionFreeAtom(atom, constantInclusion))
                         .iterator()
         );
+    }
+
+    /**
+     * Extend the homomorphism with the given mapping.
+     *
+     * @throws IllegalArgumentException if the given homomorphism maps a variable in {@code variableOrdering}
+     */
+    public HomomorphicMapping<Term> extendWithMapping(
+            final Map<Variable, Term> additionalMapping
+    ) {
+        if (additionalMapping.isEmpty()) {
+            // there is nothing to extend
+            return this;
+        }
+
+        if (variableOrdering.stream().anyMatch(additionalMapping::containsKey)) {
+            throw new IllegalArgumentException("additionalMapping " + additionalMapping +
+                    " contains a variable in variableOrdering " + variableOrdering);
+        }
+
+        final var newVariableOrdering = ImmutableList.<Variable>builder()
+                .addAll(variableOrdering)
+                .addAll(additionalMapping.keySet())
+                .build();
+
+        final var newMappingSize = newVariableOrdering.size();
+
+        final var newOrderedMapping = ImmutableList.<Term>builder();
+        for (int index = 0; index < newMappingSize; index++) {
+            if (index < orderedMapping.size()) {
+                newOrderedMapping.add(orderedMapping.get(index));
+            } else {
+                newOrderedMapping.add(additionalMapping.get(newVariableOrdering.get(index)));
+            }
+        }
+
+        return new HomomorphicMapping<>(newVariableOrdering, newOrderedMapping.build());
     }
 }
