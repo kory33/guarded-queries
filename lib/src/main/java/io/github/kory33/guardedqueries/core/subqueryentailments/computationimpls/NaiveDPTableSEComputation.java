@@ -382,15 +382,15 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         final var queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery);
         final var queryExistentialVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables());
 
-        return allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(ruleConstantWitnessGuess ->
-                allLocalInstances(extensionalSignature, ruleConstants).flatMap(localInstance -> {
-                    final var allCoexistentialVariableSets = SetLikeExtensions
-                            .powerset(queryExistentialVariables)
-                            .filter(variableSet -> !variableSet.isEmpty())
-                            .filter(variableSet -> SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet()))
-                            .filter(variableSet -> ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet));
+        return allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(ruleConstantWitnessGuess -> {
+            final var allCoexistentialVariableSets = SetLikeExtensions
+                    .powerset(queryExistentialVariables)
+                    .filter(variableSet -> !variableSet.isEmpty())
+                    .filter(variableSet -> SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet()))
+                    .filter(variableSet -> ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet));
 
-                    return allCoexistentialVariableSets.flatMap(coexistentialVariables -> {
+            return allCoexistentialVariableSets.flatMap(coexistentialVariables ->
+                    allLocalInstances(extensionalSignature, ruleConstants).flatMap(localInstance -> {
                         // As coexistentialVariables is a nonempty subset of queryVariables,
                         // we expect to see a non-empty optional.
                         //noinspection OptionalGetWithoutIsPresent
@@ -429,9 +429,9 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
                                     queryConstantEmbedding
                             ));
                         });
-                    });
-                })
-        );
+                    })
+            );
+        });
     }
 
     @Override
