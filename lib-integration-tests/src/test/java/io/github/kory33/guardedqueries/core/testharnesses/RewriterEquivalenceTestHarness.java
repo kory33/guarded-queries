@@ -117,7 +117,7 @@ public record RewriterEquivalenceTestHarness(
                         "first rewriter = " + firstRewriter + ", " +
                         "second rewriter = " + secondRewriter
                 );
-            } else {
+            } else if (i % 20 == 0) {
                 logWithTime("Test " + i + " passed, " +
                         "input size = " + testInstance.facts.size() + ", " +
                         "answer size = " + firstAnswer.facts.size()

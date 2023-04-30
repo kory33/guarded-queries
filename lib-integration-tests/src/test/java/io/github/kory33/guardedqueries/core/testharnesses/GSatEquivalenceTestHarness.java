@@ -135,7 +135,7 @@ public record GSatEquivalenceTestHarness(AbstractSaturation<? extends GTGD> gsat
                         "gsatAnswer = " + gsatAnswer + ", " +
                         "ourAnswer = " + ourAnswer
                 );
-            } else {
+            } else if (i % 20 == 0)
                 logWithTime("Test " + i + " passed, " +
                         "input size = " + testInstance.facts.size() + ", " +
                         "answer size = " + gsatAnswer.facts.size()
