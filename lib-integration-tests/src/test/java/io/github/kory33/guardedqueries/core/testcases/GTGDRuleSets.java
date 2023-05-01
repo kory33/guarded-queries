@@ -25,6 +25,13 @@ public class GTGDRuleSets {
             gtgd.parse("R(c_1, x_1) -> R(x_1, c_1), P(x_1)")
     );
 
+    // An arity-3 rule set
+    public static final ImmutableList<GTGD> arity3Rule_0 = ImmutableList.of(
+            gtgd.parse("T(x_1, x_2, x_2) -> EE y_1, y_2. T(x_2, y_1, y_2)"),
+            gtgd.parse("T(x_1, x_2, x_3) -> EE y_1. T(x_1, x_2, y_1)"),
+            gtgd.parse("T(x_1, x_2, x_3) -> T(x_3, x_2, x_1)")
+    );
+
     // An arity-4 rule set, adapted from
     // https://github.com/KRR-Oxford/Guarded-saturation/blob/bde32223ae4bc8ce084d233e7eede5ed1021adc7/src/test/java/uk/ac/ox/cs/gsat/SimpleSatTest.java#L81-L83
     public static final ImmutableList<GTGD> arity4Rule = ImmutableList.of(

@@ -104,6 +104,20 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
         );
     }
 
+    public static class Arity3Rule_0 {
+        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation / NormalizingDPTableSEComputation
+        public static final GTGDRuleAndGTGDReducibleQuery existentialJoinQuery = new GTGDRuleAndGTGDReducibleQuery(
+                GTGDRuleSets.arity3Rule_0,
+                new GTGDReducibleConjunctiveQuery(
+                        conjunctiveQuery.parse("EE y. T(x, y, z), T(y, x, z)"),
+                        ImmutableList.of(
+                                gtgd.parse("T(x, y, z), T(y, x, z) -> Goal(x, z)")
+                        ),
+                        conjunctiveQuery.parse("Goal(x, z)")
+                )
+        );
+    }
+
     public static class Arity4Rule {
         public static final GTGDRuleAndGTGDReducibleQuery atomicQuery = new GTGDRuleAndGTGDReducibleQuery(
                 GTGDRuleSets.arity4Rule,
@@ -114,7 +128,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
                 )
         );
 
-        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation
+        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation / NormalizingDPTableSEComputation
         public static final GTGDRuleAndGTGDReducibleQuery existentialGuardedQuery_0 = new GTGDRuleAndGTGDReducibleQuery(
                 GTGDRuleSets.arity4Rule,
                 new GTGDReducibleConjunctiveQuery(
@@ -126,7 +140,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
                 )
         );
 
-        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation
+        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation / NormalizingDPTableSEComputation
         public static final GTGDRuleAndGTGDReducibleQuery existentialJoinQuery_0 = new GTGDRuleAndGTGDReducibleQuery(
                 GTGDRuleSets.arity4Rule,
                 new GTGDReducibleConjunctiveQuery(
