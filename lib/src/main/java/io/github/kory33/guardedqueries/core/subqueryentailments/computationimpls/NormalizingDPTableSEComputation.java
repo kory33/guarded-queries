@@ -334,6 +334,17 @@ public final class NormalizingDPTableSEComputation implements SubqueryEntailment
         }
     }
 
+    /**
+     * Checks whether the given set of local names is of a form {0, ..., n - 1} for some n.
+     */
+    private static boolean isZeroStartingContiguousLocalNameSet(final ImmutableSet<LocalInstanceTerm.LocalName> localNames) {
+        var firstElementAfterZeroNotContainedInSet = 0;
+        while (localNames.contains(new LocalInstanceTerm.LocalName(firstElementAfterZeroNotContainedInSet))) {
+            firstElementAfterZeroNotContainedInSet++;
+        }
+        return firstElementAfterZeroNotContainedInSet == localNames.size();
+    }
+
     private static Stream<FormalInstance<LocalInstanceTerm>> allNormalizedLocalInstances(
             final FunctionFreeSignature extensionalSignature,
             final ImmutableSet<Constant> ruleConstants
@@ -349,57 +360,61 @@ public final class NormalizingDPTableSEComputation implements SubqueryEntailment
         // maxArityOfExtensionalSignature as the maximal arity, we only need to
         // consider a powerset of {0, ..., maxArityOfExtensionalSignature - 1}
         // (NORMALIZATION:
-        //  by remapping all local names in the range
+        //  By remapping all local names in the range
         //  [maxArityOfExtensionalSignature, maxArityOfExtensionalSignature * 2)
         //  to the range [0, maxArityOfExtensionalSignature), since the size of
         //  active local name set of local instances necessary to check
-        //  is at most maxArityOfExtensionalSignature_.
-        final var allActiveLocalNames = SetLikeExtensions
-                .powerset(IntStream.range(0, maxArityOfExtensionalSignature).boxed().toList());
+        //  is at most maxArityOfExtensionalSignature.
+        //  Moreover, by symmetry of instance we can demand that the set of active
+        //  names to be contiguous and starting from 0, i.e. {0, ..., n} for some n < maxArityOfExtensionalSignature.
+        // )
 
-        return allActiveLocalNames.flatMap(localNameSet -> {
-            final var localNames = ImmutableSet.copyOf(
-                    localNameSet.stream().map(LocalInstanceTerm.LocalName::new).iterator()
-            );
-            final var allLocalInstanceTerms = SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms);
-            final var predicateList = extensionalSignature.predicates().stream().toList();
+        final var localNames = ImmutableSet.copyOf(
+                IntStream
+                        .range(0, maxArityOfExtensionalSignature)
+                        .mapToObj(LocalInstanceTerm.LocalName::new)
+                        .iterator()
+        );
 
-            final Function<Predicate, Iterable<FormalInstance<LocalInstanceTerm>>> allLocalInstancesOverThePredicate = predicate -> {
-                final var predicateParameterIndices = IntStream.range(0, predicate.getArity()).boxed().toList();
-                final var allFormalFactsOverThePredicate = ImmutableList.copyOf(
-                        allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(parameterMap -> {
-                            final var parameterList = ImmutableList.<LocalInstanceTerm>copyOf(
-                                    IntStream
-                                            .range(0, predicate.getArity())
-                                            .mapToObj(parameterMap::get)
-                                            .iterator()
-                            );
+        final var allLocalInstanceTerms =
+                SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms);
+        final var predicateList =
+                extensionalSignature.predicates().stream().toList();
 
-                            //noinspection Convert2Diamond (IDEA fails to infer this)
-                            return new FormalFact<LocalInstanceTerm>(predicate, parameterList);
-                        }).iterator()
-                );
+        final Function<Predicate, Iterable<FormalInstance<LocalInstanceTerm>>> allLocalInstancesOverThePredicate = predicate -> {
+            final var predicateParameterIndices = IntStream.range(0, predicate.getArity()).boxed().toList();
+            final var allFormalFactsOverThePredicate = ImmutableList.copyOf(
+                    allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(parameterMap -> {
+                        final var parameterList = ImmutableList.<LocalInstanceTerm>copyOf(
+                                IntStream
+                                        .range(0, predicate.getArity())
+                                        .mapToObj(parameterMap::get)
+                                        .iterator()
+                        );
 
-                return () -> SetLikeExtensions
-                        .powerset(allFormalFactsOverThePredicate)
-                        .map(FormalInstance::new)
-                        .iterator();
-            };
-
-            final var allInstancesOverLocalNameSet = IteratorExtensions.mapInto(
-                    ListExtensions
-                            .productMappedCollectionsToSets(predicateList, allLocalInstancesOverThePredicate)
-                            .iterator(),
-                    FormalInstance::unionAll
+                        //noinspection Convert2Diamond (IDEA fails to infer this)
+                        return new FormalFact<LocalInstanceTerm>(predicate, parameterList);
+                    }).iterator()
             );
 
-            return IteratorExtensions
-                    .intoStream(allInstancesOverLocalNameSet)
-                    .filter(instance -> {
-                        final var activeLocalNames = instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class);
-                        return activeLocalNames.size() == localNameSet.size();
-                    });
-        });
+            return () -> SetLikeExtensions
+                    .powerset(allFormalFactsOverThePredicate)
+                    .map(FormalInstance::new)
+                    .iterator();
+        };
+
+        final var allInstancesOverLocalNameSet = IteratorExtensions.mapInto(
+                ListExtensions
+                        .productMappedCollectionsToSets(predicateList, allLocalInstancesOverThePredicate)
+                        .iterator(),
+                FormalInstance::unionAll
+        );
+
+        return IteratorExtensions
+                .intoStream(allInstancesOverLocalNameSet)
+                .filter(instance -> isZeroStartingContiguousLocalNameSet(
+                        instance.getActiveTermsInClass(LocalInstanceTerm.LocalName.class)
+                ));
     }
 
     private static Stream<SubqueryEntailmentInstance> allWellFormedNormalizedSubqueryEntailmentInstancesFor(
