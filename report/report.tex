@@ -1,11 +1,37 @@
-\documentclass[12pt]{article}
+\documentclass[12pt]{report}
 
 \usepackage[a4paper, margin=1.3in]{geometry}
 \usepackage{biblatex}
 \usepackage{setspace}
-\usepackage{amstext}
 
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amstext}
+\usepackage{amsthm}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% settings for amsthm package
+% apply chapter-wise theorem numbering for theorems
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+
+% The following are the numbered elements with "definition (i.e. non-italic) style"
+\theoremstyle{definition}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+% Load `.bib` file
 \addbibresource{references.bib}
+
+% Symbol definitions
+\def\Consts{{\mathrm{Consts}}}
+\def\Terms{{\mathrm{Terms}}}
+\newcommand{\ASatRules}[1]{\ensuremath{\normalfont{\textsc{ASatRules}} \left( #1 \right)}}
+\newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
 
 \title{Querying Infinite GTGD Chases}
 \author{Ryosuke Kondo}
@@ -21,9 +47,9 @@
 \section*{Abstract}
 
 \newpage
-\section{Introduction}
+\chapter{Introduction}
 
-\subsection{Background}
+\section{Background}
 
 Consider the following situation: (TODO; Think about some OMQA instance where two independent parties provide a data over which we would like to perform an existential join query.)
 
@@ -37,7 +63,7 @@ Data integration rules in OMQA problem instances are often written as Tuple-Gene
 
 Unfortunately, however, OMQA problems with general TGDs turned out to be undecidable \cite{beeri_vardi_1981}. In response to this, \cite{cali_gottlob_kifer_2013} identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves OMQA problems decidable, yet expressive enough to contain several classes of description logics.
 
-\subsection{Previous Works}
+\section{Previous Works}
 
 Despite OMQA problems over GTGDs being known to be decidable for several years, only a small number of work have been done to develop computationally tractable algorithms for these problems. A recent work \cite{kappelmann_2019} suggested that we can efficiently rewrite a set of GTGD rules into a so-called \emph{Datalog saturation} of it, which is a set of existential-free TGDs that is "equivalent" to the original rule set for existential-free queries. The rewriting algorithm has been improved, implemented and evaluated in \cite{benedikt_buron_germano_kappelmann_motik_2022}. 
 
@@ -53,7 +79,7 @@ Moreover, it has also been known that there exists a \emph{Datalog rewriting} of
 
 \emph{To the best of my knowledge, however, no work has implemented a query answering procedure for general CQs under GTGDs}. Given that many real-world database queries are cyclic (TODO: evidence?), limiting ourselves to acyclic existential queries may pose issues on smooth adoptation of OMQA systems.
 
-\subsection{Contribution of This Work}
+\section{Contribution of This Work}
 
 The contribution of this work is threefold:
 
@@ -63,7 +89,7 @@ The contribution of this work is threefold:
   \item Last but not least, I provide a Java implementation of the former two algorithms which, when combined, can be assembled into an OMQA system.
 \end{itemize}
 
-\subsection{Outline of This Report}
+\section{Outline of This Report}
 
 (TODO: use in-doc links)
 
@@ -78,19 +104,201 @@ In Chapter 5, we discuss the details of implementation and its verification. I p
 We conclude the report with an overview, and discuss some weakness of the algorithm which may be improved in future studies.
 
 \newpage
-\section{Preliminaries}
+\chapter{Preliminaries}
+
+% Define output of GSat as "atomic saturation" of a GTGD set
+
+Our ultimate goal is to answer the following problem.
+
+\begin{problem}[GTGD-CQ Answering]
+\label{GTGD-CQ-Answering}
+  Given a finite set $\Sigma$ of GTGD rules, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D}, \Sigma \models \sigma(Q)$?
+\end{problem}
+
+It is known that a conjunctive query under GTGD rules admits \emph{GTGD-Datalog rewritings}. These are Datalog programs together with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
+
+\begin{definition}
+  A \emph{GTGD-Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \sigma(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \sigma(Q_\mathrm{atomic}).$$
+  We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the GTGD-Datalog rewriting.
+\end{definition}
+
+This project aims to derive an algorithm that produces GTGD-Datalog rewritings for arbitrary GTGD-CQ pairs.
 
 \newpage
-\section{Chase-Trees}
+\chapter{Structures of GTGD Chases}
+
+To begin a journey towards \emph{GTGD-Datalog rewritings} with, consider answering an existential-free query $Q$ over a Datalog program $P$ and an input database $\mathcal{D}$.
+
+Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation}. Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
+
+\begin{algorithm}
+\caption{Answering Datalog query using Naive Evaluation}
+\begin{algorithmic}[1]
+\Procedure{DatalogSaturate}{Datalog program $P$, input database $\mathcal{D}$}
+  \State $\mathcal{D}_\mathrm{current} \gets \mathcal{D}$
+  \While{true}
+    \State $\mathcal{D}_\mathrm{next} \gets \mathcal{D}_\mathrm{current}$
+    \ForAll{$r \in P$}
+      \ForAll{$\sigma \in $ result of matching the body of $r$ on $\mathcal{D}_\mathrm{current}$}
+        \State add all head atoms of $r$ substituted with $\sigma$ to $\mathcal{D}_\mathrm{next}$
+      \EndFor
+    \EndFor
+    \State
+    \If{$\mathcal{D}_\mathrm{next} \neq \mathcal{D}_\mathrm{current}$}
+      \State $\mathcal{D}_\mathrm{next} \gets \mathcal{D}_\mathrm{current}$
+    \Else
+      \State \Return{$\mathcal{D}_\mathrm{current}$}
+    \EndIf
+  \EndWhile
+\EndProcedure
+\State
+\Procedure{AnswerDatalogQuery}{$P$, $\mathcal{D}$, $\exists$-free query $Q$}
+  \State \Return{result of running the join query $Q$ on $\textsc{DatalogSaturate}(P, \mathcal{D})$}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+We call the database instance $\textsc{DatalogSaturate}(P, \mathcal{D})$ the \emph{Datalog saturation of $\mathcal{D}$ with $P$}. Intuitively, a Datalog saturation is the result of \emph{repairing} the input instance by adding all but nothing other than facts derivable from the original instance.
+
+In the settings of (possibly existential) TGDs, objects known as \emph{chases} serve a similar role of representing \emph{repaired} database instances. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent fresh constants. 
+
+% TODO: Review this list
+In this chapter, we look at several classes of objects related to chases. Namely, these are chase sequences, chase proofs and shortcutting chase trees. They have overlapping semantics but are helpful in different contexts.
+
+\section{Chase Sequences}
+
+% TODO: Fill in the detail here.
+
+\section{Tree-Like Chase Proofs}
+
+%TODO: Review: if we use chase sequences at the beginning, the following is not the motivation for introducing chase proofs. I think chase proofs need to come here to have a structured finite slice of the chase, but I am not sure if we should put the chase sequence first.
+The problem with chases is that they are typically infinite for GTGDs rule sets in general, and one cannot wish to compute the entire chase to answer GTGD-CQ-Answering problems. To deal with this, we now turn to the notion of \emph{tree-like chase proofs}, which essentially captures instants of ongoing chasing processes.
+
+\begin{definition}
+  A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to database instances (possibly with nulls).
+\end{definition}
+
+Chase trees can be infinite, but we now focus on finite chase trees. The following definition is due to \cite{benedikt_buron_germano_kappelmann_motik_2022}.
+
+\begin{definition}
+ Given a set $\Sigma$ of single-headed GTGD rules, a \emph{chase transformation over $\Sigma$} on a chase tree $(T, \mu)$ is one of the following transformations:
+  \begin{itemize}
+    \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
+    \begin{itemize}
+      \item If $\tau$ is full, we simply add the head atom $H$ of $\tau$ to the instance at $v$. That is, we keep $T' = T$, and set $\mu'(v) = \mu(v) \cup \sigma(H)$ while maintaining $\mu$ and $\mu'$ equal on $T \setminus \{v\}$.
+      \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the instance $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
+    \end{itemize}
+    \item \emph{a propagation step} from a vertex $v \in T$ to an ancestor $a \in T$ of $v$ with a fact $f \in \mu(v)$, provided that $f \not\in \mu(a)$ and $\Terms(f) \subseteq \Terms(\mu(a)) \cup \Consts(\Sigma)$. The resulting chase tree is $(T, \mu')$, where $\mu'$ agrees with $\mu$ everywhere except at $a$, and $\mu'(a) = \mu(a) \cup \{f\}$.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  Given a set $\Sigma$ of single-headed GTGD rules and a base instance $\mathcal{D}$, a \emph{tree-like chase proof over $\Sigma$ from $\mathcal{D}$} is a finite sequence of chase trees $C_1, \ldots, C_n$ such that
+  \begin{itemize}
+    \item $C_1 = (T, \mu)$ is a chase tree with a single vertex $v$ together with $\mu(v) = \mathcal{D}$.
+    \item for each $i < n$, $C_{i + 1}$ is obtained from $C_i$ by applying a chase transformation over $\Sigma$.
+  \end{itemize}
+\end{definition}
+
+A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of repairing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples by using a chase step, branching off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to the ancestor node.
+
+Note that we only propagate or inherit facts whose terms appear in the target instance. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
+
+The restriction mentioned above makes tree-like chase proofs locally compact in the following sense.
+
+\begin{definition}
+  Let $\Sigma$ be a set of GTGDs and $K \in \mathbb{N}$. We say that an instance $\mathcal{D}$ is \emph{$(K, \Sigma)$-small} when $|\Terms(\mathcal{D}) \setminus \Consts(\Sigma)| \leq K$.
+\end{definition}
+
+\begin{proposition}[Tree-width of chase proofs]
+\label{chase-proofs-tree-width}
+  Let $\Sigma$ be a set of \emph{single-headed} GTGDs, $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ a tree-like chase proof over $\Sigma$ from $\mathcal{D}$ and $r \in T_1$ the root node. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then for every $1 \leq i < n$ and every non-root vertex $v$ of $T_i$, $\mu_i(v)$ is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all instances in $(T_i, \mu_i)$ are $(K, \Sigma)$-small.
+  \begin{proof}
+    By induction on $i$. We look at the rule used to derive $(T_{i+1}, \mu_{i+1})$ from $(T_{i}, \mu_{i})$ and examine the instance at the modified node.
+    \begin{itemize}
+      \item If the last step was a chase step with a full rule or a propagation step, no term set has been modified for any instance in the chase tree.
+      \item If the last step was a chase step from a vertex $v \in T_i$ with an existential rule $\forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$, we have added a new node $c$ under $v$. As $|\Terms(\sigma'(H))| \leq K$ and the inherited instance $I$ has $\Terms(I) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma)$,
+      \begin{equation*}
+        \begin{split}
+          |\Terms(\mu_{i+1}(c)) \setminus \Consts(\Sigma)|
+            &= |\Terms(\{\sigma'(H)\} \cup I) \setminus \Consts(\Sigma)| \\
+            &\leq K.
+        \end{split}
+      \end{equation*}
+    \end{itemize}
+    When $\mathcal{D}$ is $(K, \Sigma)$-small, the result extends to the root node since no chase transformation modifies the term set of the root node.
+  \end{proof}
+\end{proposition}
+
+At the same time, tree-like chase proofs prove everything we can reason about the input database $\mathcal{D}$, as long as conjunctive queries are concerned.
+
+\begin{theorem}
+  For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a boolean conjunctive query $Q$, there exists a tree-like chase proof $C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D}, \Sigma \models Q$.
+  % TODO: proof?
+\end{theorem}
+
+\section{Shortcutting Chase Trees}
+
+Tree-like chase proof is a powerful tool to reason about a fragment of a chase, but unlike a full chase, they do not constitute a model of $\mathcal{D} \cup \Sigma$.  Instead, we want a universal model as structured as a chase proof.
+
+Notice that during a chase proof, we only ever fire an existential rule from a node $n$ in the hope of either
+\begin{itemize}
+  \item retrieving back a fact to $n$ to accumulate as much facts as possible to $n$, or
+  \item finding an existential witness to the query variable in the subtree of $n$.
+\end{itemize}
+We can immediately achieve the former objective by computing the Datalog saturation of the instance at $n$ using $\ASatRules{\Sigma}$. This observation motivates the following definition.
+
+\begin{definition}[Shortcutting Chase Trees]
+  Let $\Sigma$ be a finite set of single-headed GTGDs and $\mathcal{D}$ an instance. We inductively define an infinite sequence $(T_0, \mu_0), (T_1, \mu_1), \ldots$ of chase trees as follows:
+  \begin{itemize}
+    \item $(T_0, \mu_0)$ is a chase tree with only the root vertex $r$ together with $$\mu_0(r) = \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D}).$$
+    \item For the inductive step, $(T_{i + 1}, \mu_{i + 1})$ is constructed by shortcut-chasing all leaves in the previous chase tree $(T_i, \mu_i)$.
+    
+    More precisely, let $L_i$ be the set of leaf nodes in $T_i$. For each $l \in L_i$, an existential rule $\tau = \forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$ mapping $\vec{x}$ into $\Terms(\mu_i(l))$ such that $\sigma(\beta) \subseteq \mu_i(l)$, define
+    \begin{itemize}
+      \item $\sigma'$ as an extension of $\sigma$ that maps all variables in $\vec{y}$ to fresh nulls
+      \item the instance $I_{l, \tau, \sigma}$ \emph{inherited from $\mu_i(l)$ through $\tau$ and $\sigma$} as an instance $$I_{l, \tau, \sigma} = \{ F \in \mu_i(l) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}$$
+    \end{itemize}
+    We construct $T_{i+1}$ as an extension of $T_i$ by adding a vertex $c_{l, \tau, \sigma}$ as a child of $l$ for each such $l \in L_i$, $\tau$ and $\sigma$. We extend $\mu_i$ to $\mu_{i+1}$ by setting $$\mu_{i+1}(c_{l, \tau, \sigma}) = \{ \sigma'(H) \} \cup I_{l, \tau, \sigma}.$$
+  \end{itemize}
+  Finally, the \emph{shortcutting chase tree $\SCTree{\mathcal{D}}{\Sigma}$ of $\mathcal{D}$ over $\Sigma$} is a chase tree defined as the limit $(\bigcup_{i = 0}^\infty T_i, \bigcup_{i = 0}^\infty \mu_i)$ of the sequence defined above.
+  \qed
+\end{definition}
+
+% TODO: Add a concrete example here. I suppose an infinite shortcutting chase tree and a small conjunctive query serve a good purpose.
+
+The structure of a shortcutting chase tree is very similar to that of a chase proof.
+
+\begin{proposition}
+  Let $\Sigma$ be a set of single-headed GTGDs and $\mathcal{D}$ a base instance. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then every instance at a non-root node of \emph{$\SCTree{\mathcal{D}}{\Sigma}$} is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all instances in $\SCTree{\mathcal{D}}{\Sigma}$ are $(K, \Sigma)$-small.
+  \begin{proof}
+    By an analysis as in the proof of \ref{chase-proofs-tree-width}.
+  \end{proof}
+\end{proposition}
+
+Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is in fact a universal model for $\mathcal{D} \cup \Sigma$.
+
+\begin{theorem}
+  For a set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a boolean conjunctive query, $\mathcal{D}, \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
+  \begin{proof}
+    (TODO).
+  \end{proof}
+\end{theorem}
+
+\section{Homomorphisms into Shortcutting Chase Trees}
+
+We conclude the chapter with an analysis of how a homomorphism from a given conjunctive query to a shortcutting chase tree is structured.
+
+% TODO: Discuss the head-tentacle decomposition of a query homomorphism, and show how the guarded set inherited into the tentacle is the only thing that matters to satisfy the connected subquery existentially (after a specific set of variables are mapped to base constants).
 
 \newpage
-\section{Deriving a Decision Procedure}
+\chapter{Deriving a Decision Procedure}
 
 \newpage
-\section{Implementation, Verification and Evaluation}
+\chapter{Implementation, Verification and Evaluation}
 
 \newpage
-\section{Conclusion}
+\chapter{Conclusion}
 
 \printbibliography
 
