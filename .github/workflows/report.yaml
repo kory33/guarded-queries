@@ -23,7 +23,7 @@ jobs:
           working_directory: ./report
       - run: |
           mkdir -p ./_site
-          cp ./report/out/report.pdf ./_site/report.pdf
+          cp ./report/report.pdf ./_site/report.pdf
       - uses: actions/upload-pages-artifact@v1
         with:
           path: ./_site
