@@ -21,4 +21,14 @@ public record SubqueryEntailmentInstance(
                 LocalInstanceTerm.RuleConstant::new
         );
     }
+
+    public SubqueryEntailmentInstance withLocalInstance(FormalInstance<LocalInstanceTerm> newLocalInstance) {
+        return new SubqueryEntailmentInstance(
+                this.ruleConstantWitnessGuess,
+                this.coexistentialVariables,
+                newLocalInstance,
+                this.localWitnessGuess,
+                this.queryConstantEmbedding
+        );
+    }
 }

@@ -487,13 +487,18 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //        we can mark all local instances below the root as false, too.
         //        The implementation in this class completely ignores this aspect of the tree-structure of the chase.
         //
-        //    The challenge to solve these problems essentially boils down to
-        //     - dynamically pruning the search space,
-        //       i.e. not generating problem instances that are already known to be
-        //        - false, which we will not add to the DP table anyway
-        //        - true, which is subsumed by some other instance already marked as true
-        //     - keeping track of only "maximally subsuming true instances" and "minimally subsuming false instances"
-        //     - efficiently matching a problem instance to other subsuming instances using indexing techniques
+        //   Out of these four problems,
+        //    - Problem 3 has been addressed by NormalizingDPTableSEComputation, and
+        //    - Problem 4 has been further addressed by ShortCircuitingNormalizingDPTableSEComputation.
+        //
+        //   The most crucial optimization point is Problem 2, which greatly affects how much
+        //   exponential blowup we have to deal with. The challenge is to implement the following:
+        //    - dynamically pruning the search space,
+        //      i.e. *not even generating* problem instances that are already known to be
+        //       - false, which we will not add to the DP table anyway
+        //       - true, which is subsumed by some other instance already marked as true
+        //    - keeping track of only "maximally subsuming true instances" and "minimally subsuming false instances"
+        //    - efficiently matching a problem instance to other subsuming instances using indexing techniques
         allWellFormedSubqueryEntailmentInstancesFor(
                 extensionalSignature,
                 ruleConstants,
