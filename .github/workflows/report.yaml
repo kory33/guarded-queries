@@ -1,0 +1,21 @@
+name: report
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-report-pdf-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: xu-cheng/latex-action@v2
+        with:
+          root_file: report.tex
+          working_directory: ./report
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Report
+          path: ./report/report.pdf
+
