@@ -588,7 +588,7 @@ public final class ShortCircuitingNormalizingDPTableSEComputation implements Sub
 
     @Override
     public String toString() {
-        return "NormalizingDPTableSEComputation{" +
+        return "ShortCircuitingNormalizingDPTableSEComputation{" +
                 "datalogSaturationEngine=" + datalogSaturationEngine +
                 '}';
     }
