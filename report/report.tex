@@ -180,11 +180,11 @@ This project aims to derive an algorithm that produces Datalog rewritings for ar
 
 \section{Tree-Like Chase Proofs}
 
-In the settings of existential rules, an object known as the \emph{chase} represents the \emph{completion} of a database for some data integration rules. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent fresh constants \cite{fagin_kolaitis_miller_popa_2005}.
+In the presence of existential rules, an object known as the \emph{chase} represents a canonical \emph{completion} of a database concerning some data integration rules. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent fresh constants \cite{fagin_kolaitis_miller_popa_2005}.
 
-As with Datalog saturations, chases over an instance $\mathcal{D}$ give all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
+As with Datalog saturations, the chase of an instance $\mathcal{D}$ gives all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
 
-However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists z. R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, due to how one constructs a chase, it lacks a structure with which we can reason about query entailments.
+However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists z. R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
 
 % TODO: which paper introduced tree-like chase proofs for Datalog+-?
 To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes.
@@ -195,25 +195,20 @@ To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} int
 
 Chase trees can be infinite in general, but we focus on finite chase trees in this section. The following definition incorporates ideas from \cite{benedikt_buron_germano_kappelmann_motik_2022} and \cite{kappelmann_2019}.
 
-% TODO: The notion of "chase transformation" is superfluous; we do not need to introduce a word for that and say that a chase proof evolves in one of two ways.
-\begin{definition}
- Given a set $\Sigma$ of single-headed GTGD rules, a \emph{chase transformation over $\Sigma$} on a chase tree $(T, \mu)$ is one of the following transformations:
-  \begin{itemize}
-    \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
-    \begin{itemize}
-      \item If $\tau$ is full, we simply add the head atom $H$ of $\tau$ to the instance at $v$. That is, we keep $T' = T$, and set $\mu'(v) = \mu(v) \cup \sigma(H)$ while maintaining $\mu$ and $\mu'$ equal on $T \setminus \{v\}$.
-      \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the instance $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
-    \end{itemize}
-    \item \emph{a propagation step} from a vertex $v \in T$ to an ancestor $a \in T$ of $v$ with a fact $f \in \mu(v)$, provided that $f \not\in \mu(a)$ and $\Terms(f) \subseteq \Terms(\mu(a)) \cup \Consts(\Sigma)$. The resulting chase tree is $(T, \mu')$, where $\mu'$ agrees with $\mu$ everywhere except at $a$, and $\mu'(a) = \mu(a) \cup \{f\}$.
-  \end{itemize}
-\end{definition}
-
 \begin{definition}
 \label{tree-like-chase-proof}
   Given a set $\Sigma$ of single-headed GTGD rules and a base instance $\mathcal{D}$, a \emph{tree-like chase proof over $\Sigma$ from $\mathcal{D}$} is a finite sequence of chase trees $C_1, \ldots, C_n$ such that
   \begin{itemize}
     \item $C_1 = (T, \mu)$ is a chase tree with a single vertex $v$ together with $\mu(v) = \mathcal{D}$.
-    \item for each $i < n$, $C_{i + 1}$ is obtained from $C_i$ by applying a chase transformation over $\Sigma$.
+    \item for each $i < n$, $C_{i + 1}$ is obtained from $C_i = (T, \mu)$ by applying one of the following transformation steps.
+    \begin{itemize}
+      \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
+      \begin{itemize}
+        \item If $\tau$ is full, we simply add the head atom $H$ of $\tau$ to the instance at $v$. That is, we keep $T' = T$, and set $\mu'(v) = \mu(v) \cup \sigma(H)$ while maintaining $\mu$ and $\mu'$ equal on $T \setminus \{v\}$.
+        \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the instance $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
+      \end{itemize}
+      \item \emph{a propagation step} from a vertex $v \in T$ to an ancestor $a \in T$ of $v$ with a fact $f \in \mu(v)$, provided that $f \not\in \mu(a)$ and $\Terms(f) \subseteq \Terms(\mu(a)) \cup \Consts(\Sigma)$. The resulting chase tree is $(T, \mu')$, where $\mu'$ agrees with $\mu$ everywhere except at $a$, and $\mu'(a) = \mu(a) \cup \{f\}$.
+    \end{itemize}
   \end{itemize}
 \end{definition}
 
@@ -221,7 +216,7 @@ A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of
 
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
 
-The restriction mentioned above makes tree-like chase proofs locally compact in the following sense.
+The restriction mentioned above makes the local structure of tree-like chase proofs \emph{small} in the following sense.
 
 \begin{definition}
   Let $\Sigma$ be a set of GTGDs and $K \in \mathbb{N}$. We say that a bag $\mathcal{B}$ of facts is \emph{$(K, \Sigma)$-small} when $|\Terms(\mathcal{B}) \setminus \Consts(\Sigma)| \leq K$.
