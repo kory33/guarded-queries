@@ -13,11 +13,15 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+\usepackage{hyperref}
+\usepackage[nameinlink]{cleveref}
+
 % settings for amsthm package
 % apply chapter-wise theorem numbering for theorems
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
 
 % The following are the numbered elements with "definition (i.e. non-italic) style"
 \theoremstyle{definition}
@@ -34,7 +38,7 @@
 \newcommand{\ASatRules}[1]{\ensuremath{\normalfont{\textsc{ASatRules}} \left( #1 \right)}}
 \newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
 
-\title{Querying Infinite GTGD Chases}
+\title{A Step Towards Practical Query Answering Under GTGDs}
 \author{Ryosuke Kondo}
 \date{May 2023}
 
@@ -60,7 +64,7 @@ Unlike querying a single relational database, it is not sufficient to perform a 
 
 In general, the problem of answering queries given (1) a collection of \emph{incomplete} data sources, (2) a finite set of \emph{data integration rules} that can derive the existence of new tuples and (3) a conjunctive query (CQ) is called Ontology-Mediated Query Answering (OMQA) \cite{bienvenu16}.
 
-Data integration rules in OMQA problem instances are often written as Tuple-Generating Dependencies (TGDs), which are first-order sentences of the form $\forall \vec{x}. \Phi(\vec{x}, \vec{c}) \rightarrow \exists \vec{y}. \Psi(\vec{x}, \vec{y}, \vec{c}')$. In the example above, for instance, the rules can be translated into logical formulae (TODO: translate the rules into TGDs). Formulated this way, we can think of OMQA problems as finding all assignments $\sigma$ of free variables in the input query that validate the logical entailment relation $\mathcal{D} \land \Sigma \models \sigma(Q)$, where $\mathcal{D}$ is the conjunction of all records present in data sources, $\Sigma$ is the data integration rules and $Q$ is the input CQ.
+Data integration rules in OMQA problem instances are often written as Tuple-Generating Dependencies (TGDs), which are first-order sentences of the form $\forall \vec{x}. \Phi(\vec{x}, \vec{c}) \rightarrow \exists \vec{y}. \Psi(\vec{x}, \vec{y}, \vec{c}')$. In the example above, for instance, the rules can be translated into logical formulae (TODO: translate the rules into TGDs). Formulated this way, we can think of OMQA problems as finding all assignments $\sigma$ of free variables in the input query that validate the logical entailment relation $\mathcal{D} \cup \Sigma \models \sigma(Q)$, where $\mathcal{D}$ is the conjunction of all records present in data sources, $\Sigma$ is the data integration rules and $Q$ is the input CQ.
 
 Unfortunately, however, OMQA problems with general TGDs turned out to be undecidable \cite{beeri_vardi_1981}. In response to this, \cite{cali_gottlob_kifer_2013} identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves OMQA problems decidable, yet expressive enough to contain several classes of description logics.
 
@@ -74,7 +78,7 @@ Even though the implementation by \cite{benedikt_buron_germano_kappelmann_motik_
 
 (TODO: The following two paragraphs clearly do not fit here, but I think they should be present in the introduction, or else the exact problem I worked on is very difficult to communicate. Reorganize?)
 
-It has been known that the entailment $\mathcal{D} \land \Sigma \models \sigma(Q)$ holds if and only if $\sigma(Q)$ is witnessed by the \emph{chase} of $\mathcal{D}$, which, informally speaking, is the result of \emph{repairing} $\mathcal{D}$ by generating tuples using rules in $\Sigma$ infinitely many times. % citation needed
+It has been known that the entailment $\mathcal{D} \cup \Sigma \models \sigma(Q)$ holds if and only if $\sigma(Q)$ is witnessed by the \emph{chase} of $\mathcal{D}$, which, informally speaking, is the result of \emph{repairing} $\mathcal{D}$ by generating tuples using rules in $\Sigma$ infinitely many times. % citation needed
 
 Moreover, it has also been known that there exists a \emph{Datalog rewriting} of a finite set of GTGD rules and an arbitrary CQ \cite{barany_benedikt_cate_2013}. We will refer the problem of finding a Datalog rewriting of a GTGD rule set and a CQ by \emph{GTGD-Datalog Rewriting}. Note that Datalog-saturating a GTGD rule set is a special case of GTGD-Datalog Rewriting problem where the query is always atomic.
 
@@ -116,7 +120,7 @@ We conclude the report with an overview, and discuss some weakness of the algori
 Consider the following problem:
 
 \begin{problem}
-   Given an existential free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D}, P \models \sigma(Q)$.
+   Given an existential free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \sigma(Q)$.
 \end{problem}
 
 Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation}. Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
@@ -157,7 +161,7 @@ Our ultimate goal is to answer the following problem.
 
 \begin{problem}[GTGD-CQ Answering]
 \label{GTGD-CQ-Answering}
-  Given a finite set $\Sigma$ of GTGD rules, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D}, \Sigma \models \sigma(Q)$?
+  Given a finite set $\Sigma$ of GTGD rules, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \sigma(Q)$?
 \end{problem}
 
 % Motivate why we want to compute Datalog rewritings by talking about data complexity, cite the result showing the existence and finally formally define.
@@ -178,7 +182,7 @@ This project aims to derive an algorithm that produces Datalog rewritings for ar
 
 In the settings of existential rules, an object known as the \emph{chase} represents the \emph{completion} of a database for some data integration rules. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent fresh constants \cite{fagin_kolaitis_miller_popa_2005}.
 
-As with Datalog saturations, chases over an instance $\mathcal{D}$ give all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{x}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{x}$ away.
+As with Datalog saturations, chases over an instance $\mathcal{D}$ give all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
 
 However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists z. R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, due to how one constructs a chase, it lacks a structure with which we can reason about query entailments.
 
@@ -225,9 +229,9 @@ The restriction mentioned above makes tree-like chase proofs locally compact in 
 
 \begin{proposition}[Tree-width of chase proofs]
 \label{chase-proofs-tree-width}
-  Let $\Sigma$ be a set of \emph{single-headed} GTGDs, $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ a tree-like chase proof over $\Sigma$ from $\mathcal{D}$ and $r \in T_1$ the root node. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then for every $1 \leq i < n$ and every non-root vertex $v$ of $T_i$, $\mu_i(v)$ is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $(T_i, \mu_i)$ are $(K, \Sigma)$-small.
+  Let $\Sigma$ be a set of \emph{single-headed} GTGDs, $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then for every $1 \leq i < n$ and every non-root vertex $v$ of $T_i$, $\mu_i(v)$ is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $(T_i, \mu_i)$ are $(K, \Sigma)$-small.
   \begin{proof}
-    By induction on $i$. We look at the rule used to derive $(T_{i+1}, \mu_{i+1})$ from $(T_{i}, \mu_{i})$ and examine the bag at the modified node.
+    By induction on $i$. The base case $i = 1$ is vacuous. We look at the rule used to derive $(T_{i+1}, \mu_{i+1})$ from $(T_{i}, \mu_{i})$ and examine the bag at the modified node.
     \begin{itemize}
       \item If the last step was a chase step with a full rule or a propagation step, no term set has been modified for any bag in the chase tree.
       \item If the last step was a chase step from a vertex $v \in T_i$ with an existential rule $\forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$, we have added a new node $c$ under $v$. As $|\Terms(\sigma'(H))| \leq K$ and the inherited bag $I$ has $\Terms(I) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma)$,
@@ -247,13 +251,13 @@ At the same time, tree-like chase proofs prove everything we can reason about th
 
 \begin{proposition}
 \label{chase-proof-completeness}
-  For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D}, \Sigma \models Q$.
+  For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
   \begin{proof}[Proof (sketch)] $ $\par
-    ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Take any (Herbrand) structure $\mathcal{M}$ and suppose $\mathcal{M} \models \mathcal{D} \wedge \Sigma$. Write $I_i = \bigcup_{v \in T_i} \mu_i(v)$ for the chased instance at $i$-th step.
+    ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Take any (Herbrand) structure $\mathcal{M}$ and suppose $\mathcal{M} \models \mathcal{D} \cup \Sigma$. Write $I_i = \bigcup_{v \in T_i} \mu_i(v)$ for the chased instance at $i$-th step.
     
     By induction on $1 \leq i \leq n$, we can construct an increasing sequence $\sigma_1, \ldots, \sigma_n$ of substitutions such that $\sigma_i$ homomorphically maps all nulls in $I_i$ to $\mathcal{M}$. In particular, $\sigma(I_n) \subseteq \mathcal{M}$, and as $I_n \models Q$, $\mathcal{M} \models Q$.
 
-    ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. The cited proposition shows that an ordinary chase can be decomposed into a tree-like structure, and the decomposition is performed exactly as in the definition of \ref{tree-like-chase-proof}.
+    ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. Proof therein decomposes an ordinary chase into a tree-like structure, and the decomposition is performed exactly as in \Cref{tree-like-chase-proof}.
   \end{proof}
 \end{proposition}
 
@@ -292,18 +296,36 @@ The structure of a shortcutting chase tree is very similar to that of a chase pr
 \begin{proposition}
   Let $\Sigma$ be a set of single-headed GTGDs and $\mathcal{D}$ an instance. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then every bag of facts at a non-root node of \emph{$\SCTree{\mathcal{D}}{\Sigma}$} is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $\SCTree{\mathcal{D}}{\Sigma}$ are $(K, \Sigma)$-small.
   \begin{proof}
-    By the same analysis as in the proof of \ref{chase-proofs-tree-width}.
+    By the same analysis as in the proof of \Cref{chase-proofs-tree-width}.
   \end{proof}
 \end{proposition}
 
-Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D} \cup \Sigma$.
+Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D} \cup \Sigma$, since any finite subtree of $\SCTree{\mathcal{D}}{\Sigma}$ homomorphically embeds into some chase proof.
+
+\begin{lemma}
+\label{sctree-subtree-embeds-into-a-chase-proof}
+  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ such that $(T, \mu)$ can be homomorphically mapped into $C_n$.
+  \begin{proof}
+    By induction on the structure of $(T, \mu)$.
+
+    The base case is $T = \{r\}$, where $r$ is the root of $\SCTree{\mathcal{D}}{\Sigma}$. By \Cref{chase-proof-completeness}, we can construct a chase-proof $C_1, \ldots, C_n$ that aggregates all provable base facts to the root bag.
+
+    For the inductive part, take a finite rooted subtree $(T, \mu)$ and a leaf $l$ of $T$, and suppose that $T \setminus \{l\}$ can be homomorphically mapped into $C_1, \ldots, C_n$. Let $(\tau, \sigma)$ be a pair of a rule and a substitution used to derive $l$.
+    
+    We extend the proof $C_1, \ldots, C_n$ by applying a chase step with $(\tau, \sigma)$ to create a child node $c \in C_{n+1}$. By \Cref{chase-proof-completeness}, we can derive all facts whose terms appear in the bag $c$. We have now obtained a chase proof $C_1, \ldots, C_{n+m}$ with $c$ saturated, so $(T, \mu)$ can be homomorphically mapped into $C_{n+m}$.
+  \end{proof}
+\end{lemma}
 
 \begin{theorem}
-  For a set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query, $\mathcal{D}, \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
-  \begin{proof}[Proof (sketch)] $ $\par
-    ($\Longrightarrow$): Suppose $\mathcal{D}, \Sigma \models Q$. By \ref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
+  For a set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, $\mathcal{D} \cup \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
+  \begin{proof}[Proof] $ $\par
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
 
-    ($\Longleftarrow$): (TODO: We may choose to embed SCTree into either the oblivious chase sequence (in which case we pick an appropriate finite initial subtree of SCTree) or chase proof).
+    ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$ that maps atoms in $Q$ to facts in $\SCTree{\mathcal{D}}{\Sigma}$.
+    
+    We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ that admits a homomorphism from $Q$. To do so, for each $j \in J$, let $N_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of nodes whose bags contain the fact $\sigma(A_j)$. Choose $n_j \in N_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $n_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
+
+    Now apply \Cref{sctree-subtree-embeds-into-a-chase-proof} and \Cref{chase-proof-completeness} to $(T, \mu)$.
   \end{proof}
 \end{theorem}
 
