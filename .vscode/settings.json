@@ -1,5 +1,12 @@
 {
   "files.watcherExclude": {
     "**/target": true
-  }
+  },
+  "grammarly.selectors": [
+    {
+      "language": "latex",
+      "scheme": "file",
+      "pattern": "report/report.tex"
+    }
+  ]
 }
