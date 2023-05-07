@@ -16,6 +16,16 @@
 \usepackage{hyperref}
 \usepackage[nameinlink]{cleveref}
 
+\usepackage[dvipsnames]{xcolor}
+\hypersetup{
+  colorlinks=true,
+  linktoc=section,
+  linkcolor=RoyalBlue,
+  citecolor=RoyalBlue,
+  urlcolor=RoyalBlue,
+  linkbordercolor=white,
+}
+
 % settings for amsthm package
 % apply chapter-wise theorem numbering for theorems
 \theoremstyle{plain}
@@ -23,7 +33,7 @@
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 
-% The following are the numbered elements with "definition (i.e. non-italic) style"
+% The following are the numbered elements with "definition style" (i.e. non-italic)
 \theoremstyle{definition}
 \newtheorem{problem}[theorem]{Problem}
 \newtheorem{definition}[theorem]{Definition}
@@ -114,6 +124,7 @@ We conclude the report with an overview, and discuss some weakness of the algori
 % TODO: define formula formalism
 % TODO: define TGDs, Datalog rules, full TGDs, guarded TGDs
 % TODO: define "instances", and make it clear that we may use a word "bag" in contexts where we don't talk about the whole database
+% TODO: define "homomorphism" as an arrow between two sets of facts mapping nulls and variables in the domain set to terms in the target set, such that facts are preserved, and note that this is a rather unconventional typing
 
 \section{Datalog Saturation}
 
@@ -190,7 +201,7 @@ However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists
 To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes.
 
 \begin{definition}
-  A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to bags of facts (possibly with nulls).
+  A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to bags of facts (possibly with nulls). We shall often idenfify a chase tree $(T, \mu)$ with the set $\bigcup_{v \in T} \mu(v)$ of facts in it.
 \end{definition}
 
 Chase trees can be infinite in general, but we focus on finite chase trees in this section. The following definition incorporates ideas from \cite{benedikt_buron_germano_kappelmann_motik_2022} and \cite{kappelmann_2019}.
@@ -215,6 +226,8 @@ Chase trees can be infinite in general, but we focus on finite chase trees in th
 A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples by using a chase step, branching off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to the ancestor node.
 
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
+
+% NOTE: It may be better to call this quantity "width", but it is slightly different from treewidth since we exclude rule constants. I could not come up with a fitting word here.
 
 The restriction mentioned above makes the local structure of tree-like chase proofs \emph{small} in the following sense.
 
@@ -248,9 +261,9 @@ At the same time, tree-like chase proofs prove everything we can reason about th
 \label{chase-proof-completeness}
   For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
   \begin{proof}[Proof (sketch)] $ $\par
-    ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Take any (Herbrand) structure $\mathcal{M}$ and suppose $\mathcal{M} \models \mathcal{D} \cup \Sigma$. Write $I_i = \bigcup_{v \in T_i} \mu_i(v)$ for the chased instance at $i$-th step.
+    ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $C_1, \ldots, C_n$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Take any (Herbrand) structure $\mathcal{M}$ and suppose $\mathcal{M} \models \mathcal{D} \cup \Sigma$.
     
-    By induction on $1 \leq i \leq n$, we can construct an increasing sequence $\sigma_1, \ldots, \sigma_n$ of substitutions such that $\sigma_i$ homomorphically maps all nulls in $I_i$ to $\mathcal{M}$. In particular, $\sigma(I_n) \subseteq \mathcal{M}$, and as $I_n \models Q$, $\mathcal{M} \models Q$.
+    By induction on $1 \leq i \leq n$ and examining the step used to derive the last chase tree, we can construct an increasing sequence $\sigma_1, \ldots, \sigma_n$ of homomorphisms $\sigma_i: C_i \rightarrow \mathcal{M}$. In particular, $\sigma(C_n) \subseteq \mathcal{M}$, and as $C_n \models Q$, $\mathcal{M} \models Q$.
 
     ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. Proof therein decomposes an ordinary chase into a tree-like structure, and the decomposition is performed exactly as in \Cref{tree-like-chase-proof}.
   \end{proof}
@@ -299,13 +312,13 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
 \begin{lemma}
 \label{sctree-subtree-embeds-into-a-chase-proof}
-  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ such that $(T, \mu)$ can be homomorphically mapped into $C_n$.
+  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits a homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
   \begin{proof}
     By induction on the structure of $(T, \mu)$.
 
     The base case is $T = \{r\}$, where $r$ is the root of $\SCTree{\mathcal{D}}{\Sigma}$. By \Cref{chase-proof-completeness}, we can construct a chase-proof $C_1, \ldots, C_n$ that aggregates all provable base facts to the root bag.
 
-    For the inductive part, take a finite rooted subtree $(T, \mu)$ and a leaf $l$ of $T$, and suppose that $T \setminus \{l\}$ can be homomorphically mapped into $C_1, \ldots, C_n$. Let $(\tau, \sigma)$ be a pair of a rule and a substitution used to derive $l$.
+    For the inductive part, take a finite rooted subtree $(T, \mu)$ and a leaf $l$ of $T$, and suppose that $T \setminus \{l\}$ can be homomorphically mapped into the last chase tree in a proof $C_1, \ldots, C_n$. Let $(\tau, \sigma)$ be a pair of a rule and a substitution used to derive $l$.
     
     We extend the proof $C_1, \ldots, C_n$ by applying a chase step with $(\tau, \sigma)$ to create a child node $c \in C_{n+1}$. By \Cref{chase-proof-completeness}, we can derive all facts whose terms appear in the bag $c$. We have now obtained a chase proof $C_1, \ldots, C_{n+m}$ with $c$ saturated, so $(T, \mu)$ can be homomorphically mapped into $C_{n+m}$.
   \end{proof}
@@ -316,11 +329,11 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
   \begin{proof}[Proof] $ $\par
     ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
 
-    ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$ that maps atoms in $Q$ to facts in $\SCTree{\mathcal{D}}{\Sigma}$.
+    ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
     
-    We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ that admits a homomorphism from $Q$. To do so, for each $j \in J$, let $N_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of nodes whose bags contain the fact $\sigma(A_j)$. Choose $n_j \in N_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $n_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
+    We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ such that $\sigma$ restricts to $\sigma: Q \rightarrow (T, \mu)$. To do so, for each $j \in J$, let $N_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of nodes whose bags contain the fact $\sigma(A_j)$. Choose $n_j \in N_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $n_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
 
-    Now apply \Cref{sctree-subtree-embeds-into-a-chase-proof} and \Cref{chase-proof-completeness} to $(T, \mu)$.
+    By applying \Cref{sctree-subtree-embeds-into-a-chase-proof} to $(T, \mu)$, there is a chase proof of $Q$ from $\mathcal{D}$ under $\Sigma$. By soundness of chase proofs (\Cref{chase-proof-completeness}, $\Longrightarrow$) we are done.
   \end{proof}
 \end{theorem}
 
@@ -333,7 +346,7 @@ We conclude the chapter with an analysis of how a homomorphism from a given conj
 \newpage
 \chapter{Deriving a Decision Procedure}
 
-\subsection{Expressing Local Structure of a Shortcutting Chase Tree}
+\section{Expressing Local Structure of a Shortcutting Chase Tree}
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
