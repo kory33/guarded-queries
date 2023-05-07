@@ -43,9 +43,12 @@
 \addbibresource{references.bib}
 
 % Symbol definitions
+\def\Vars{{\mathrm{Vars}}}
 \def\Consts{{\mathrm{Consts}}}
 \def\Terms{{\mathrm{Terms}}}
 \newcommand{\ASatRules}[1]{\ensuremath{\normalfont{\textsc{ASatRules}} \left( #1 \right)}}
+\newcommand{\BaseVars}[1]{\ensuremath{\normalfont{\textrm{BaseVars}} \left( #1 \right)}}
+\newcommand{\NullVars}[1]{\ensuremath{\normalfont{\textrm{NullVars}} \left( #1 \right)}}
 \newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
 
 \title{A Step Towards Practical Query Answering Under GTGDs}
@@ -125,6 +128,7 @@ We conclude the report with an overview, and discuss some weakness of the algori
 % TODO: define TGDs, Datalog rules, full TGDs, guarded TGDs
 % TODO: define "instances", and make it clear that we may use a word "bag" in contexts where we don't talk about the whole database
 % TODO: define "homomorphism" as an arrow between two sets of facts mapping nulls and variables in the domain set to terms in the target set, such that facts are preserved, and note that this is a rather unconventional typing
+% TOOD: define "the subtree T \downarrow v of T as the tree induced by all descendants of v in T"
 
 \section{Datalog Saturation}
 
@@ -337,11 +341,60 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
   \end{proof}
 \end{theorem}
 
+Note that a shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow v$ of all descendants (including $v$ itself) of $v$ can be written as $\SCTree{\mathcal{D}}{\Sigma} \downarrow v = \SCTree{\mu(v)}{\Sigma}$.
+
 \section{Query Homomorphisms into Shortcutting Chase Trees}
 
-We conclude the chapter with an analysis of how a homomorphism from a given conjunctive query to a shortcutting chase tree is structured.
+We conclude the chapter with an analysis of how the structure of the query constrains the structure of homomorphisms from a given conjunctive query to a shortcutting chase tree.
 
-% TODO: Discuss the head-tentacle decomposition of a query homomorphism, and show how the guarded set inherited into the tentacle is the only thing that matters to satisfy the connected subquery existentially (after a specific set of variables are mapped to base constants).
+We begin by decomposing a query homomorphism into its \emph{head part} and the \emph{null part}.
+
+\begin{definition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query and $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism from $Q$ into some shortcut chase tree. The set $\BaseVars{\sigma}$ of \emph{base variables} (resp. the set $\NullVars{\sigma}$ of \emph{null variables}) of $\sigma$ are variables in $\vec{z}$ that are mapped to constants (resp. nulls) in $\SCTree{\mathcal{D}}{\Sigma}$ by $\sigma$.
+\end{definition}
+
+For a shortcut chase tree $\SCTree{\mathcal{D}}{\Sigma}$ and a child $c$ of the root of the tree, we call the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ a \emph{tentacle} in $\SCTree{\mathcal{D}}{\Sigma}$. We observe that the set of null variables in $Q$ connected by atoms must occur within the same tentacle.
+
+We introduce the following terminology.
+
+\begin{definition}
+  Given a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, we say that
+  \begin{itemize}
+    \item two variables $z_1, z_2$ bound in $Q$ are \emph{$Q$-adjacent} if some atom $A_j$ in $Q$ contains both $z_1$ and $z_2$
+    \item a set $Z$ of variables bound in $Q$ are \emph{$Q$-connected} if for each pair $z_1, z_2 \in Z$ of variables, there is a finite sequence $v_1, \ldots, v_n$ of variables in $Z$ such that
+    \begin{itemize}
+      \item $v_1 = z_1$ and $v_n = z_2$
+      \item for each $1 \leq i < n$, $v_i$ and $v_{i+1}$ are $Q$-adjacent
+    \end{itemize}
+  \end{itemize}
+  For a subset $Z$ of $\vec{z}$, a \emph{$Q$-connected component of $Z$} is a maximally $Q$-connected subset of $Z$.
+  \qed
+\end{definition}
+
+\begin{proposition}[Co-existentialness of nulls]
+\label{coexistentialness}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism, and $C$ a $Q$-connected component of $\NullVars{\sigma}$. If we write $T_C$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ all of whose bags contain a null in $\sigma(C)$, then $T_C$ is a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$. In particular, all nulls in $\sigma(C)$ occur in a single tentacle.
+  \begin{proof}
+    Since $T_C$ does not contain the root node, it suffices to show the connectedness of $T_C$. (TODO).
+  \end{proof}
+\end{proposition}
+
+In the light of \Cref{coexistentialness}, we call a $Q$-connected component of $\NullVars{\sigma}$ a \emph{set of variables co-existential according to $\sigma$}.
+
+The decomposition of query variables into $\textrm{BaseVars}$ and $\textrm{NullVars}$ allows us to separate the conjunctive query answering problem into the following two steps.
+
+\begin{enumerate}
+  \item (Non-deterministically) guess the set $B$ of base variables such that $B \supset FV(Q)$. Guess how a query homomorphism restricts to $B$, i.e. guess a mapping $\sigma_\mathrm{base}: B \rightarrow \Consts(\mathcal{D})$.
+  \item Check that the query is satisfied in a way compatible to $\sigma_\mathrm{base}$, in the following \emph{decomposed} manner:
+  \begin{itemize}
+    \item Let $$J_B = \{ j \in J \mid \Vars(A_j) \subseteq B \}.$$ Check that for each $j \in J_B$, $$\sigma_\mathrm{base}(A_j) \in \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D})$$
+    \item For each $Q$-connected component $C$ of $\Vars(Q) \setminus B$, let $Q_C$ be the boolean conjunctive query given by $\exists (\vec{z} \setminus B). \bigwedge_{j \in J_{C \cup B}} \sigma_\mathrm{base}(A_j)$, where $$J_{C \cup B} = \{ j \in J \mid \Vars(A_j) \subseteq C \cup B \}.$$Check that $\mathcal{D} \cup \Sigma \models Q_C$ holds for each $C$.
+  \end{itemize}
+\end{enumerate}
+
+The crucial observation, which we will exploit in the next chapter, is that the satisfaction of each $Q_C$ only depends on the set of facts that is propagated down to the tentacle.
+
+% TODO: state (since the proof is trivial) that the subquery entailment only depends on the set of facts propagated to the root of the tentacle in which the query is witnessed.
 
 \newpage
 \chapter{Deriving a Decision Procedure}
