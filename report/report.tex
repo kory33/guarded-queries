@@ -8,6 +8,7 @@
 \usepackage{amsmath}
 \usepackage{amstext}
 \usepackage{amsthm}
+\usepackage{amssymb}
 \usepackage{mathtools}
 
 \usepackage{algorithm}
@@ -40,16 +41,20 @@
 \newtheorem{example}[theorem]{Example}
 
 % Load `.bib` file
+% TODO: we should get rid of "et al." 
 \addbibresource{references.bib}
 
 % Symbol definitions
 \def\Vars{{\mathrm{Vars}}}
 \def\Consts{{\mathrm{Consts}}}
 \def\Terms{{\mathrm{Terms}}}
+\newcommand{\dom}[1]{\ensuremath{\normalfont{\operatorname{dom}} \left( #1 \right)}}
 \newcommand{\ASatRules}[1]{\ensuremath{\normalfont{\textsc{ASatRules}} \left( #1 \right)}}
 \newcommand{\BaseVars}[1]{\ensuremath{\normalfont{\textrm{BaseVars}} \left( #1 \right)}}
 \newcommand{\NullVars}[1]{\ensuremath{\normalfont{\textrm{NullVars}} \left( #1 \right)}}
 \newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
+\newcommand{\Subq}[3]{\ensuremath{\normalfont{\textrm{Subq}} \left( #1, #2, #3 \right)}}
+\newcommand{\Baseq}[2]{\ensuremath{\normalfont{\textrm{Baseq}} \left( #1, #2 \right)}}
 
 \title{A Step Towards Practical Query Answering Under GTGDs}
 \author{Ryosuke Kondo}
@@ -135,7 +140,7 @@ We conclude the report with an overview, and discuss some weakness of the algori
 Consider the following problem:
 
 \begin{problem}
-   Given an existential free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \sigma(Q)$.
+   Given an existential free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions (each of which is an \emph{answer} to the query) $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \alpha(Q)$.
 \end{problem}
 
 Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation}. Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
@@ -176,7 +181,7 @@ Our ultimate goal is to answer the following problem.
 
 \begin{problem}[GTGD-CQ Answering]
 \label{GTGD-CQ-Answering}
-  Given a finite set $\Sigma$ of GTGD rules, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \sigma(Q)$?
+  Given a finite set $\Sigma$ of GTGD rules, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
 % Motivate why we want to compute Datalog rewritings by talking about data complexity, cite the result showing the existence and finally formally define.
@@ -184,7 +189,7 @@ Our ultimate goal is to answer the following problem.
 It is known that a conjunctive query under GTGD rules admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
 
 \begin{definition}
-  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\sigma: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \sigma(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \sigma(Q_\mathrm{atomic}).$$
+  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \sigma(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
   We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the Datalog rewriting.
 \end{definition}
 
@@ -329,6 +334,7 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 \end{lemma}
 
 \begin{theorem}
+\label{sctree-soundness-completeness}
   For a set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, $\mathcal{D} \cup \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
   \begin{proof}[Proof] $ $\par
     ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
@@ -353,59 +359,105 @@ We begin by decomposing a query homomorphism into its \emph{head part} and the \
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query and $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism from $Q$ into some shortcut chase tree. The set $\BaseVars{\sigma}$ of \emph{base variables} (resp. the set $\NullVars{\sigma}$ of \emph{null variables}) of $\sigma$ are variables in $\vec{z}$ that are mapped to constants (resp. nulls) in $\SCTree{\mathcal{D}}{\Sigma}$ by $\sigma$.
 \end{definition}
 
-For a shortcut chase tree $\SCTree{\mathcal{D}}{\Sigma}$ and a child $c$ of the root of the tree, we call the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ a \emph{tentacle} in $\SCTree{\mathcal{D}}{\Sigma}$. We observe that the set of null variables in $Q$ connected by atoms must occur within the same tentacle.
+For a shortcut chase tree $\SCTree{\mathcal{D}}{\Sigma}$ and a child $c$ of the root of the tree, we call the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ a \emph{tentacle} in $\SCTree{\mathcal{D}}{\Sigma}$. We observe that a connected set of null variables in $Q$ must all map to nulls within the same tentacle.
 
-We introduce the following terminology.
+To make this precise, we introduce the following terminology.
 
 \begin{definition}
   Given a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, we say that
   \begin{itemize}
     \item two variables $z_1, z_2$ bound in $Q$ are \emph{$Q$-adjacent} if some atom $A_j$ in $Q$ contains both $z_1$ and $z_2$
-    \item a set $Z$ of variables bound in $Q$ are \emph{$Q$-connected} if for each pair $z_1, z_2 \in Z$ of variables, there is a finite sequence $v_1, \ldots, v_n$ of variables in $Z$ such that
+    \item a set $Z$ of variables bound in $Q$ are \emph{$Q$-connected} if for each pair $z_1, z_2 \in Z$ of variables, there is a finite sequence $x_1, \ldots, x_n$ of variables in $Z$ such that
     \begin{itemize}
-      \item $v_1 = z_1$ and $v_n = z_2$
-      \item for each $1 \leq i < n$, $v_i$ and $v_{i+1}$ are $Q$-adjacent
+      \item $x_1 = z_1$ and $x_n = z_2$
+      \item for each $1 \leq i < n$, $x_i$ and $x_{i+1}$ are $Q$-adjacent
     \end{itemize}
   \end{itemize}
-  For a subset $Z$ of $\vec{z}$, a \emph{$Q$-connected component of $Z$} is a maximally $Q$-connected subset of $Z$.
+  For a subset $Z$ of $\vec{z}$, a \emph{$Q$-connected component of $Z$} is a $\subseteq$-maximal $Q$-connected nonempty subset of $Z$.
   \qed
 \end{definition}
 
 \begin{proposition}[Co-existentialness of nulls]
 \label{coexistentialness}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism, and $C$ a $Q$-connected component of $\NullVars{\sigma}$. If we write $T_C$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ all of whose bags contain a null in $\sigma(C)$, then $T_C$ is a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$. In particular, all nulls in $\sigma(C)$ occur in a single tentacle.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism, and $C$ a $Q$-connected component of $\NullVars{\sigma}$. If we write $T_C$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ whose bags contain a null in $\sigma(C)$, then $T_C$ is a rooted proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$. In particular, all nulls in $\sigma(C)$ occur in a single tentacle.
   \begin{proof}
-    Since $T_C$ does not contain the root node, it suffices to show the connectedness of $T_C$. (TODO).
+    For each null $n \in \sigma(C)$, let $V_n \subseteq \SCTree{\mathcal{D}}{\Sigma}$ be the set of nodes in which $n$ appears. We wish to see that $T_C = \bigcup_{n \in \sigma(C)} V_n$ is a rooted proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$. Since $T_C$ does not contain the root node, it suffices to show the connectedness of $T_C$.
+
+    So take two vertices $v_1, v_2 \in T_C$, and let $z_1, z_2 \in C$ be variables such that $v_i \in\nobreak V_{\sigma(z_i)}$ for $i \in \{1, 2\}$. As $C$ is a $Q$-connected component of $\NullVars{\sigma}$, there exists a sequence $z_1 = x_1, \ldots, x_n = z_2$ of variables in $C$ such that $x_i$ and $x_{i+1}$ are $Q$-adjacent for each $1 \leq i < n$.
+
+    For each $i$, as $x_i$ and $x_{i+1}$ are $Q$-adjacent and $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$, there exists a node $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ that contains both $\sigma(x_i)$ and $\sigma(x_{i+1})$. In particular, $V_\sigma(x_i) \cap V_\sigma(x_{i+1}) \neq \emptyset$.
+
+    By construction of $\SCTree{\mathcal{D}}{\Sigma}$, each $V_\sigma(x_i)$ is connected, so there is a path in $\SCTree{\mathcal{D}}{\Sigma}$ that joins $v_1$ and $v_2$ through intersections $V_\sigma(x_i) \cap V_\sigma(x_{i+1})$.
   \end{proof}
 \end{proposition}
 
-In the light of \Cref{coexistentialness}, we call a $Q$-connected component of $\NullVars{\sigma}$ a \emph{set of variables co-existential according to $\sigma$}.
+\Cref{coexistentialness} asserts that a homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ forces connected sets of $\textrm{NullVars}$ to appear in the same tentacle. In light of this, we call a $Q$-connected component of $\NullVars{\sigma}$ a \emph{set of variables co-existential according to $\sigma$}.
 
-The decomposition of query variables into $\textrm{BaseVars}$ and $\textrm{NullVars}$ allows us to separate the conjunctive query answering problem into the following two steps.
+Notice that a conjunctive query is satisfied precisely when there exists (1) a mapping of query variables to base constants and (2) a mapping of co-existential variables into nulls in tentacles. To state this formally, we define the notion of a \emph{subquery induced by a partial homomorphism}.
 
-\begin{enumerate}
-  \item (Non-deterministically) guess the set $B$ of base variables such that $B \supset FV(Q)$. Guess how a query homomorphism restricts to $B$, i.e. guess a mapping $\sigma_\mathrm{base}: B \rightarrow \Consts(\mathcal{D})$.
-  \item Check that the query is satisfied in a way compatible to $\sigma_\mathrm{base}$, in the following \emph{decomposed} manner:
-  \begin{itemize}
-    \item Let $$J_B = \{ j \in J \mid \Vars(A_j) \subseteq B \}.$$ Check that for each $j \in J_B$, $$\sigma_\mathrm{base}(A_j) \in \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D})$$
-    \item For each $Q$-connected component $C$ of $\Vars(Q) \setminus B$, let $Q_C$ be the boolean conjunctive query given by $\exists (\vec{z} \setminus B). \bigwedge_{j \in J_{C \cup B}} \sigma_\mathrm{base}(A_j)$, where $$J_{C \cup B} = \{ j \in J \mid \Vars(A_j) \subseteq C \cup B \}.$$Check that $\mathcal{D} \cup \Sigma \models Q_C$ holds for each $C$.
-  \end{itemize}
-\end{enumerate}
+\begin{definition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ a base instance and $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ a partial homomorphism sending query variables to base constants, such that $\dom{\sigma_\mathrm{base}} \supseteq FV(Q)$. Let $\mathrm{BVars} = \dom{\sigma_\mathrm{base}}$.
 
-The crucial observation, which we will exploit in the next chapter, is that the satisfaction of each $Q_C$ only depends on the set of facts that is propagated down to the tentacle.
+  We define the \emph{base part $\Baseq{Q}{\sigma_\mathrm{base}}$ of $Q$ according to $\sigma_\mathrm{base}$} as the variable-free query
+  $$\Baseq{Q}{\sigma_\mathrm{base}} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} \sigma_\mathrm{base}(A_j).$$
 
-% TODO: state (since the proof is trivial) that the subquery entailment only depends on the set of facts propagated to the root of the tentacle in which the query is witnessed.
+  For each $Q$-connected component $C$ of $(\vec{z} \setminus \mathrm{BVars})$, the \emph{subquery $\Subq{Q}{\sigma_\mathrm{base}}{C}$ of $Q$ induced by $\sigma_\mathrm{base}$ and $C$} is the Boolean conjunctive query defined by
+  $$\Subq{Q}{\sigma_\mathrm{base}}{C} = \exists C. \bigwedge_{j \in J'} \sigma_\mathrm{base}(A_j),$$
+  where $$J' = \{ j \in J \mid \Vars(A_j) \subseteq C \cup \mathrm{BVars} \}.$$
+  \qed
+\end{definition}
+
+Intuitively, the partial map $\sigma$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{base}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input base instance, and for each $C$, $\Subq{Q}{\sigma}{C}$ is a query whose entailment tells us if $\sigma$ had been a valid choice.
+
+We are now ready to state two main results of this section, which we will use in \Cref{deriving-a-rewriting} to derive the Datalog rewriting.
 
 \newpage
-\chapter{Deriving a Decision Procedure}
+
+\begin{lemma}[Base-coexistential decomposition]
+\label{base-coexistential}
+  Let $Q$ be a conjunctive query, $\mathcal{D}$ a base instance and $\Sigma$ a finite set of GTGDs. Then, for a substitution\newline $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ of $\alpha$ such that
+  \begin{itemize}
+    \item $\mathcal{D} \cup \Sigma \models \Baseq{Q}{\sigma_\mathrm{base}}$
+    \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{base}}})$.
+  \end{itemize}
+  \begin{proof}
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models \sigma(Q)$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: \alpha(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \Vars(Q) \setminus FV(Q) \mid \sigma(v) \text{ is a base constant} \},$$ then $(\sigma \upharpoonright B) \cup \alpha$ is an extension of $\alpha$ satisfying conditions in the lemma.
+
+    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{base}$ satisfies the two conditions. Then 
+  \end{proof}
+\end{lemma}
+
+% TODO: put a helpful diagram
+
+In order to produce a rewriting, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. We can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ to check the entailment.
+
+(TODO: add a lemma asserting that for a connected BCQ, we can always find a "successful branching point" at which the homomorphic image of the query splits)
+
+\newpage
+\chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
+
+\Cref{base-coexistential} together with (TODO: add a Cref) allows us to answer a conjunctive query with the following procedure.
+
+\begin{enumerate}
+  \item Non-deterministically guess $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$.
+  \item Check that the Datalog saturation of the input instance satisfies the base part $\Baseq{Q}{\sigma_\mathrm{base}}$.
+  \item Check that, for each set $C$ of variables co-existential according to $\sigma_\mathrm{base}$, the subquery $\Subq{Q}{\sigma_\mathrm{base}}{C}$ is entailed by $\mathcal{D} \cup \Sigma$.
+  \item Produce $\sigma_\mathrm{base} \upharpoonright FV(Q)$ as an answer to the query
+\end{enumerate}
+
+We will use this procedure as a stepping stone to derive a Datalog rewriting of the rule-query pair $(\Sigma, Q)$.
 
 \section{Expressing Local Structure of a Shortcutting Chase Tree}
+
+% TODO: state (the proof is trivial) that the subquery entailment only depends on the set of facts propagated to the root of the tentacle in which the query is witnessed.
+
+% TODO: talk about "replacing \mathcal{D} with the head of the tentacle?" first as an "optimization" of the above algorithm, and state that this is not just an optimization 
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
 
 \newpage
-\chapter{Conclusion}
+\chapter{Further Discussion and Conclusion}
 
 \printbibliography
 
