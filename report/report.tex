@@ -1,7 +1,7 @@
 \documentclass[12pt]{report}
 
 \usepackage[a4paper, margin=1.3in]{geometry}
-\usepackage{biblatex}
+\usepackage[style=alphabetic,maxnames=10]{biblatex}
 \usepackage{setspace}
 
 \usepackage{amsfonts}
@@ -423,7 +423,7 @@ We are now ready to state two main results of this section, which we will use in
   \begin{proof}
     ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models \sigma(Q)$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: \alpha(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \Vars(Q) \setminus FV(Q) \mid \sigma(v) \text{ is a base constant} \},$$ then $(\sigma \upharpoonright B) \cup \alpha$ is an extension of $\alpha$ satisfying conditions in the lemma.
 
-    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{base}$ satisfies the two conditions. Then 
+    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{base}$ satisfies the two conditions. Then (TODO; paste subquery homomorphisms together to construct a query homomorphism).
   \end{proof}
 \end{lemma}
 
