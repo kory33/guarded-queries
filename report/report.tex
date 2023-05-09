@@ -1,7 +1,7 @@
 \documentclass[12pt]{report}
 
 \usepackage[a4paper, margin=1.3in]{geometry}
-\usepackage[style=alphabetic,maxnames=10]{biblatex}
+\usepackage[maxnames=10]{biblatex}
 \usepackage{setspace}
 
 \usepackage{amsfonts}
@@ -39,6 +39,7 @@
 \newtheorem{problem}[theorem]{Problem}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
 
 % Load `.bib` file
 % TODO: we should get rid of "et al." 
@@ -351,17 +352,11 @@ Note that a shortcutting tree chase has a \emph{coinductive} structure: If we wr
 
 \section{Query Homomorphisms into Shortcutting Chase Trees}
 
-We conclude the chapter with an analysis of how the structure of the query constrains the structure of homomorphisms from a given conjunctive query to a shortcutting chase tree.
+We now discuss how the structure of the query constrains the structure of query homomorphisms into the shortcutting chase tree.
 
-We begin by decomposing a query homomorphism into its \emph{head part} and the \emph{null part}.
+% TODO: briefly mention why we are going into this stuff.
 
-\begin{definition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query and $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism from $Q$ into some shortcut chase tree. The set $\BaseVars{\sigma}$ of \emph{base variables} (resp. the set $\NullVars{\sigma}$ of \emph{null variables}) of $\sigma$ are variables in $\vec{z}$ that are mapped to constants (resp. nulls) in $\SCTree{\mathcal{D}}{\Sigma}$ by $\sigma$.
-\end{definition}
-
-For a shortcut chase tree $\SCTree{\mathcal{D}}{\Sigma}$ and a child $c$ of the root of the tree, we call the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ a \emph{tentacle} in $\SCTree{\mathcal{D}}{\Sigma}$. We observe that a connected set of null variables in $Q$ must all map to nulls within the same tentacle.
-
-To make this precise, we introduce the following terminology.
+A key observation is that a \emph{connected} set of variables produces a connected homomorphic image in $\SCTree{\mathcal{D}}{\Sigma}$. To make this intuition precise, we introduce the following terminology.
 
 \begin{definition}
   Given a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, we say that
@@ -373,63 +368,89 @@ To make this precise, we introduce the following terminology.
       \item for each $1 \leq i < n$, $x_i$ and $x_{i+1}$ are $Q$-adjacent
     \end{itemize}
   \end{itemize}
+
   For a subset $Z$ of $\vec{z}$, a \emph{$Q$-connected component of $Z$} is a $\subseteq$-maximal $Q$-connected nonempty subset of $Z$.
+
+  Finally, $Q$ is a \emph{connected} conjunctive query if $\vec{z}$ is $Q$-connected.
   \qed
 \end{definition}
 
-\begin{proposition}[Co-existentialness of nulls]
-\label{coexistentialness}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ be a homomorphism, and $C$ a $Q$-connected component of $\NullVars{\sigma}$. If we write $T_C$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ whose bags contain a null in $\sigma(C)$, then $T_C$ is a rooted proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$. In particular, all nulls in $\sigma(C)$ occur in a single tentacle.
+A set $Z$ of bound variables is $Q$-connected if the hypergraph corresponding to the structure of $Q$ (with $Z$ as the vertex set and atoms in $Q$ as the hyperedges) is connected, as illustrated in the following example.
+
+\begin{example}
+  Consider a conjunctive query $$Q = \exists z_1,z_2,z_3,z_4,z_5.\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2,z_3) \wedge R(z_3, z_4) \wedge R(z_3, z_5).$$
+  Then $\{z_1, z_3, z_4\}$ and $\{z_2, z_3, z_5\}$ are both $Q$-connected, but $\{z_1, z_2, z_4\}$ and $\{z_4, z_5\}$ are not.
+
+  $Q$-connected components of $\{z_1, z_2, z_4, z_5\}$ are $\{z_1,z_2\}$, $\{z_4\}$ and $\{z_5\}$.
+  \qed
+  % TODO: a picture helps!
+\end{example}
+
+We are ready to state the observation.
+
+\begin{lemma}[\emph{Homomorphic image of connected variables is connected}]
+\label{image-of-connected-variables-is-connected}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ a homomorphism, and $Z$ a nonempty, $Q$-connected subset of $\vec{z}$.
+
+  If we write $T_Z$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ whose bags contain a term in $\sigma(Z)$, then $T_Z$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
-    For each null $n \in \sigma(C)$, let $V_n \subseteq \SCTree{\mathcal{D}}{\Sigma}$ be the set of nodes in which $n$ appears. We wish to see that $T_C = \bigcup_{n \in \sigma(C)} V_n$ is a rooted proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$. Since $T_C$ does not contain the root node, it suffices to show the connectedness of $T_C$.
+    For each term $t \in \sigma(Z)$, let $V_t \subseteq \SCTree{\mathcal{D}}{\Sigma}$ be the set of nodes in which $t$ appears. We wish to see that $T_Z = \bigcup_{t \in \sigma(Z)} V_t$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$. Since $T_Z$ is nonempty, it suffices to show the connectedness of $T_Z$.
 
-    So take two vertices $v_1, v_2 \in T_C$, and let $z_1, z_2 \in C$ be variables such that $v_i \in\nobreak V_{\sigma(z_i)}$ for $i \in \{1, 2\}$. As $C$ is a $Q$-connected component of $\NullVars{\sigma}$, there exists a sequence $z_1 = x_1, \ldots, x_n = z_2$ of variables in $C$ such that $x_i$ and $x_{i+1}$ are $Q$-adjacent for each $1 \leq i < n$.
+    So take two vertices $v_1, v_2 \in T_Z$, and let $z_1, z_2 \in Z$ be variables bound in $Q$ such that $v_i \in V_{\sigma(z_i)}$ for $i \in \{1, 2\}$. As $Z$ is $Q$-connected, there exists a sequence $z_1 = x_1, \ldots, x_n = z_2$ of variables in $Z$ such that $x_i$ and $x_{i+1}$ are $Q$-adjacent for each $1 \leq i < n$.
 
-    For each $i$, as $x_i$ and $x_{i+1}$ are $Q$-adjacent and $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$, there exists a node $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ that contains both $\sigma(x_i)$ and $\sigma(x_{i+1})$. In particular, $V_\sigma(x_i) \cap V_\sigma(x_{i+1}) \neq \emptyset$.
+    For each $i$, there exists an atom $A$ containing both $x_i$ and $x_{i+1}$. As \newline $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism, there exists a node $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ that contains $\sigma(A)$. In particular, $v$ contains both $\sigma(x_i)$ and $\sigma(x_{i+1})$, so $V_\sigma(x_i) \cap V_\sigma(x_{i+1}) \neq \emptyset$.
 
     By construction of $\SCTree{\mathcal{D}}{\Sigma}$, each $V_\sigma(x_i)$ is connected, so there is a path in $\SCTree{\mathcal{D}}{\Sigma}$ that joins $v_1$ and $v_2$ through intersections $V_\sigma(x_i) \cap V_\sigma(x_{i+1})$.
   \end{proof}
-\end{proposition}
+\end{lemma}
 
-\Cref{coexistentialness} asserts that a homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ forces connected sets of $\textrm{NullVars}$ to appear in the same tentacle. In light of this, we call a $Q$-connected component of $\NullVars{\sigma}$ a \emph{set of variables co-existential according to $\sigma$}.
-
-Notice that a conjunctive query is satisfied precisely when there exists (1) a mapping of query variables to base constants and (2) a mapping of co-existential variables into nulls in tentacles. To state this formally, we define the notion of a \emph{subquery induced by a partial homomorphism}.
+We will use \Cref{image-of-connected-variables-is-connected} to develop a query-answering procedure. To begin with, we define a way to split the query entailment checking problem into smaller problems by a partial guess of the query homomorphism.
 
 \begin{definition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ a base instance and $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ a partial homomorphism sending query variables to base constants, such that $\dom{\sigma_\mathrm{base}} \supseteq FV(Q)$. Let $\mathrm{BVars} = \dom{\sigma_\mathrm{base}}$.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree over an instance (which may contain nulls) and \newline $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ a partial map from query variables to terms in $\mathcal{D}$. Let $\mathrm{BVars} = \dom{\sigma_\mathrm{partial}}$.
 
-  We define the \emph{base part $\Baseq{Q}{\sigma_\mathrm{base}}$ of $Q$ according to $\sigma_\mathrm{base}$} as the variable-free query
-  $$\Baseq{Q}{\sigma_\mathrm{base}} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} \sigma_\mathrm{base}(A_j).$$
+  We define the \emph{base part $\Baseq{Q}{\sigma_\mathrm{partial}}$ of $Q$ according to $\sigma_\mathrm{partial}$} as the variable-free query
+  $$\Baseq{Q}{\sigma_\mathrm{partial}} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} \sigma_\mathrm{partial}(A_j).$$
 
-  For each $Q$-connected component $C$ of $(\vec{z} \setminus \mathrm{BVars})$, the \emph{subquery $\Subq{Q}{\sigma_\mathrm{base}}{C}$ of $Q$ induced by $\sigma_\mathrm{base}$ and $C$} is the Boolean conjunctive query defined by
-  $$\Subq{Q}{\sigma_\mathrm{base}}{C} = \exists C. \bigwedge_{j \in J'} \sigma_\mathrm{base}(A_j),$$
+  For each $Q$-connected component $C$ of $(\vec{z} \setminus \mathrm{BVars})$, the \emph{subquery $\Subq{Q}{\sigma_\mathrm{partial}}{C}$ of $Q$ induced by $\sigma_\mathrm{partial}$ and $C$} is the connected Boolean conjunctive query defined by
+  $$\Subq{Q}{\sigma_\mathrm{partial}}{C} = \exists \vec{C}. \bigwedge_{j \in J'} \sigma_\mathrm{partial}(A_j),$$
   where $$J' = \{ j \in J \mid \Vars(A_j) \subseteq C \cup \mathrm{BVars} \}.$$
   \qed
 \end{definition}
 
-Intuitively, the partial map $\sigma$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{base}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input base instance, and for each $C$, $\Subq{Q}{\sigma}{C}$ is a query whose entailment tells us if $\sigma$ had been a valid choice.
+Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{base}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma}{C}$ is a query whose entailment tells us if $\sigma$ had been a valid choice.
 
-We are now ready to state two main results of this section, which we will use in \Cref{deriving-a-rewriting} to derive the Datalog rewriting.
+As the following lemma states, the original query is satisfied precisely when all split queries are.
 
 \newpage
-
-\begin{lemma}[Base-coexistential decomposition]
-\label{base-coexistential}
-  Let $Q$ be a conjunctive query, $\mathcal{D}$ a base instance and $\Sigma$ a finite set of GTGDs. Then, for a substitution\newline $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ of $\alpha$ such that
+\begin{lemma}[Base-connected query decomposition]
+\label{base-connected-query-decomposition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then, for a substitution\newline $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ of $\alpha$ such that
   \begin{itemize}
     \item $\mathcal{D} \cup \Sigma \models \Baseq{Q}{\sigma_\mathrm{base}}$
     \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{base}}})$.
   \end{itemize}
   \begin{proof}
-    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models \sigma(Q)$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: \alpha(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \Vars(Q) \setminus FV(Q) \mid \sigma(v) \text{ is a base constant} \},$$ then $(\sigma \upharpoonright B) \cup \alpha$ is an extension of $\alpha$ satisfying conditions in the lemma.
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models \alpha(Q)$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: \alpha(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \Vars(Q) \setminus FV(Q) \mid \sigma(v) \in \Terms(\mathcal{D}) \},$$ then $(\sigma \upharpoonright B) \cup \alpha$ is an extension of $\alpha$ satisfying conditions in the lemma.
 
-    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{base}$ satisfies the two conditions. Then (TODO; paste subquery homomorphisms together to construct a query homomorphism).
+    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{base}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{base}}})$.
+    
+    For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{base}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_\mathrm{base}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_\mathrm{base} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \Vars(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
+    
+    Since every atom $A_j$ in $Q$ appears either in $\Baseq{Q}{\sigma_\mathrm{base}}$ or in precisely one $\Subq{Q}{\sigma_\mathrm{base}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
+    
+    As $\sigma \supseteq \sigma_\mathrm{base} \supseteq \alpha$, $(\sigma \upharpoonright \vec{z})$ is a query homomorphism $(\sigma \upharpoonright \vec{z}): \alpha(Q) \rightarrow\nobreak \SCTree{\mathcal{D}}{\Sigma}$. Therefore $\mathcal{D} \cup \Sigma \models \alpha(Q)$.
   \end{proof}
 \end{lemma}
 
 % TODO: put a helpful diagram
 
-In order to produce a rewriting, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. We can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ to check the entailment.
+In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ to check the query entailment recursively.
+
+\begin{theorem}
+\label{recursive-connected-bcq-entailment}
+  
+\end{theorem}
 
 (TODO: add a lemma asserting that for a connected BCQ, we can always find a "successful branching point" at which the homomorphic image of the query splits)
 
