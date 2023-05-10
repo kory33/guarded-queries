@@ -201,6 +201,7 @@ This project aims to derive an algorithm that produces Datalog rewritings for ar
 
 \newpage
 \chapter{Characterising Query Entailment under GTGDs}
+\label{characterising-query-entailment-under-gtgds}
 
 \section{Tree-Like Chase Proofs}
 
@@ -576,30 +577,46 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \newpage
 \chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
 
-\Cref{base-coexistential} together with (TODO: add a Cref) allows us to answer a conjunctive query with the following procedure.
+In \Cref{characterising-query-entailment-under-gtgds}, we devised \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over GTGDs.
 
-\begin{enumerate}
-  \item Non-deterministically guess $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$.
-  \item Check that the Datalog saturation of the input instance satisfies the base part $\Baseq{Q}{\sigma_\mathrm{base}}$.
-  \item Check that, for each set $C$ of variables co-existential according to $\sigma_\mathrm{base}$, the subquery $\Subq{Q}{\sigma_\mathrm{base}}{C}$ is entailed by $\mathcal{D} \cup \Sigma$.
-  \item Produce $\sigma_\mathrm{base} \upharpoonright FV(Q)$ as an answer to the query
-\end{enumerate}
+However, because of high data complexity, the algorithm is impractical for query-answering purposes. We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$, so the running time is inevitably exponential to the number of constants in the input base instance $\mathcal{D}$.
 
-We will use this procedure as a stepping stone to derive a Datalog rewriting of the rule-query pair $(\Sigma, Q)$.
+Instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to come up with a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
 
-\section{Expressing Local Structure of a Shortcutting Chase Tree}
+The first important observation is that if a subquery is satisfied within a proper subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a child $c$ of the root node, then as long as enough facts are inherited to $c$, the subquery remains entailed in the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ even when uninherited facts are removed from the base instance $\mathcal{D}$. In other words, the subquery entailment only depends on the set of facts inherited from the base instance.
 
-% TODO: state (the proof is trivial) that the subquery entailment only depends on the set of facts propagated to the root of the tentacle in which the query is witnessed.
+% TODO: add a diagram if possible.
 
-% TODO: talk about "replacing \mathcal{D} with the head of the tentacle?" first as an "optimization" of the above algorithm, and state that this is not just an optimization and actually leads to a rewriting
+If an existential rule $\forall \vec{x}. \beta \rightarrow \exists \vec{y}. H(\vec{x}, \vec{y})$ is fired with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$ to grow a child node $c$, the only facts inherited to $c$ are the ones whose terms all lie in $\sigma(H(\vec{x}, \vec{y}))$.
+
+% TODO: write about the general strategy for producing a rewriting
+%       where one prepares "subgoal atoms" for each connected variable set of the query
+%       and then come up with "sufficiently large" base data to entail the subquery,
+%       finally adding in all "subquery integration rules".
+
+\section{What Does It Take To Entail a Subquery?}
+
+% TODO: define the notion of "subquery entailment instance" and the "subquery entailment problem".
+% TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
+
+\section{The Rewriting Algorithm}
+
+% TODO: present an algorithm. if time permits, add a correctness proof
+%       and the runtime complexity analysis
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
 
-%TODO: talk about test queries which have "simply-connected" hypergraph structures (is this what people call "acyclic"? Check.)
+% TODO: talk about the implementation architecture and briefly indicate how the user can try using the built jar
+
+% TODO: talk about test queries which have "simply-connected" hypergraph structures (is this what people call "acyclic"? Check.)
 
 \newpage
 \chapter{Further Discussion and Conclusion}
+
+\section{Future Work}
+
+\section{Conclusion}
 
 \printbibliography
 
