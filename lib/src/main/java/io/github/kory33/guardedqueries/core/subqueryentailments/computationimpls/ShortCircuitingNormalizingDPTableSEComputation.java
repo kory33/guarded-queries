@@ -322,6 +322,13 @@ public final class ShortCircuitingNormalizingDPTableSEComputation implements Sub
                     saturatedInstance.coexistentialVariables()
             ).get();
 
+            // Check if the root instance can be split
+            if (canBeSplitIntoYesInstancesWithoutChasing(relevantSubquery, saturatedInstance)) {
+                // we do not need to chase further
+                this.table.put(saturatedInstance, true);
+                return;
+            }
+
             // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
             // because they are treated as special symbols corresponding to variables and query constants
             // occurring in the subquery.
