@@ -527,10 +527,11 @@ We are ready to present a query-answering procedure \Cref{basic-query-answering-
 \begin{itemize}
   \item there are only finitely many such classes, and
   \item for each such $\cong_\Sigma$-equivalence class $\mathcal{E}$, there exists a path $v_1, \ldots, v_n$ from the root node of $\SCTree{\mathcal{D}}{\Sigma}$ such that
-  \begin{itemize}
+  \begin{enumerate}
     \item none of $\mu(v_1), \ldots, \mu(v_n)$ are $\cong_\Sigma$-equivalent
     \item $[\mu(v_n)]_{\cong_\Sigma} = \mathcal{E}$
-  \end{itemize}
+  \end{enumerate}
+  because we can always shorten a path not satisfying (1) by replacing a segment $v_i, \ldots, v_{i+m}$ such that $\mu(v_i) \cong_\Sigma \mu(v_{i+m})$ with just $v_i$, and then replacing all of $v_{i+m+1}, \ldots, v_n$ by their $\cong_\Sigma$-equivalent copies in the subtree rooted at $v_i$.
 \end{itemize}
 
 One can first prove termination and correctness of \Cref{basic-query-answering-procedure} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{recursive-connected-bcq-entailment}. It is then straightforward to see, by applying \Cref{base-connected-query-decomposition}, that \Cref{basic-query-answering-procedure} produces all valid answers to a general conjunctive query.
