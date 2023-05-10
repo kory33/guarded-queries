@@ -87,7 +87,7 @@ Unlike querying a single relational database, it is not sufficient to perform a 
 
 In general, the problem of answering queries given (1) a collection of \emph{incomplete} data sources, (2) a finite set of \emph{data integration rules} that can derive the existence of new tuples and (3) a conjunctive query (CQ) is called Ontology-Mediated Query Answering (OMQA) \cite{bienvenu16}.
 
-Data integration rules in OMQA problem instances are often written as Tuple-Generating Dependencies (TGDs), which are first-order sentences of the form $\forall \vec{x}. \Phi(\vec{x}, \vec{c}) \rightarrow \exists \vec{y}. \Psi(\vec{x}, \vec{y}, \vec{c}')$. In the example above, for instance, the rules can be translated into logical formulae (TODO: translate the rules into TGDs). Formulated this way, we can think of OMQA problems as finding all assignments $\sigma$ of free variables in the input query that validate the logical entailment relation $\mathcal{D} \cup \Sigma \models \sigma(Q)$, where $\mathcal{D}$ is the conjunction of all records present in data sources, $\Sigma$ is the data integration rules and $Q$ is the input CQ.
+Data integration rules in OMQA problem instances are often written as Tuple-Generating Dependencies (TGDs), which are first-order sentences of the form $\forall \vec{x}.\ \Phi(\vec{x}, \vec{c}) \rightarrow \exists \vec{y}.\ \Psi(\vec{x}, \vec{y}, \vec{c}')$. In the example above, for instance, the rules can be translated into logical formulae (TODO: translate the rules into TGDs). Formulated this way, we can think of OMQA problems as finding all assignments $\sigma$ of free variables in the input query that validate the logical entailment relation $\mathcal{D} \cup \Sigma \models \sigma(Q)$, where $\mathcal{D}$ is the conjunction of all records present in data sources, $\Sigma$ is the data integration rules and $Q$ is the input CQ.
 
 Unfortunately, however, OMQA problems with general TGDs turned out to be undecidable \cite{beeri_vardi_1981}. In response to this, \cite{cali_gottlob_kifer_2013} identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves OMQA problems decidable, yet expressive enough to contain several classes of description logics.
 
@@ -97,7 +97,7 @@ Despite OMQA problems over GTGDs being known to be decidable for several years, 
 
 (TODO: include a diagram indicating the scheme of how Datalog saturation is incorporated into OMQA)
 
-Even though the implementation by \cite{benedikt_buron_germano_kappelmann_motik_2022} only supports atomic queries out-of-the-box, we can reduce any \emph{acyclic} existential queries into a few guarded rules and a single goal atom containing just the free variables in the original query. For the (TODO: reference to the example given at the beginning of Section 1.1) query, we can add a (TODO)-ary goal predicate $\mathrm{Goal}(-, -)$ and rules (TODO: apply the reduction). However, such reduction does not apply to cyclic queries (e.g. a \emph{triangle query} $\exists x,y,z. R(w, x, y) \land S(y, z) \land S(z, x)$) in general.
+Even though the implementation by \cite{benedikt_buron_germano_kappelmann_motik_2022} only supports atomic queries out-of-the-box, we can reduce any \emph{acyclic} existential queries into a few guarded rules and a single goal atom containing just the free variables in the original query. For the (TODO: reference to the example given at the beginning of Section 1.1) query, we can add a (TODO)-ary goal predicate $\mathrm{Goal}(-, -)$ and rules (TODO: apply the reduction). However, such reduction does not apply to cyclic queries (e.g. a \emph{triangle query} $\exists x,y,z.\ R(w, x, y) \land S(y, z) \land S(z, x)$) in general.
 
 (TODO: The following two paragraphs clearly do not fit here, but I think they should be present in the introduction, or else the exact problem I worked on is very difficult to communicate. Reorganize?)
 
@@ -148,10 +148,11 @@ Consider the following problem:
    Given an existential free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions (each of which is an \emph{answer} to the query) $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \alpha(Q)$.
 \end{problem}
 
-Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation}. Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
+Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation} (\Cref{naive-evaluation-algorithm}). Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
 
 \begin{algorithm}
 \caption{Answering Datalog query using Naive Evaluation}
+\label{naive-evaluation-algorithm}
 \begin{algorithmic}[1]
 \Procedure{DatalogSaturate}{Datalog program $P$, input database $\mathcal{D}$}
   \State $\mathcal{D}_\mathrm{current} \gets \mathcal{D}$
@@ -186,15 +187,15 @@ Our ultimate goal is to answer the following problem.
 
 \begin{problem}[GTGD-CQ Answering]
 \label{GTGD-CQ-Answering}
-  Given a finite set $\Sigma$ of GTGD rules, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
+  Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
 % Motivate why we want to compute Datalog rewritings by talking about data complexity, cite the result showing the existence and finally formally define.
 
-It is known that a conjunctive query under GTGD rules admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
+It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
 
 \begin{definition}
-  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \sigma(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
+  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \alpha(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
   We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the Datalog rewriting.
 \end{definition}
 
@@ -210,7 +211,7 @@ In the presence of existential rules, an object known as the \emph{chase} repres
 
 As with Datalog saturations, the chase of an instance $\mathcal{D}$ gives all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
 
-However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists z. R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
+However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists z.\ R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
 
 % TODO: which paper introduced tree-like chase proofs for Datalog+-?
 To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes.
@@ -223,12 +224,12 @@ Chase trees can be infinite in general, but we focus on finite chase trees in th
 
 \begin{definition}
 \label{tree-like-chase-proof}
-  Given a set $\Sigma$ of single-headed GTGD rules and a base instance $\mathcal{D}$, a \emph{tree-like chase proof over $\Sigma$ from $\mathcal{D}$} is a finite sequence of chase trees $C_1, \ldots, C_n$ such that
+  Given a set $\Sigma$ of single-headed GTGDs and a base instance $\mathcal{D}$, a \emph{tree-like chase proof over $\Sigma$ from $\mathcal{D}$} is a finite sequence of chase trees $C_1, \ldots, C_n$ such that
   \begin{itemize}
     \item $C_1 = (T, \mu)$ is a chase tree with a single vertex $v$ together with $\mu(v) = \mathcal{D}$.
     \item for each $i < n$, $C_{i + 1}$ is obtained from $C_i = (T, \mu)$ by applying one of the following transformation steps.
     \begin{itemize}
-      \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
+      \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
       \begin{itemize}
         \item If $\tau$ is full, we simply add the head atom $H$ of $\tau$ to the instance at $v$. That is, we keep $T' = T$, and set $\mu'(v) = \mu(v) \cup \sigma(H)$ while maintaining $\mu$ and $\mu'$ equal on $T \setminus \{v\}$.
         \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the instance $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
@@ -257,7 +258,7 @@ The restriction mentioned above makes the local structure of tree-like chase pro
     By induction on $i$. The base case $i = 1$ is vacuous. We look at the rule used to derive $(T_{i+1}, \mu_{i+1})$ from $(T_{i}, \mu_{i})$ and examine the bag at the modified node.
     \begin{itemize}
       \item If the last step was a chase step with a full rule or a propagation step, no term set has been modified for any bag in the chase tree.
-      \item If the last step was a chase step from a vertex $v \in T_i$ with an existential rule $\forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$, we have added a new node $c$ under $v$. As $|\Terms(\sigma'(H))| \leq K$ and the inherited bag $I$ has $\Terms(I) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma)$,
+      \item If the last step was a chase step from a vertex $v \in T_i$ with an existential rule $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$, we have added a new node $c$ under $v$. As $|\Terms(\sigma'(H))| \leq K$ and the inherited bag $I$ has $\Terms(I) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma)$,
       \begin{equation*}
         \begin{split}
           |\Terms(\mu_{i+1}(c)) \setminus \Consts(\Sigma)|
@@ -299,7 +300,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
     \item $(T_0, \mu_0)$ is a chase tree with only the root vertex $r$ together with $$\mu_0(r) = \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D}).$$
     \item For the inductive step, $(T_{i + 1}, \mu_{i + 1})$ is constructed by shortcut-chasing all leaves in the previous chase tree $(T_i, \mu_i)$.
     
-    More precisely, let $L_i$ be the set of leaf nodes in $T_i$. For each $l \in L_i$, an existential rule $\tau = \forall \vec{x}. \beta \rightarrow \exists \vec{y}. H$ and a substitution $\sigma$ mapping $\vec{x}$ into $\Terms(\mu_i(l))$ such that $\sigma(\beta) \subseteq \mu_i(l)$, define
+    More precisely, let $L_i$ be the set of leaf nodes in $T_i$. For each $l \in L_i$, an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ into $\Terms(\mu_i(l))$ such that $\sigma(\beta) \subseteq \mu_i(l)$, define
     \begin{itemize}
       \item $\sigma'$ as an extension of $\sigma$ that maps all variables in $\vec{y}$ to fresh nulls
       \item the bag $B_{l, \tau, \sigma}$ of facts \emph{inherited from $\mu_i(l)$ through $\tau$ and $\sigma$} as $$I_{l, \tau, \sigma} = \{ F \in \mu_i(l) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}$$
@@ -325,7 +326,7 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
 \begin{lemma}
 \label{sctree-subtree-embeds-into-a-chase-proof}
-  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits a homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
+  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of single-headed GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits a homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
   \begin{proof}
     By induction on the structure of $(T, \mu)$.
 
@@ -433,7 +434,7 @@ As the following lemma states, the original query is satisfied precisely when al
 % TODO: maybe we can get rid of \alpha in this lemma (and leave general CQ case for a corollary)
 \begin{lemma}[Base-connected query decomposition]
 \label{bcq-base-connected-query-decomposition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_\mathrm{partial}: \vec{z} \rightharpoonup \Terms(\mathcal{D})$ such that
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_\mathrm{partial}: \vec{z} \rightharpoonup \Terms(\mathcal{D})$ such that
   \begin{itemize}
     \item $\mathcal{D} \cup \Sigma \models \Baseq{Q}{\sigma_\mathrm{partial}}$
     \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$.
@@ -451,7 +452,7 @@ We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolea
 
 \begin{corollary}
 \label{base-connected-query-decomposition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs.
   
   Then for a substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
 \end{corollary}
@@ -475,7 +476,7 @@ To witness the entailment of a connected Boolean conjunctive query, finding a \e
 
 \begin{theorem}
 \label{recursive-connected-bcq-entailment}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a connected Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a successful branching point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a connected Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a successful branching point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
     ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful branching point for $Q$.
 
@@ -583,24 +584,32 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \newpage
 \chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
 
-In \Cref{characterising-query-entailment-under-gtgds}, we devised \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over GTGDs.
+In \Cref{characterising-query-entailment-under-gtgds}, we develop \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over single-headed GTGDs.
 
-However, because of high data complexity, the algorithm is impractical for query-answering purposes. We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$, so the running time is inevitably exponential to the number of constants in the input base instance $\mathcal{D}$.
+However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
 
-Instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to come up with a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
+The first important observation is that the entailment of a subquery in a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$ only depends on a tiny fraction of $\mathcal{D}$.
 
-The first important observation is that if a subquery is satisfied within a proper subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a child $c$ of the root node, then as long as enough facts are inherited to $c$, the subquery remains entailed in the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow c$ even when uninherited facts are removed from the base instance $\mathcal{D}$. In other words, the subquery entailment only depends on the set of facts inherited from the base instance.
+More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is witnessed by a subtree $T_c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a child $c$, which is obtained by firing an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ together with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$. That is, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_c$ mapping all variables in $Q_\mathrm{sub}$ to nulls in $T_c$. If we let $\mathcal{D'}$ be a subset of $\mathcal{D}$ formed by extracting facts in $\mathcal{D}$ that are either
+\begin{itemize}
+  \item used in the substituted body $\sigma(\beta)$, or
+  \item inherited to $c$, i.e. facts whose applied terms are all in $\sigma(H)$,
+\end{itemize}
+then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. Moreover, by the construction of $\mathrm{SCtree}$, the subtree $T_{c'}$ rooted at $c'$ and $T_c$ are isomorphic, and in particular, there remains to be a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
-% TODO: add a diagram if possible.
+Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, if we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$ where only $r_1$ and $r_2$ are constants in $\Sigma$, then we can deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$.
 
-If an existential rule $\forall \vec{x}. \beta \rightarrow \exists \vec{y}. H(\vec{x}, \vec{y})$ is fired with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$ to grow a child node $c$, the only facts inherited to $c$ are the ones whose terms all lie in $\sigma(H(\vec{x}, \vec{y}))$.
+With these observations in mind, we adopt the following strategy for building a rewriting.
 
-% TODO: write about the general strategy for producing a rewriting
-%       where one prepares "subgoal atoms" for each connected variable set of the query
-%       and then come up with "sufficiently large" base data to entail the subquery,
-%       finally adding in all "subquery integration rules".
+\begin{itemize}
+  \item Start with an atomic saturation $\ASatRules{\Sigma}$ of $\Sigma$.
+  \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution.
+  \item For each \emph{local instance} $I$ (to be defined in \Cref{local-instances-and-the-subquery-entailment-problem}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
+  \item Finally, add all rules that \emph{integrate} subgoals into the goal atom.
+\end{itemize}
 
-\section{What Does It Take To Entail a Subquery?}
+\section{Local Instances and the Subquery Entailment Problem}
+\label{local-instances-and-the-subquery-entailment-problem}
 
 % TODO: define the notion of "subquery entailment instance" and the "subquery entailment problem".
 % TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
