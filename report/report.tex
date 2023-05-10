@@ -37,6 +37,7 @@
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
 
 % The following are the numbered elements with "definition style" (i.e. non-italic)
 \theoremstyle{definition}
@@ -273,13 +274,11 @@ At the same time, tree-like chase proofs prove everything we can reason about th
 
 \begin{proposition}
 \label{chase-proof-completeness}
-  For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
+  For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $\ C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
   \begin{proof}[Proof (sketch)] $ $\par
-    ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $C_1, \ldots, C_n$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Take any (Herbrand) structure $\mathcal{M}$ and suppose $\mathcal{M} \models \mathcal{D} \cup \Sigma$.
-    
-    By induction on $1 \leq i \leq n$ and examining the step used to derive the last chase tree, we can construct an increasing sequence $\sigma_1, \ldots, \sigma_n$ of homomorphisms $\sigma_i: C_i \rightarrow \mathcal{M}$. In particular, $\sigma(C_n) \subseteq \mathcal{M}$, and as $C_n \models Q$, $\mathcal{M} \models Q$.
+    ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. For each $1 \leq i \leq n$, let $I_i = \bigcup_{v \in T_n} \mu_n(v)$ be the instance containing all facts in $(T_i, \mu_i)$. The sequence $I_1, \ldots, I_n$ is known as a \emph{chase sequence}, and \cite{fagin_kolaitis_miller_popa_2005} showed that $Q$ follows from $\mathcal{D}$ if there is a chase sequence ending with $I_n \models Q$.
 
-    ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. Proof therein decomposes an ordinary chase into a tree-like structure, and the decomposition is performed exactly as in \Cref{tree-like-chase-proof}.
+    ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. The proof therein decomposes an ordinary chase sequence into a tree-like structure, and the decomposition is performed exactly as in \Cref{tree-like-chase-proof}.
   \end{proof}
 \end{proposition}
 
@@ -427,33 +426,39 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
   \qed
 \end{definition}
 
-Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{partial}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma}{C}$ is a query whose entailment tells us if $\sigma$ had been a valid choice.
+Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{partial}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma_\mathrm{partial}}{C}$ is a query whose entailment tells us if $\sigma_\mathrm{partial}$ had been a valid choice.
 
 As the following lemma states, the original query is satisfied precisely when all split queries are.
 
+% TODO: maybe we can get rid of \alpha in this lemma (and leave general CQ case for a corollary)
 \begin{lemma}[Base-connected query decomposition]
-\label{base-connected-query-decomposition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then, for a substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ of $\alpha$ such that
+\label{bcq-base-connected-query-decomposition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_\mathrm{partial}: \vec{z} \rightharpoonup \Terms(\mathcal{D})$ such that
   \begin{itemize}
     \item $\mathcal{D} \cup \Sigma \models \Baseq{Q}{\sigma_\mathrm{partial}}$
     \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$.
   \end{itemize}
   \begin{proof}
-    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models \alpha(Q)$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: \alpha(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \Vars(Q) \setminus FV(Q) \mid \sigma(v) \in \Terms(\mathcal{D}) \},$$ then $(\sigma \upharpoonright B) \cup \alpha$ is an extension of $\alpha$ satisfying conditions in the lemma.
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \vec{z} \mid \sigma(v) \in \Terms(\mathcal{D}) \},$$ then $(\sigma \upharpoonright B)$ is a partial map satisfying conditions in the lemma.
 
-    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{partial}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$.
+    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{partial}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$. For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_\mathrm{partial} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
     
-    For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_\mathrm{partial} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \Vars(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
-    
-    Since every atom $A_j$ in $Q$ appears either in $\Baseq{Q}{\sigma_\mathrm{partial}}$ or in precisely one $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
-    
-    As $\sigma \supseteq \sigma_\mathrm{partial} \supseteq \alpha$, $(\sigma \upharpoonright \vec{z})$ is a query homomorphism $(\sigma \upharpoonright \vec{z}): \alpha(Q) \rightarrow\nobreak \SCTree{\mathcal{D}}{\Sigma}$. Therefore $\mathcal{D} \cup \Sigma \models \alpha(Q)$.
+    Since every atom $A_j$ in $Q$ appears either in $\Baseq{Q}{\sigma_\mathrm{partial}}$ or in precisely one $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$, and therefore $\mathcal{D} \cup \Sigma \models Q$.
   \end{proof}
 \end{lemma}
 
+We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolean conjunctive queries.
+
+\begin{corollary}
+\label{base-connected-query-decomposition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs.
+  
+  Then for a substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
+\end{corollary}
+
 % TODO: put a helpful diagram
 
-In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{coinductiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful branching point}, a point at which a connected Boolean conjunctive query can be split as in \Cref{base-connected-query-decomposition}.
+In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{coinductiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful branching point}, a point at which a connected Boolean conjunctive query can be split as in \Cref{bcq-base-connected-query-decomposition}.
 
 \begin{definition}
 \label{successful-branching-point-definition}
@@ -476,7 +481,7 @@ To witness the entailment of a connected Boolean conjunctive query, finding a \e
 
     By \Cref{coinductiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(r) \}$ be a nonempty set of variables mapped to $r$, and define $Q_B$ to be the query $$Q_B = \exists \overrightarrow{(\Vars(Q) \setminus B)}. \bigwedge_{j \in J}(A_j)$$ with free variables $B$. Then $\mu(r) \cup \Sigma \models (\sigma \upharpoonright B)(Q)$, so apply \Cref{base-connected-query-decomposition} and we have a branching map at $r$.
 
-    ($\Longleftarrow$): Suppose that $v$ is a successful branching point with a branching map $\sigma_\mathrm{partial}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}})$. Then for each $1 \leq i \leq n$, we may pick a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$ by \Cref{chase-proof-completeness}. By unioning all of $\sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ as in the proof of \Cref{base-connected-query-decomposition}, we obtain a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
+    ($\Longleftarrow$): Suppose that $v$ is a successful branching point with a branching map $\sigma_\mathrm{partial}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}})$. Then for each $1 \leq i \leq n$, we may pick a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$ by \Cref{chase-proof-completeness}. If we let $\sigma = \sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
   \end{proof}
 \end{theorem}
 
@@ -528,15 +533,16 @@ We are ready to present a query-answering procedure \Cref{basic-query-answering-
   \end{itemize}
 \end{itemize}
 
-One can first prove termination and correctness of \Cref{basic-query-answering-procedure} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{recursive-connected-bcq-entailment}. It is then straightforward to see that \Cref{basic-query-answering-procedure} produces all valid answers to a general conjunctive query.
+One can first prove termination and correctness of \Cref{basic-query-answering-procedure} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{recursive-connected-bcq-entailment}. It is then straightforward to see, by applying \Cref{base-connected-query-decomposition}, that \Cref{basic-query-answering-procedure} produces all valid answers to a general conjunctive query.
 
 \begin{algorithm}
 \caption{Basic query answering procedure}
 \label{basic-query-answering-procedure}
 \begin{algorithmic}[1]
+\State // computes if $\mathcal{D} \cup \Sigma \models Q$ for connected BCQ $Q$
 \Procedure{EntailsConnectedBCQ}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
-  \ForAll{equivalence class $[\mathcal{D}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
-    \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{D}$, $\Sigma$, $Q$)}
+  \ForAll{equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
+    \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
       \State \textbf{return true}
     \EndIf
   \EndFor
@@ -549,19 +555,18 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
       \State \Return{\textbf{true}}
     \EndIf
   \EndFor
-  \Return{\textbf{false}}
+  \State \Return{\textbf{false}}
 \EndProcedure
 \State
-\Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, CQ $Q$, $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
+\State // computes if the query is satisfied with a partial substitution $\sigma_\mathrm{partial}$
+\Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
   \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq FV(Q)$
   \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D})$
   \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Baseq{Q}{\sigma_\mathrm{partial}}$
-  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus FV(Q)$
+  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \sigma_\mathrm{partial}$
   \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
   \State \hskip1.5em \textsc{EntailsConnectedBCQ}($\mathcal{D}_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$)
-  \If{baseSatisfied and allComponentsSatisfied}
-    \State \Return{\textbf{true}}
-  \EndIf
+  \State \Return{baseSatisfied \textbf{and} allComponentsSatisfied}
 \EndProcedure
 \State
 \Procedure{AnswerConjunctiveQuery}{$\mathcal{D}$, $\Sigma$, conjunctive query $Q$}
