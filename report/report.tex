@@ -348,13 +348,16 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
   \end{proof}
 \end{theorem}
 
-Note that a shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow v$ of all descendants (including $v$ itself) of $v$ can be written as $\SCTree{\mathcal{D}}{\Sigma} \downarrow v = \SCTree{\mu(v)}{\Sigma}$.
+\begin{remark}
+\label{coinductiveness-of-sctree}
+  A shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow v$ of all descendants (including $v$ itself) of $v$ can be written as $\SCTree{\mathcal{D}}{\Sigma} \downarrow v = \SCTree{\mu(v)}{\Sigma}$.
+\end{remark}
 
-\section{Query Homomorphisms into Shortcutting Chase Trees}
+% TODO: a diagram illustrating how a subtree is another shortcut chase tree should be inserted here
 
-We now discuss how the structure of the query constrains the structure of query homomorphisms into the shortcutting chase tree.
+\section{Query Satisfaction in Shortcutting Chase Trees}
 
-% TODO: briefly mention why we are going into this stuff.
+We now discuss how the structure of the query constrains the structure of query homomorphisms into the shortcutting chase tree. By the end of this chapter, we will have derived a recursive query answering procedure, whose recursive structure will be exploited in \Cref{deriving-a-rewriting} to compute a Datalog rewriting.
 
 A key observation is that a \emph{connected} set of variables produces a connected homomorphic image in $\SCTree{\mathcal{D}}{\Sigma}$. To make this intuition precise, we introduce the following terminology.
 
@@ -406,8 +409,10 @@ We are ready to state the observation.
 
 We will use \Cref{image-of-connected-variables-is-connected} to develop a query-answering procedure. To begin with, we define a way to split the query entailment checking problem into smaller problems by a partial guess of the query homomorphism.
 
+%TODO: "base part" should be "partially committed part" or something like that, since it is not necessarily at the base.
+
 \begin{definition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree over an instance (which may contain nulls) and \newline $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ a partial map from query variables to terms in $\mathcal{D}$. Let $\mathrm{BVars} = \dom{\sigma_\mathrm{partial}}$.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree over an instance $\mathcal{D}$ (which may contain nulls) and $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ a partial map from query variables to terms in $\mathcal{D}$. Let $\mathrm{BVars} = \dom{\sigma_\mathrm{partial}}$.
 
   We define the \emph{base part $\Baseq{Q}{\sigma_\mathrm{partial}}$ of $Q$ according to $\sigma_\mathrm{partial}$} as the variable-free query
   $$\Baseq{Q}{\sigma_\mathrm{partial}} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} \sigma_\mathrm{partial}(A_j).$$
@@ -418,41 +423,103 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
   \qed
 \end{definition}
 
-Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{base}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma}{C}$ is a query whose entailment tells us if $\sigma$ had been a valid choice.
+Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{partial}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma}{C}$ is a query whose entailment tells us if $\sigma$ had been a valid choice.
 
 As the following lemma states, the original query is satisfied precisely when all split queries are.
 
-\newpage
 \begin{lemma}[Base-connected query decomposition]
 \label{base-connected-query-decomposition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then, for a substitution\newline $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{base}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ of $\alpha$ such that
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then, for a substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Consts(\mathcal{D})$ of $\alpha$ such that
   \begin{itemize}
-    \item $\mathcal{D} \cup \Sigma \models \Baseq{Q}{\sigma_\mathrm{base}}$
-    \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{base}}})$.
+    \item $\mathcal{D} \cup \Sigma \models \Baseq{Q}{\sigma_\mathrm{partial}}$
+    \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$.
   \end{itemize}
   \begin{proof}
     ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models \alpha(Q)$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: \alpha(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \Vars(Q) \setminus FV(Q) \mid \sigma(v) \in \Terms(\mathcal{D}) \},$$ then $(\sigma \upharpoonright B) \cup \alpha$ is an extension of $\alpha$ satisfying conditions in the lemma.
 
-    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{base}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{base}}})$.
+    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{partial}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$.
     
-    For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{base}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_\mathrm{base}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_\mathrm{base} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \Vars(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
+    For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_\mathrm{partial} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \Vars(Q) \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
     
-    Since every atom $A_j$ in $Q$ appears either in $\Baseq{Q}{\sigma_\mathrm{base}}$ or in precisely one $\Subq{Q}{\sigma_\mathrm{base}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
+    Since every atom $A_j$ in $Q$ appears either in $\Baseq{Q}{\sigma_\mathrm{partial}}$ or in precisely one $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
     
-    As $\sigma \supseteq \sigma_\mathrm{base} \supseteq \alpha$, $(\sigma \upharpoonright \vec{z})$ is a query homomorphism $(\sigma \upharpoonright \vec{z}): \alpha(Q) \rightarrow\nobreak \SCTree{\mathcal{D}}{\Sigma}$. Therefore $\mathcal{D} \cup \Sigma \models \alpha(Q)$.
+    As $\sigma \supseteq \sigma_\mathrm{partial} \supseteq \alpha$, $(\sigma \upharpoonright \vec{z})$ is a query homomorphism $(\sigma \upharpoonright \vec{z}): \alpha(Q) \rightarrow\nobreak \SCTree{\mathcal{D}}{\Sigma}$. Therefore $\mathcal{D} \cup \Sigma \models \alpha(Q)$.
   \end{proof}
 \end{lemma}
 
 % TODO: put a helpful diagram
 
-In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ to check the query entailment recursively.
+In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{base}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{base}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{coinductiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful branching point}, a point at which a connected Boolean conjunctive query can be split as in \Cref{base-connected-query-decomposition}.
+
+\begin{definition}
+\label{successful-branching-point-definition}
+  Let $Q$ be a connected Boolean conjunctive query and $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree. We say that a vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$ with the associated set $\mu(v)$ of facts is a \emph{successful branching point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$} if there exists a partial map $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mu(v))$, which we call a \emph{branching map at $v$}, such that
+  \begin{itemize}
+    \item $\dom{\sigma_\mathrm{partial}}$ is nonempty
+    \item $\mu(v) \models \Baseq{Q}{\sigma_\mathrm{partial}}$
+    \item $\SCTree{\mu(v)}{\Sigma} \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ for each $Q$-connected component $C$ of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}})$
+  \end{itemize}
+  \qed
+\end{definition}
+
+To witness the entailment of a connected Boolean conjunctive query, finding a \emph{single} such vertex in the shortcutting chase tree suffices.
 
 \begin{theorem}
 \label{recursive-connected-bcq-entailment}
-  
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a connected Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a successful branching point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$.
+  \begin{proof}
+    ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful branching point for $Q$.
+
+    By \Cref{coinductiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(r) \}$ be a nonempty set of variables mapped to $r$, and define $Q_B$ to be the query $$Q_B = \exists \overrightarrow{(\Vars(Q) \setminus B)}. \bigwedge_{j \in J}(A_j)$$ with free variables $B$. Then $\mu(r) \cup \Sigma \models (\sigma \upharpoonright B)(Q)$, so apply \Cref{base-connected-query-decomposition} and we have a branching map at $r$.
+
+    ($\Longleftarrow$): Suppose that $v$ is a successful branching point with a branching map $\sigma_\mathrm{partial}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}})$. Then for each $1 \leq i \leq n$, we may pick a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$ by \Cref{chase-proof-completeness}. By unioning all of $\sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ as in the proof of \Cref{base-connected-query-decomposition}, we obtain a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
+  \end{proof}
 \end{theorem}
 
-(TODO: add a lemma asserting that for a connected BCQ, we can always find a "successful branching point" at which the homomorphic image of the query splits)
+\begin{remark}
+\label{remark-towards-query-answering-procedure}
+  Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful branching point for $Q$ with a branching map $\sigma_\mathrm{partial}$, we also need to decide if subqueries $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the branching map $\sigma_\mathrm{partial}$ to be a nonempty map, each subquery $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$ is a connected Boolean query strictly smaller than $Q$.
+
+  Moreover, for Boolean conjunctive queries, the query entailment is unaffected by a certain renaming of constants. Therefore, we only need to search for successful branching points up to renaming equivalence.
+  \qed
+\end{remark}
+
+We capture this intuition with the following.
+
+\begin{definition}
+  Let $\mathcal{D}$ be an instance. A \emph{$\Sigma$-preserving renaming on $\mathcal{D}$} is an injective function $\sigma: \Terms(\mathcal{D}) \setminus \Consts(\Sigma) \xhookrightarrow{} T$ where $T$ is a set of terms with $T \cap \Consts(\Sigma) = \emptyset$.
+\end{definition}
+
+\begin{proposition}
+\label{bcq-invariant-under-sigma-preserving-renaming}
+  If $Q$ is a Boolean conjunctive query and $\sigma$ is $\Sigma$-preserving renaming on an instance $\mathcal{D}$, then $\mathcal{D} \cup \Sigma \models Q$ if and only if $\sigma(\mathcal{D}) \cup \Sigma \models Q$.
+  \begin{proof}
+    If we extend $\sigma$ to all of $\Terms(\SCTree{\mathcal{D}}{\Sigma})$ by defining $$\sigma'(t) =
+    \begin{cases}
+      \sigma(t) & \text{if } t \in \Consts(\mathcal{D}) \setminus \Consts(\Sigma) \\
+      t & \text{otherwise}
+    \end{cases}$$
+    Then $\SCTree{\sigma'(\mathcal{D})}{\Sigma}$ is an isomorphic image of $\SCTree{\mathcal{D}}{\Sigma}$ under $\sigma'$. Now apply \Cref{sctree-soundness-completeness}.
+  \end{proof}
+\end{proposition}
+
+\begin{remark}
+  In \Cref{bcq-invariant-under-sigma-preserving-renaming}, we require that the renaming $\sigma$ \emph{preserves} all constants in $\Sigma$. This is because \begin{itemize}
+    \item if $c \in \Consts(\Sigma)$ is renamed to some other constant by $\sigma$, then a rule in $\Sigma$ that fired in $\SCTree{\mathcal{D}}{\Sigma}$ may no longer fire in $\SCTree{\sigma(\mathcal{D})}{\Sigma}$ thereby invalidating the $(\Longrightarrow)$ implication, and
+    \item if $t \in \Terms(\mathcal{D})$ is renamed to a constant in $\Sigma$, then a rule that did not fire in $\SCTree{\mathcal{D}}{\Sigma}$ may fire in $\SCTree{\sigma(\mathcal{D})}{\Sigma}$, invalidating $(\Longleftarrow)$ direction.
+  \end{itemize}
+\end{remark}
+
+\begin{definition}
+  We say that two instances $\mathcal{D}_1, \mathcal{D}_2$ are \emph{$\Sigma$-renaming-equivalent} (written $\mathcal{D}_1 \cong_\Sigma \mathcal{D}_2$) if there exists a $\Sigma$-preserving renaming $\sigma$ with $\sigma(\mathcal{D}_1) = \mathcal{D}_2$. It is easy to see that $\cong_\Sigma$ is an equivalence relation.
+\end{definition}
+
+We are ready to present a query-answering procedure based on the intuition of \Cref{remark-towards-query-answering-procedure}.
+
+\begin{algorithm}
+\label{basic-query-answering-procedure}
+  (TODO)
+\end{algorithm}
 
 \newpage
 \chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
@@ -472,10 +539,12 @@ We will use this procedure as a stepping stone to derive a Datalog rewriting of 
 
 % TODO: state (the proof is trivial) that the subquery entailment only depends on the set of facts propagated to the root of the tentacle in which the query is witnessed.
 
-% TODO: talk about "replacing \mathcal{D} with the head of the tentacle?" first as an "optimization" of the above algorithm, and state that this is not just an optimization 
+% TODO: talk about "replacing \mathcal{D} with the head of the tentacle?" first as an "optimization" of the above algorithm, and state that this is not just an optimization and actually leads to a rewriting
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
+
+%TODO: talk about test queries which have "simply-connected" hypergraph structures (is this what people call "acyclic"? Check.)
 
 \newpage
 \chapter{Further Discussion and Conclusion}
