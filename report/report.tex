@@ -343,14 +343,14 @@ We can immediately achieve the former objective by computing the Datalog saturat
     \tau'_2 & = & \forall x_1, x_2.\ A(x_1, x_2) & \rightarrow & C(x_1, c_1)
   \end{array}\]
 
-  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{sctree-example-diagram}. The chase tree is continued indefinitely by chasing with existential rules and Datalog saturating each layer with $\Sigma'$.
+  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{sctree-example-diagram}. The chase tree is continued indefinitely by chasing with existential rules and Datalog-saturating each layer with $\Sigma'$.
   \qed
 \end{example}
 
 \begin{figure}[t]
   \centering
   \includesvg{./diagrams/sctree-example.drawio.svg}
-  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. Facts highlighted in red are the ones obtained by Datalog saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
+  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are the ones obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
   \label{sctree-example-diagram}
 \end{figure}
 
@@ -555,33 +555,32 @@ In order to produce answers to the query using \Cref{base-connected-query-decomp
 
 \begin{definition}
 \label{successful-commit-point-definition}
-  Let $Q$ be a connected Boolean conjunctive query and $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree. We say that a vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$ with the associated set $\mu(v)$ of facts is a \emph{successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$} if there exists a partial map $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mu(v)) \setminus \Consts(\Sigma)$, which we call a \emph{commit map at $v$}, such that
+  Let $Q$ be a connected Boolean conjunctive query and $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree. We say that a vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$ with the associated bag $\mu(v)$ of facts is a \emph{successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$} if there exists a $\Consts(\Sigma)$-free partial map $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mu(v)) \setminus \Consts(\Sigma)$, which we call a \emph{commit map at $v$}, such that
   \begin{itemize}
-    \item $\dom{\sigma_\mathrm{commit}}$ is nonempty
-    \item $\mu(v) \models \Commq{Q}{\sigma_\mathrm{commit}}$
-    \item $\SCTree{\mu(v)}{\Sigma} \models \Subq{Q}{\sigma_\mathrm{commit}}{C}$ for each $Q$-connected component $C$ of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$
+    \item $\dom{\sigma_\mathrm{commit}}$ is nonempty,
+    \item $\mu(v) \models \Commq{Q}{\sigma_\mathrm{commit}}$, and
+    \item for each $Q$-connected component $C$ of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$, there exists a $\Consts(\Sigma)$-free query homomorphism $\sigma_C: \Subq{Q}{\sigma_\mathrm{commit}}{C} \rightarrow \SCTree{\mu(v)}{\Sigma}$.
   \end{itemize}
   \qed
 \end{definition}
 
-To witness the entailment of a connected Boolean conjunctive query, finding a \emph{single} such vertex in the shortcutting chase tree suffices.
+To witness the entailment of a connected Boolean conjunctive query (with all query variables that get mapped to $\Consts(\Sigma)$ already substituted), finding a \emph{single} successful commit point in the shortcutting chase tree suffices.
 
-% FIXME: This is false; we need to first guess rule constant guesses
-\begin{theorem}
+\begin{theorem}(Recursive BCQ Entailment)
 \label{recursive-connected-bcq-entailment}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a connected Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then there exists a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ if and only if there exists a successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
-    ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful commit point for $Q$.
+    ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful commit point for $Q$.
 
-    By \Cref{coinductiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(r) \}$ be a nonempty set of variables mapped to $r$, and define $Q_B$ to be the query $$Q_B = \exists \overrightarrow{(\Vars(Q) \setminus B)}. \bigwedge_{j \in J}(A_j)$$ with free variables $B$. Then $\mu(r) \cup \Sigma \models (\sigma \upharpoonright B)(Q)$, so apply \Cref{base-connected-query-decomposition} and we have a commit map at $r$.
+    By \Cref{coinductiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_\mathrm{commit} = \sigma \upharpoonright B$, then $\sigma_\mathrm{commit}$ is a commit map at $r$.
 
-    ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_\mathrm{commit}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$. Then for each $1 \leq i \leq n$, we may pick a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{commit}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$ by \Cref{chase-proof-completeness}. If we let $\sigma = \sigma_\mathrm{commit}, \sigma_{C_1}, \ldots, \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
+    ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_\mathrm{commit}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$. Then for each $1 \leq i \leq n$, there is a $\Consts(\Sigma)$-free query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{commit}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$. If we let $\sigma = \sigma_\mathrm{commit} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
   \end{proof}
 \end{theorem}
 
 \begin{remark}
 \label{remark-towards-query-answering-procedure}
-  Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful commit point for $Q$ with a commit map $\sigma_\mathrm{commit}$, we also need to decide if subqueries $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the commit map $\sigma_\mathrm{commit}$ to be a nonempty map, each subquery $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ is a connected Boolean query strictly smaller than $Q$.
+  Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful commit point for $Q$ with a commit map $\sigma_\mathrm{commit}$, we also need to decide if subqueries $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the commit map $\sigma_\mathrm{commit}$ to be a nonempty map, the number of bound variables in each subquery $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ is strictly less than that of $Q$.
 
   Moreover, for Boolean conjunctive queries, the query entailment is unaffected by a certain renaming of constants. Therefore, we only need to search for successful commit points up to renaming equivalence.
   \qed
@@ -634,7 +633,7 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \caption{Basic query answering procedure}
 \label{basic-query-answering-procedure}
 \begin{algorithmic}[1]
-\State // computes if $\mathcal{D} \cup \Sigma \models Q$ for connected BCQ $Q$
+\State // decide if $\exists \Consts(\Sigma)\text{-free } \sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
 \Procedure{EntailsConnectedBCQ}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
   \ForAll{equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
     \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
@@ -645,7 +644,7 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \EndProcedure
 \State
 \Procedure{IsSuccessfulBranchingPoint}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
-  \ForAll{nonempty partial map $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
+  \ForAll{nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D}) \setminus \Consts(\Sigma)$}
     \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{commit}$)}
       \State \Return{\textbf{true}}
     \EndIf
@@ -666,9 +665,12 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \State
 \Procedure{AnswerConjunctiveQuery}{$\mathcal{D}$, $\Sigma$, conjunctive query $Q$}
   \ForAll{substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D}) \cup \Consts(\Sigma)$}
-    \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\alpha$)}
-      \State \textbf{output} $\alpha$ as an answer
-    \EndIf
+    \ForAll{substitution $\sigma_{\Consts(\Sigma)}: (\Vars(Q) \setminus FV(Q)) \rightharpoonup \Consts(\Sigma)$}
+      \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\alpha \cup \sigma_{\Consts(\Sigma)}$)}
+        \State \textbf{output} $\alpha$ as an answer
+        \State \textbf{break} inner loop
+      \EndIf
+    \EndFor
   \EndFor
 \EndProcedure
 \end{algorithmic}
