@@ -220,10 +220,12 @@ However, with recursive rules such as $R(x, y) \rightarrow \exists z.\ R(y, z)$,
 To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes.
 
 \begin{definition}
-  A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to bags of facts (possibly with nulls). We shall often idenfify a chase tree $(T, \mu)$ with the set $\bigcup_{v \in T} \mu(v)$ of facts in it.
+  A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to a set of facts (possibly with nulls). We usually refer to the instance $\mu(v)$ as a \emph{bag of facts at $v$} to distinguish it from the input base instance.
+  
+  We will often identify a chase tree $(T, \mu)$ with the set $\bigcup_{v \in T} \mu(v)$ of facts in it.
 \end{definition}
 
-Chase trees can be infinite in general, but we focus on finite chase trees in this section. The following definition incorporates ideas from \cite{benedikt_buron_germano_kappelmann_motik_2022} and \cite{kappelmann_2019}.
+In this section, we focus on finite chase trees. The following definition incorporates ideas from \cite{benedikt_buron_germano_kappelmann_motik_2022} and \cite{kappelmann_2019}.
 
 \begin{definition}
 \label{tree-like-chase-proof}
@@ -241,6 +243,25 @@ Chase trees can be infinite in general, but we focus on finite chase trees in th
     \end{itemize}
   \end{itemize}
 \end{definition}
+
+\begin{example}
+\label{tree-like-chase-proof-example}
+  Suppose that $\Sigma$ contains the following single-headed GTGDs, where $c_1$ is a constant.
+  \[\begin{array}{rcrcl}
+    \tau_1 &=& \forall x_1,x_2.\ A(x_1, x_2) &\rightarrow& \exists y. B(x_1, y) \\
+    \tau_2 &=& \forall x_1,x_2.\ B(x_1, x_2) &\rightarrow& C(x_1, c_1) \wedge A(x_2, c_1) \\
+    \tau_3 &=& \forall x_1,x_2.\ A(x_1, x_2) \wedge C(x_1, x_2) &\rightarrow& \exists y.\ D(x_2, y)
+  \end{array}\]
+  If we start with an instance $\mathcal{D} = \{A(c_4, c_1)\}$, we can perform a chase step with $\tau_1$, then chase with $\tau_2$, propagate a fact $C(c_4, c_1)$ to the root and finally fire $\tau_3$. We illustrate the process in \Cref{tree-like-chase-proof-example-diagram}.
+  \qed
+\end{example}
+
+\begin{figure}[t]
+  \centering
+  \includesvg{./diagrams/tree-like-chase-proof-example.drawio.svg}
+  \caption{A tree-like chase proof with rules in \Cref{tree-like-chase-proof-example}}
+  \label{tree-like-chase-proof-example-diagram}
+\end{figure}
 
 A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples by using a chase step, branching off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to the ancestor node.
 
@@ -274,7 +295,7 @@ The restriction mentioned above makes the local structure of tree-like chase pro
   \end{proof}
 \end{proposition}
 
-At the same time, tree-like chase proofs prove everything we can reason about the input database $\mathcal{D}$, as long as conjunctive queries are concerned.
+At the same time, as long as conjunctive queries are concerned, tree-like chase proofs prove everything we can reason about the input database $\mathcal{D}$.
 
 \begin{proposition}
 \label{chase-proof-completeness}
@@ -314,7 +335,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
   \qed
 \end{definition}
 
-% TODO: Add a concrete example here. I suppose an infinite shortcutting chase tree and a small conjunctive query serve a good purpose.
+% TODO: Compute SCTree of tree-like-chase-proof-example and include a diagram here.
 
 The structure of a shortcutting chase tree is very similar to that of a chase proof.
 
@@ -390,20 +411,18 @@ A set $Z$ of bound variables is $Q$-connected if $Z$ is connected in the hypergr
 
 \begin{figure}[ht]
   \centering
-  \caption{The hypergraph corresponding to $Q$ in \Cref{query-connectedness}.}
   \includesvg{./diagrams/query-connectedness-example.drawio.svg}
+  \caption{The hypergraph corresponding to $Q$ in \Cref{query-connectedness-example}.}
 \end{figure}
 
 \begin{example}
-\label{query-connectedness}
+\label{query-connectedness-example}
   Consider a conjunctive query
   \begin{align*}
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
     &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5).
   \end{align*}
-  Then $\{z_1, z_3, z_4\}$ and $\{z_2, z_3, z_5\}$ are both $Q$-connected, but $\{z_1, z_2, z_4\}$ and $\{z_4, z_5\}$ are not.
-
-  $Q$-connected components of $\{z_1, z_2, z_4, z_5\}$ are $\{z_1,z_2,z_5\}$ and $\{z_4\}$. $Q$ is a connected Boolean query.
+  Then $\{z_1, z_3, z_4\}$ and $\{z_2, z_3, z_5\}$ are both $Q$-connected, but $\{z_1, z_2, z_4\}$ and $\{z_4, z_5\}$ are not. $Q$-connected components of $\{z_1, z_4, z_6, z_5\}$ are $\{z_1\}$, $\{z_4\}$ and $\{z_5, z_6\}$. $Q$ is a connected Boolean query.
   \qed
 \end{example}
 
@@ -440,6 +459,35 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
   where $$J' = \{ j \in J \mid \Vars(A_j) \subseteq C \cup \mathrm{BVars} \}.$$
   \qed
 \end{definition}
+
+\begin{figure}[ht]
+  \centering
+  \includesvg{./diagrams/query-decomposition-example.drawio.svg}
+  \caption{Decomposition of a query in \Cref{bcq-decomposition-example}.}
+  \label{bcq-decomposition-example-figure}
+\end{figure}
+
+\begin{example}
+\label{bcq-decomposition-example}
+  Let
+  \begin{align*}
+    Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
+    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5).
+  \end{align*}
+  as in \Cref{query-connectedness-example}. Suppose that $\sigma_\mathrm{partial}$ is given by \[\begin{array}{cccc}
+    \sigma_\mathrm{partial}: &\Vars(Q) &\rightharpoonup &\{c_1, c_2, c_3\} \\
+    &z_2 &\mapsto &c_1 \\
+    &z_3 &\mapsto &c_3
+  \end{array}\]
+  then $\Baseq{Q}{\sigma_\mathrm{partial}} = R(c_1, c_3)$. The split connected components are $C_1 = \{z_1\}$, $C_2 = \{z_4\}$ and $C_3 = \{z_5, z_6\}$, and their corresponding subqueries are
+  \begin{align*}
+    \Subq{Q}{\sigma_\mathrm{partial}}{C_1} &= \exists z_1.\ S(z_1, c_1) \wedge S(z_1, c_3) \\
+    \Subq{Q}{\sigma_\mathrm{partial}}{C_2} &= \exists z_4.\ R(c_3, z_4) \\
+    \Subq{Q}{\sigma_\mathrm{partial}}{C_3} &= \exists z_5, z_6.\ R(c_3, z_5) \wedge T(c_1, z_6, z_5)
+  \end{align*}
+  The decomposition after applying $\sigma_\mathrm{partial}$ is illustrated in \Cref{bcq-decomposition-example-figure}.
+  \qed
+\end{example}
 
 Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial commitment towards constructing the whole homomorphism. $\Baseq{Q}{\sigma_\mathrm{partial}}$ is a collection of atoms which we expect to see in (Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma_\mathrm{partial}}{C}$ is a query whose entailment tells us if $\sigma_\mathrm{partial}$ had been a valid choice.
 
@@ -654,7 +702,7 @@ Moreover, we would like the multiple instances of structures to interconnect eac
 
 % TODO: talk about the implementation architecture (how the rewriting system makes a single call to an implementation of "SubqueryEntailmentComputation", and how the CLI implementation subsumes the rules before presenting the output to the user) and briefly indicate how the user can try running the rewrite algorithm using the fat jar
 
-% TODO: talk about test queries with GTGD-reducible hypergraph structures 
+% TODO: talk about test queries with "contractible" hypergraph structures 
 
 % TODO: include example performance for some test queries (with three implementations of SEComputation), with some simple calculation on the size of Subquery Entailment Problem space we need to solve for each test case
 
@@ -666,7 +714,7 @@ Moreover, we would like the multiple instances of structures to interconnect eac
 \section{Future Work}
 
 % TODO: talk about search space pruning with an example
-% TODO: talk about how we do not really need to solve subquery entailment problem for most queries (ones that are "GTGD-reducible"), and the possibility of exploiting the acyclicity in the middle of SE computation
+% TODO: talk about how we do not really need to solve subquery entailment problem for most queries (ones that are "contractible"), and the possibility of exploiting the acyclicity in the middle of SE computation
 % TODO: talk about integrating an optimised datalog saturation engine
 % TODO: talk about "strict existential subquery entailments" for minimising the output rule size
 
