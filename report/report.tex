@@ -3,6 +3,7 @@
 \usepackage[a4paper, margin=1.3in]{geometry}
 \usepackage[maxnames=10]{biblatex}
 \usepackage{setspace}
+\usepackage[labelfont=bf]{caption}
 
 \usepackage{amsfonts}
 \usepackage{amsmath}
@@ -14,10 +15,12 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+\usepackage[dvipsnames]{xcolor}
+\usepackage{svg}
+
 \usepackage{hyperref}
 \usepackage[nameinlink]{cleveref}
 
-\usepackage[dvipsnames]{xcolor}
 \hypersetup{
   colorlinks=true,
   linktoc=section,
@@ -211,7 +214,7 @@ In the presence of existential rules, an object known as the \emph{chase} repres
 
 As with Datalog saturations, the chase of an instance $\mathcal{D}$ gives all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
 
-However, in the presence of recursive rules such as $R(x, y) \rightarrow \exists z.\ R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
+However, with recursive rules such as $R(x, y) \rightarrow \exists z.\ R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
 
 % TODO: which paper introduced tree-like chase proofs for Datalog+-?
 To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes.
@@ -243,7 +246,7 @@ A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of
 
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
 
-% NOTE: It may be better to call this quantity "width", but it is slightly different from treewidth since we exclude rule constants. I could not come up with a fitting word here.
+% TODO: It may be better to call this quantity "width", but it is slightly different from treewidth since we exclude rule constants. I could not come up with a fitting word here.
 
 The restriction mentioned above makes the local structure of tree-like chase proofs \emph{small} in the following sense.
 
@@ -316,6 +319,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
 The structure of a shortcutting chase tree is very similar to that of a chase proof.
 
 \begin{proposition}
+\label{each-bag-in-sctree-is-k-sigma-small}
   Let $\Sigma$ be a set of single-headed GTGDs and $\mathcal{D}$ an instance. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then every bag of facts at a non-root node of \emph{$\SCTree{\mathcal{D}}{\Sigma}$} is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $\SCTree{\mathcal{D}}{\Sigma}$ are $(K, \Sigma)$-small.
   \begin{proof}
     By the same analysis as in the proof of \Cref{chase-proofs-tree-width}.
@@ -382,15 +386,25 @@ A key observation is that a \emph{connected} set of variables produces a connect
   \qed
 \end{definition}
 
-A set $Z$ of bound variables is $Q$-connected if the hypergraph corresponding to the structure of $Q$ (with $Z$ as the vertex set and atoms in $Q$ as the hyperedges) is connected, as illustrated in the following example.
+A set $Z$ of bound variables is $Q$-connected if $Z$ is connected in the hypergraph corresponding to the structure of $Q$ (with $Z$ as the vertex set and atoms in $Q$ as the hyperedges), as illustrated in the following example.
+
+\begin{figure}[ht]
+  \centering
+  \caption{The hypergraph corresponding to $Q$ in \Cref{query-connectedness}.}
+  \includesvg{./diagrams/query-connectedness-example.drawio.svg}
+\end{figure}
 
 \begin{example}
-  Consider a conjunctive query $$Q = \exists z_1,z_2,z_3,z_4,z_5.\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2,z_3) \wedge R(z_3, z_4) \wedge R(z_3, z_5).$$
+\label{query-connectedness}
+  Consider a conjunctive query
+  \begin{align*}
+    Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
+    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5).
+  \end{align*}
   Then $\{z_1, z_3, z_4\}$ and $\{z_2, z_3, z_5\}$ are both $Q$-connected, but $\{z_1, z_2, z_4\}$ and $\{z_4, z_5\}$ are not.
 
-  $Q$-connected components of $\{z_1, z_2, z_4, z_5\}$ are $\{z_1,z_2\}$, $\{z_4\}$ and $\{z_5\}$.
+  $Q$-connected components of $\{z_1, z_2, z_4, z_5\}$ are $\{z_1,z_2,z_5\}$ and $\{z_4\}$. $Q$ is a connected Boolean query.
   \qed
-  % TODO: a picture helps!
 \end{example}
 
 We are ready to state the observation.
@@ -526,7 +540,7 @@ We capture the latter intuition with the following.
 
 We are ready to present a query-answering procedure \Cref{basic-query-answering-procedure} based on the intuition of \Cref{remark-towards-query-answering-procedure}. Note that, in $\textsc{EntailsConnectedBCQ}$, we can scan through all equivalence classes $[\mathcal{D}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$ by a depth-first search, since
 \begin{itemize}
-  \item there are only finitely many such classes, and
+  \item there are only finitely many such classes by \Cref{each-bag-in-sctree-is-k-sigma-small}, and
   \item for each such $\cong_\Sigma$-equivalence class $\mathcal{E}$, there exists a path $v_1, \ldots, v_n$ from the root node of $\SCTree{\mathcal{D}}{\Sigma}$ such that
   \begin{enumerate}
     \item none of $\mu(v_1), \ldots, \mu(v_n)$ are $\cong_\Sigma$-equivalent
@@ -565,7 +579,7 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
   \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq FV(Q)$
   \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D})$
   \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Baseq{Q}{\sigma_\mathrm{partial}}$
-  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \sigma_\mathrm{partial}$
+  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}}$
   \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
   \State \hskip1.5em \textsc{EntailsConnectedBCQ}($\mathcal{D}_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$)
   \State \Return{baseSatisfied \textbf{and} allComponentsSatisfied}
@@ -584,7 +598,7 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \newpage
 \chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
 
-In \Cref{characterising-query-entailment-under-gtgds}, we develop \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over single-headed GTGDs.
+In \Cref{characterising-query-entailment-under-gtgds}, we developed \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over single-headed GTGDs.
 
 However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
 
@@ -605,33 +619,56 @@ With these observations in mind, we adopt the following strategy for building a 
   \item Start with an atomic saturation $\ASatRules{\Sigma}$ of $\Sigma$.
   \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution.
   \item For each \emph{local instance} $I$ (to be defined in \Cref{local-instances-and-the-subquery-entailment-problem}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
-  \item Finally, add all rules that \emph{integrate} subgoals into the goal atom.
+  \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
+
+In \Cref{local-instances-and-the-subquery-entailment-problem}, we define the precise structure of \emph{local instances} and discuss how to enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm.
 
 \section{Local Instances and the Subquery Entailment Problem}
 \label{local-instances-and-the-subquery-entailment-problem}
 
+To proceed with the strategy, we need to define a data structure representing an input to the following question: "Is this $(K, \Sigma)$-small structure sufficiently large to entail a subquery of $Q$ induced by a $Q$-connected set $C$ of bound variables?"
+
+Moreover, we would like the multiple instances of structures to interconnect each other so that they can describe a local structure of $\SCTree{\mathcal{D}}{\Sigma}$. We illustrate this problem and a solution we will adopt with the following example.
+
+\begin{example}
+\label{implicit-equality-coding-of-local-names}
+  Consider the following (TODO: define a rule set and pick a base instance, and then draw a $\SCTree{\mathcal{D}}{\Sigma}$).
+\end{example}
+
 % TODO: define the notion of "subquery entailment instance" and the "subquery entailment problem".
 % TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
 
-\section{The Rewriting Algorithm}
+\section{A Rewriting Algorithm}
+\label{a-rewriting-algorithm}
 
 % TODO: present an algorithm. if time permits, add a correctness proof
 %       and the runtime complexity analysis
 
+\section{Some Optimizations on Subquery Entailment Computation}
+
+% TODO: We would love to write about the "short-circuiting" in the middle of DFS and re-normalization of local instances to {0, ..., K-1}.
+
 \newpage
 \chapter{Implementation, Testing and Evaluation}
 
-% TODO: talk about the implementation architecture and briefly indicate how the user can try using the built jar
+% TODO: talk about the implementation architecture (how the rewriting system makes a single call to an implementation of "SubqueryEntailmentComputation", and how the CLI implementation subsumes the rules before presenting the output to the user) and briefly indicate how the user can try running the rewrite algorithm using the fat jar
 
-% TODO: talk about test queries which have "simply-connected" hypergraph structures (is this what people call "acyclic"? Check.)
+% TODO: talk about test queries with GTGD-reducible hypergraph structures 
+
+% TODO: include example performance for some test queries (with three implementations of SEComputation), with some simple calculation on the size of Subquery Entailment Problem space we need to solve for each test case
 
 \newpage
-\chapter{Further Discussion and Conclusion}
+\chapter{Conclusions and Further Discussion}
+
+\section{Conclusions}
 
 \section{Future Work}
 
-\section{Conclusion}
+% TODO: talk about search space pruning with an example
+% TODO: talk about how we do not really need to solve subquery entailment problem for most queries (ones that are "GTGD-reducible"), and the possibility of exploiting the acyclicity in the middle of SE computation
+% TODO: talk about integrating an optimised datalog saturation engine
+% TODO: talk about "strict existential subquery entailments" for minimising the output rule size
 
 \printbibliography
 
