@@ -268,8 +268,6 @@ A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of
 
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
 
-% TODO: It may be better to call this quantity "width", but it is slightly different from treewidth since we exclude rule constants. I could not come up with a fitting word here.
-
 The restriction mentioned above makes the local structure of tree-like chase proofs \emph{small} in the following sense.
 
 \begin{definition}
@@ -398,8 +396,6 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 \label{coinductiveness-of-sctree}
   A shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow v$ of all descendants (including $v$ itself) of $v$ can be written as $\SCTree{\mathcal{D}}{\Sigma} \downarrow v = \SCTree{\mu(v)}{\Sigma}$.
 \end{remark}
-
-% TODO: a diagram illustrating how a subtree is another shortcut chase tree should be inserted here
 
 \section{Query Satisfaction in Shortcutting Chase Trees}
 
@@ -633,7 +629,8 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \caption{Basic query answering procedure}
 \label{basic-query-answering-procedure}
 \begin{algorithmic}[1]
-\State // decide if $\exists \Consts(\Sigma)\text{-free } \sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
+\State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
+\State // $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
 \Procedure{EntailsConnectedBCQ}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
   \ForAll{equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
     \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
