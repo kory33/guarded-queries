@@ -57,7 +57,7 @@
 \def\Consts{{\mathrm{Consts}}}
 \def\Terms{{\mathrm{Terms}}}
 \newcommand{\dom}[1]{\ensuremath{\normalfont{\operatorname{dom}} \left( #1 \right)}}
-\newcommand{\ASatRules}[1]{\ensuremath{\normalfont{\textsc{ASatRules}} \left( #1 \right)}}
+\newcommand{\ARew}[1]{\ensuremath{\normalfont{\textsc{ARew}} \left( #1 \right)}}
 \newcommand{\BaseVars}[1]{\ensuremath{\normalfont{\textrm{BaseVars}} \left( #1 \right)}}
 \newcommand{\NullVars}[1]{\ensuremath{\normalfont{\textrm{NullVars}} \left( #1 \right)}}
 \newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
@@ -185,7 +185,7 @@ We call the database instance $\textsc{DatalogSaturate}(P, \mathcal{D})$ the \em
 
 \section{Problem Formulation}
 
-% Define output of GSat as "atomic saturation" of a GTGD set
+% Define output of GSat as "atomic rewriting" of a GTGD set
 Our ultimate goal is to answer the following problem.
 
 \begin{problem}[GTGD-CQ Answering]
@@ -237,7 +237,7 @@ In this section, we focus on finite chase trees. The following definition incorp
       \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
       \begin{itemize}
         \item If $\tau$ is full, we simply add the head atom $H$ of $\tau$ to the instance at $v$. That is, we keep $T' = T$, and set $\mu'(v) = \mu(v) \cup \sigma(H)$ while maintaining $\mu$ and $\mu'$ equal on $T \setminus \{v\}$.
-        \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the instance $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
+        \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the bag $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
       \end{itemize}
       \item \emph{a propagation step} from a vertex $v \in T$ to an ancestor $a \in T$ of $v$ with a fact $f \in \mu(v)$, provided that $f \not\in \mu(a)$ and $\Terms(f) \subseteq \Terms(\mu(a)) \cup \Consts(\Sigma)$. The resulting chase tree is $(T, \mu')$, where $\mu'$ agrees with $\mu$ everywhere except at $a$, and $\mu'(a) = \mu(a) \cup \{f\}$.
     \end{itemize}
@@ -316,12 +316,12 @@ Notice that during a chase proof, we only ever fire an existential rule from a n
   \item retrieving back a fact to $n$ to accumulate as much facts as possible to $n$, or
   \item finding an existential witness to the query variable in the subtree of $n$.
 \end{itemize}
-We can immediately achieve the former objective by computing the Datalog saturation of the bag at $n$ using $\ASatRules{\Sigma}$. This observation motivates the following definition.
+We can immediately achieve the former objective by computing the Datalog saturation of the bag at $n$ using $\ARew{\Sigma}$. This observation motivates the following definition.
 
 \begin{definition}[Shortcutting Chase Trees]
   Let $\Sigma$ be a finite set of single-headed GTGDs and $\mathcal{D}$ an instance. We inductively define an infinite sequence $(T_0, \mu_0), (T_1, \mu_1), \ldots$ of chase trees as follows:
   \begin{itemize}
-    \item $(T_0, \mu_0)$ is a chase tree with only the root vertex $r$ together with $$\mu_0(r) = \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D}).$$
+    \item $(T_0, \mu_0)$ is a chase tree with only the root vertex $r$ together with $$\mu_0(r) = \textsc{DatalogSaturate}(\ARew{\Sigma}, \mathcal{D}).$$
     \item For the inductive step, $(T_{i + 1}, \mu_{i + 1})$ is constructed by shortcut-chasing all leaves in the previous chase tree $(T_i, \mu_i)$.
     
     More precisely, let $L_i$ be the set of leaf nodes in $T_i$. For each $l \in L_i$, an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ into $\Terms(\mu_i(l))$ such that $\sigma(\beta) \subseteq \mu_i(l)$, define
@@ -329,13 +329,29 @@ We can immediately achieve the former objective by computing the Datalog saturat
       \item $\sigma'$ as an extension of $\sigma$ that maps all variables in $\vec{y}$ to fresh nulls
       \item the bag $B_{l, \tau, \sigma}$ of facts \emph{inherited from $\mu_i(l)$ through $\tau$ and $\sigma$} as $$I_{l, \tau, \sigma} = \{ F \in \mu_i(l) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}$$
     \end{itemize}
-    We construct $T_{i+1}$ as an extension of $T_i$ by adding a vertex $c_{l, \tau, \sigma}$ as a child of $l$ for each such $l \in L_i$, $\tau$ and $\sigma$. We extend $\mu_i$ to $\mu_{i+1}$ by setting $$\mu_{i+1}(c_{l, \tau, \sigma}) = \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \{ \sigma'(H) \} \cup I_{l, \tau, \sigma}).$$
+    We construct $T_{i+1}$ as an extension of $T_i$ by adding a vertex $c_{l, \tau, \sigma}$ as a child of $l$ for each such $l \in L_i$, $\tau$ and $\sigma$. We extend $\mu_i$ to $\mu_{i+1}$ by setting $$\mu_{i+1}(c_{l, \tau, \sigma}) = \textsc{DatalogSaturate}(\ARew{\Sigma}, \{ \sigma'(H) \} \cup I_{l, \tau, \sigma}).$$
   \end{itemize}
   Finally, the \emph{shortcutting chase tree $\SCTree{\mathcal{D}}{\Sigma}$ of $\mathcal{D}$ over $\Sigma$} is a chase tree defined as the limit $(\bigcup_{i = 0}^\infty T_i, \bigcup_{i = 0}^\infty \mu_i)$ of the sequence defined above.
   \qed
 \end{definition}
 
-% TODO: Compute SCTree of tree-like-chase-proof-example and include a diagram here.
+\begin{example}
+  Consider the rules in \Cref{tree-like-chase-proof-example}. According to an implementation in \cite{Benedikt_Rewriting_the_Infinite}, the set $\Sigma'$ containing the following two rules is an atomic rewriting.
+  \[\begin{array}{ccrcl}
+    \tau'_1 & = & \forall x_1, x_2.\ B(x_1, x_2) & \rightarrow & C(x_1, c_1) \wedge A(x_2, c_1) \\
+    \tau'_2 & = & \forall x_1, x_2.\ A(x_1, x_2) & \rightarrow & C(x_1, c_1)
+  \end{array}\]
+
+  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{sctree-example-diagram}. The chase tree is continued indefinitely by chasing with existential rules and Datalog saturating each layer with $\Sigma'$.
+  \qed
+\end{example}
+
+\begin{figure}[t]
+  \centering
+  \includesvg{./diagrams/sctree-example.drawio.svg}
+  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. Facts highlighted in red are the ones obtained by Datalog saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree under $v_1$ can be obtained by shortcutting chasing the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
+  \label{sctree-example-diagram}
+\end{figure}
 
 The structure of a shortcutting chase tree is very similar to that of a chase proof.
 
@@ -428,6 +444,7 @@ A set $Z$ of bound variables is $Q$-connected if $Z$ is connected in the hypergr
 
 We are ready to state the observation.
 
+% FIXME: This lemma does not hold when a homomorphism maps a variable to a rule constant! A rule constant may disappear and then appear deep in the sctree since it can be created out of nowhere provided there are enough facts (maybe we should remark this?).
 \begin{lemma}[\emph{Homomorphic image of connected variables is connected}]
 \label{image-of-connected-variables-is-connected}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ a homomorphism, and $Z$ a nonempty, $Q$-connected subset of $\vec{z}$.
@@ -493,7 +510,6 @@ Intuitively, the partial map $\sigma_\mathrm{partial}$ represents a partial comm
 
 As the following lemma states, the original query is satisfied precisely when all split queries are.
 
-% TODO: maybe we can get rid of \alpha in this lemma (and leave general CQ case for a corollary)
 \begin{lemma}[Base-connected query decomposition]
 \label{bcq-base-connected-query-decomposition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_\mathrm{partial}: \vec{z} \rightharpoonup \Terms(\mathcal{D})$ such that
@@ -625,7 +641,7 @@ One can first prove termination and correctness of \Cref{basic-query-answering-p
 \State // computes if the query is satisfied with a partial substitution $\sigma_\mathrm{partial}$
 \Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
   \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq FV(Q)$
-  \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ASatRules{\Sigma}, \mathcal{D})$
+  \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ARew{\Sigma}, \mathcal{D})$
   \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Baseq{Q}{\sigma_\mathrm{partial}}$
   \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}}$
   \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
@@ -664,7 +680,7 @@ Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only i
 With these observations in mind, we adopt the following strategy for building a rewriting.
 
 \begin{itemize}
-  \item Start with an atomic saturation $\ASatRules{\Sigma}$ of $\Sigma$.
+  \item Start with an atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
   \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution.
   \item For each \emph{local instance} $I$ (to be defined in \Cref{local-instances-and-the-subquery-entailment-problem}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
