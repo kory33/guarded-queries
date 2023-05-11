@@ -22,6 +22,10 @@ jobs:
           root_file: report.tex
           working_directory: ./report
           args: "-pdf -file-line-error -halt-on-error -interaction=nonstopmode -shell-escape"
+      - name: Install Inkscape (for SVG to PDF conversion)
+        run: |
+          sudo apt-get update
+          sudo apt-get install inkscape
       - run: |
           mkdir -p ./_site
           cp ./report/report.pdf ./_site/report.pdf
