@@ -612,9 +612,17 @@ We capture the latter intuition with the following.
   We say that two instances $\mathcal{D}_1, \mathcal{D}_2$ are \emph{$\Sigma$-renaming-equivalent} (written $\mathcal{D}_1 \cong_\Sigma \mathcal{D}_2$) if there exists a $\Sigma$-preserving renaming $\sigma$ with $\sigma(\mathcal{D}_1) = \mathcal{D}_2$. It is easy to see that $\cong_\Sigma$ is an equivalence relation.
 \end{definition}
 
+\begin{proposition}
+\label{renaming-equivalence-class-bound}
+  For any shortcutting chase tree $\SCTree{\mathcal{D}}{\Sigma}$, there are only finitely many $\cong_\Sigma$-equivalence classes of bags in $\SCTree{\mathcal{D}}{\Sigma}$.
+  \begin{proof}
+    For any non-root node $v$ of $\SCTree{\mathcal{D}}{\Sigma}$, by \Cref{each-bag-in-sctree-is-k-sigma-small} there are at most $K + |\Consts(\Sigma)|$ terms present in the bag $\mu(v)$. Hence there are at most $|P| \cdot 2^{(K + |\Consts(\Sigma)|)}$ facts in $\mu(v)$, where $P$ is the set of predicates in $\mathcal{D} \cup \Sigma$. In particular, the number of $\cong_\Sigma$-equivalence classes in $\SCTree{\mathcal{D}}{\Sigma}$ is at most $2^{|P| \cdot 2^{K + |\Consts(\Sigma)|}} + 1$, where the bag at the root node accounts for $(+1)$.
+  \end{proof}
+\end{proposition}
+
 We are ready to present a query-answering procedure \Cref{basic-query-answering-procedure} based on the intuition of \Cref{remark-towards-query-answering-procedure}. Note that, in $\textsc{EntailsConnectedBCQ}$, we can scan through all equivalence classes $[\mathcal{D}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$ by a depth-first search, since
 \begin{itemize}
-  \item there are only finitely many such classes by \Cref{each-bag-in-sctree-is-k-sigma-small}, and
+  \item there are only finitely many such classes by \Cref{renaming-equivalence-class-bound}, and
   \item for each such $\cong_\Sigma$-equivalence class $\mathcal{E}$, there exists a path $v_1, \ldots, v_n$ from the root node of $\SCTree{\mathcal{D}}{\Sigma}$ such that
   \begin{enumerate}
     \item none of $\mu(v_1), \ldots, \mu(v_n)$ are $\cong_\Sigma$-equivalent
@@ -623,7 +631,20 @@ We are ready to present a query-answering procedure \Cref{basic-query-answering-
   because we can always shorten a path not satisfying (1) by replacing a segment $v_i, \ldots, v_{i+m}$ such that $\mu(v_i) \cong_\Sigma \mu(v_{i+m})$ with just $v_i$, and then replacing all of $v_{i+m+1}, \ldots, v_n$ by their $\cong_\Sigma$-equivalent copies in the subtree rooted at $v_i$.
 \end{itemize}
 
-One can first prove termination and correctness of \Cref{basic-query-answering-procedure} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{recursive-connected-bcq-entailment}. It is then straightforward to see, by applying \Cref{base-connected-query-decomposition}, that \Cref{basic-query-answering-procedure} produces all valid answers to a general conjunctive query.
+We will only use \Cref{basic-query-answering-procedure} as an intermediate step towards producing a rewriting. We will not go through the algorithm line by line, but we shall sketch the proof of its correctness and termination.
+
+\begin{theorem}
+  The procedure \textsc{AnswerConjunctiveQuery} in \Cref{basic-query-answering-procedure} produces all valid answers to \hyperref[GTGD-CQ-Answering]{GTGD-CQ Answering} in finite time.
+  \begin{proof}[Proof (sketch)]
+    Termination is clear since
+    \begin{itemize}
+      \item all \textbf{for}-loops iterate over a finite set, and
+      \item size of connected BCQ decreases on every recursive call (\Cref{remark-towards-query-answering-procedure}).
+    \end{itemize}
+
+    We can first prove the correctness of \textsc{SatisfiedWith} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{recursive-connected-bcq-entailment}. It is then straightforward to see, by applying \Cref{base-connected-query-decomposition}, that \textsc{AnswerConjunctiveQuery} produces all valid answers.
+  \end{proof}
+\end{theorem}
 
 \begin{algorithm}
 \caption{Basic query answering procedure}
