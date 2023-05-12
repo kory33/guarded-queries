@@ -180,7 +180,7 @@ A \emph{conjunctive query} is a formula of the form $\exists z_1, \ldots, z_n.\ 
 
 We now turn our attention to a representation of a relational database. A \emph{(database) instance} is a collection of facts. A base (database) instance is a collection of base facts. We often regard a database instance as a single conjunction of facts. For example, we identify an instance $\{ R(c_1, c_3), T(c_2, c_3, c_3) \}$ with a conjunction $R(c_1, c_3) \wedge T(c_2, c_3, c_3)$.
 
-We use the notion known as \emph{homomorphisms} to describe how an instance satisfies a conjunctive query. In the literature, it is common to define homomorphisms as unrestricted substitutions of variables and nulls to terms. However, we will use a much more constrained notion of homomorphisms in this report.
+We use \emph{homomorphisms} to describe how an instance satisfies a conjunctive query.
 
 An \emph{instance homomorphism} $\sigma: \mathcal{D} \rightarrow \mathcal{D}'$ from an instance $\mathcal{D}$ to another instance $\mathcal{D}'$ is an embedding of $\mathcal{D}$ into $\mathcal{D}'$. More precisely, $\sigma$ is a mapping $\sigma: \Nulls(\mathcal{D}) \rightarrow \Terms(\mathcal{D}')$, such that for every fact $F \in \mathcal{D}$, $\sigma(F) \in \mathcal{D}'$.
 
@@ -228,6 +228,14 @@ Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_
 
 We call the database instance $\textsc{DatalogSaturate}(P, \mathcal{D})$ the \emph{Datalog saturation of $\mathcal{D}$ with $P$}. Intuitively, a Datalog saturation results from \emph{supplementing} the input instance by adding all but nothing other than facts derivable from the original instance.
 
+For a general set $\Sigma$ of GTGDs, we can compute a Datalog program, which we call an \emph{atomic rewriting}, that gives the same answers as $\Sigma$ for atomic queries. More precisely,
+
+\begin{definition}
+  Let $\Sigma$ be a finite set of GTGDs. We say that a Datalog program $P$ is an \emph{atomic rewriting} of $\Sigma$ if for every instance $\mathcal{D}$ and every fact $F$, $\mathcal{D} \wedge \Sigma \models F$ if and only if $\mathcal{D} \wedge P \models F$.
+\end{definition}
+
+A recent work \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented an algorithm, called \emph{Guarded-saturation}, for computing an atomic rewriting of an arbitrary GTGD set. For this report, we fix an implementation in Guarded-saturation and call its output \emph{the} atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
+
 \section{Problem Formulation}
 
 % Define output of GSat as "atomic rewriting" of a GTGD set
@@ -238,18 +246,17 @@ Our ultimate goal is to answer the following problem.
   Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
-% TODO: Motivate why we want to compute Datalog rewritings by talking about data complexity, cite the result showing the existence and finally formally define.
-
 It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
 
 \begin{definition}
-  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \alpha(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
+  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma \cup \mathcal{D} \models \alpha(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog} \cup \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
   We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the Datalog rewriting.
+  \qed
 \end{definition}
 
-% TODO: talk about Atomic Rewriting, which is a partial solution to the Datalog rewriting problem that works for atomic queries.
+In order to answer \Cref{GTGD-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
 
-This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGD-CQ pairs.
+This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGD-CQ pairs. We achieve this by using the atomic rewriting produced by the Guarded-saturation algorithm.
 
 \newpage
 \chapter{Characterising Query Entailment under GTGDs}
@@ -270,6 +277,7 @@ To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} int
   A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to a set of facts (possibly with nulls). We usually refer to the instance $\mu(v)$ as a \emph{bag of facts at $v$} to distinguish it from the input base instance.
   
   We will often identify a chase tree $(T, \mu)$ with the set $\bigcup_{v \in T} \mu(v)$ of facts in it.
+  \qed
 \end{definition}
 
 In this section, we focus on finite chase trees. The following definition incorporates ideas from \cite{benedikt_buron_germano_kappelmann_motik_2022} and \cite{kappelmann_2019}.
