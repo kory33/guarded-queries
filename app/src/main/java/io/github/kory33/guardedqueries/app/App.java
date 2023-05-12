@@ -23,7 +23,7 @@ public class App {
             final var head = rule.getHead();
             final String atomsString = Arrays.stream(head.getAtoms())
                     .map(Atom::toString)
-                    .collect(Collectors.joining(", "));
+                    .collect(Collectors.joining(" ∧ "));
 
             final var existentialVariables = ImmutableSet.copyOf(rule.getExistential());
             if (existentialVariables.isEmpty()) {
