@@ -66,6 +66,7 @@
 \newcommand{\Commq}[2]{\ensuremath{\normalfont{\textrm{Commq}} \left( #1, #2 \right)}}
 \newcommand{\LNames}[1]{\ensuremath{\normalfont{\textrm{LNames}} \left( #1 \right)}}
 \newcommand{\LRealz}[2]{\ensuremath{\normalfont{\textrm{LRealz}}_{ #1 } \left( #2 \right)}}
+\newcommand{\SubgoalRule}[1]{\ensuremath{\normalfont{\textrm{SubgoalRule}} \left( #1 \right)}}
 
 \title{Rewriting Conjunctive Queries \\ Under Guarded TGDs}
 \author{Ryosuke Kondo}
@@ -877,12 +878,13 @@ Putting these concepts together, we obtain the following notion of a subquery.
   Then $\partial_Q C = \{ z_3, z_4 \}$ and $S_{Q,C} = \{c_1, c_2\}$. If we let
   \[\begin{array}{rcl}
     \sigma_{\Consts(\Sigma)} &=& \{ z_3 \mapsto r_1 \} \\
-    \sigma_I &=& \{ z_4 \mapsto 3 \} \\
-    \iota &=& \{ c_1 \mapsto 2, c_2 \mapsto 3 \}
+    \sigma_I &=& \{ z_4 \mapsto 2 \} \\
+    \iota &=& \{ c_1 \mapsto 1, c_2 \mapsto 3 \}
   \end{array}\]
   where $r_1 \in \Consts(\Sigma)$, then $$
-  \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota} = \exists z_1, z_2. S(2, z_1, 3, z_2) \wedge T(z_1, 3, r_1).
+  \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota} = \exists z_1, z_2.\ S(1, z_1, 2, z_2) \wedge T(z_1, 3, r_1).
   $$
+  \qed
 \end{example}
 
 \subsection{Formalizing the Subquery Entailment Problem}
@@ -904,10 +906,94 @@ Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsect
   \qed
 \end{problem}
 
+\subsection{From a Subquery Entailment to a Datalog Rule}
+
+Suppose that $C$ is a $Q$-connected set of bound variables in $Q$, and let $Q_\mathrm{sub}$ be the (unsubstituted) subquery induced by $C$. The way in which $Q_\mathrm{sub}$ is satisfied can be fully described by how variables in $\partial_Q C$ are mapped to terms. Therefore, to represent a subquery satisfaction, we introduce the \emph{subgoal predicate} as an intensional predicate $\mathrm{Subgoal}_{Q, C}$ having the arity $|\partial_Q C|$.
+
+For each \textsc{yes} instance of \Cref{subquery-entailment-problem}, we wish to add a Datalog rule (which we will write $\mathrm{SubgoalRule}(\mathcal{I})$) that has the local instance in the body and the subgoal atom as the head.
+For example, suppose that the subquery in \Cref{local-realization-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
+  \forall x_2, x_4.\ S(c_1, x_2, c_2, x_4) \wedge T(x_4, x_2, c_1) \wedge R(x_2, c_2) \rightarrow \mathrm{Subgoal}_{Q, \{z_1, z_2\}}(r_1, x_2)
+$$
+where $x$ is the variable replacing $z_4$ in the original query.
+
+Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
+
+\begin{definition}
+  Let $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ be a $Q$-subquery entailment problem instance. Let $S$ be the subgoal atom substituted with local names, defined by $$
+    S = (\sigma_{\Consts(\Sigma)} \cup \sigma_I)\left(\mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)\right).
+  $$
+
+  Let $\rho$ be a renaming of all local names to variables and query constants, defined by $$
+    \rho(n) = \begin{cases}
+      \iota^{-1}(n) & \text{if } n \in \range{\iota} \\
+      x_n & \text{otherwise}
+    \end{cases}
+  $$
+
+  Finally, let $\mathrm{SubgoalRule}(\mathcal{I})$ be the Datalog rule given by $$
+    \mathrm{SubgoalRule}(\mathcal{I}) = \rho\left(I \rightarrow S\right)
+  $$
+  with all free variables universally quantified.
+  \qed
+\end{definition}
+
+It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}_{Q,C}(\vec{t})$ with the subquery $\Subq{Q}{C}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
+
 \section{A Rewriting Algorithm}
 \label{a-rewriting-algorithm}
 
-We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, otherwise, the subquery becomes immediately unsatisfiable in the chased subtree.
+To produce a Datalog rewriting of a pair $(\Sigma, Q)$, it now remains to enumerate subquery entailment instances satisfying \Cref{subquery-entailment-problem}.
+
+We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, since otherwise the partially substituted subquery becomes immediately unsatisfiable in the chased subtree. The corresponding pseudocode can be found in \Cref{naive-subquery-entailment-computation}.
+
+% TODO: revise this!
+\begin{algorithm}
+\caption{Naive Subquery Entailment Computation}
+\label{naive-subquery-entailment-computation}
+\begin{algorithmic}[1]
+\State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
+\State // $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
+\Procedure{EntailsConnectedBCQ}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
+  \ForAll{equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
+    \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
+      \State \textbf{return true}
+    \EndIf
+  \EndFor
+  \State \textbf{return false}
+\EndProcedure
+\State
+\Procedure{IsSuccessfulBranchingPoint}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
+  \ForAll{nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D}) \setminus \Consts(\Sigma)$}
+    \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{commit}$)}
+      \State \Return{\textbf{true}}
+    \EndIf
+  \EndFor
+  \State \Return{\textbf{false}}
+\EndProcedure
+\State
+\State // computes if the query is satisfied with a partial substitution $\sigma_\mathrm{partial}$
+\Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
+  \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq FV(Q)$
+  \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ARew{\Sigma}, \mathcal{D})$
+  \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Commq{Q}{\sigma_\mathrm{partial}}$
+  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}}$
+  \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
+  \State \hskip1.5em \textsc{EntailsConnectedBCQ}($\mathcal{D}_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$)
+  \State \Return{baseSatisfied \textbf{and} allComponentsSatisfied}
+\EndProcedure
+\State
+\Procedure{AnswerConjunctiveQuery}{$\mathcal{D}$, $\Sigma$, conjunctive query $Q$}
+  \ForAll{substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D}) \cup \Consts(\Sigma)$}
+    \ForAll{substitution $\sigma_{\Consts(\Sigma)}: (\Vars(Q) \setminus FV(Q)) \rightharpoonup \Consts(\Sigma)$}
+      \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\alpha \cup \sigma_{\Consts(\Sigma)}$)}
+        \State \textbf{output} $\alpha$ as an answer
+        \State \textbf{break} inner loop
+      \EndIf
+    \EndFor
+  \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 % TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
 
