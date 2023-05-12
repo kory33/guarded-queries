@@ -56,6 +56,9 @@
 \def\Vars{{\mathrm{Vars}}}
 \def\Consts{{\mathrm{Consts}}}
 \def\Terms{{\mathrm{Terms}}}
+\def\Nulls{{\mathrm{Nulls}}}
+\def\Predicates{{\mathrm{Predicates}}}
+\newcommand{\Arity}[1]{\ensuremath{\normalfont{\operatorname{Arity}} \left( #1 \right)}}
 \newcommand{\dom}[1]{\ensuremath{\normalfont{\operatorname{dom}} \left( #1 \right)}}
 \newcommand{\range}[1]{\ensuremath{\normalfont{\operatorname{range}} \left( #1 \right)}}
 \newcommand{\ARew}[1]{\ensuremath{\normalfont{\textsc{ARew}} \left( #1 \right)}}
@@ -83,6 +86,7 @@
 
 \newpage
 \chapter{Introduction}
+\label{introduction}
 
 \section{Background}
 
@@ -141,12 +145,48 @@ We conclude the report with an overview, and discuss some weakness of the algori
 \newpage
 \chapter{Preliminaries}
 
-% TODO: define formula formalism
-% TODO: define TGDs, Datalog rules, full TGDs, guarded TGDs and single-headed GTGDs (whose existential heads are single-headed).
-% TODO: mention how we can turn arbitrary set of GTGDs into single-headed GTGDs by introduce auxiliary, or intensional, predicates
-% TODO: define "instances", and make it clear that we may use a word "bag" in contexts where we don't talk about the whole database
-% TODO: define "homomorphism" as an arrow between two sets of facts mapping nulls and variables in the domain set to terms in the target set, such that facts are preserved, and note that this is a rather unconventional typing
-% TOOD: define "the subtree T \downarrow v of T as the tree induced by all descendants of v in T"
+This chapter introduces terminologies and notations, which we will use throughout the report.
+
+\section{Formulas}
+
+We fix countably infinite collections of \emph{constants}, \emph{variables} and \emph{nulls}. Nulls are similar to variables but play a similar role as Skolem constants (at the beginning of \Cref{characterising-query-entailment-under-gtgds}, we will see examples illustrating the use of nulls). A \emph{term} is either a constant, a variable or a null.
+
+We also fix a countably infinite set of \emph{predicates}. A predicate $P$ has its associated arity $\Arity{P}$. An \emph{atom} is a string of the form $P(t_1, \ldots, t_{\Arity{P}})$, where each $t_i$ is a term. A \emph{fact} is an atom not containing a variable, and a \emph{base fact} is a fact not containing nulls. We write $\Terms(S)$, $\Consts(S)$, $\Vars(S)$ and $\Nulls(S)$ for the sets of terms, constants, variables and nulls in an object $S$ (such as a conjunction of atoms).
+
+A \emph{tuple-generating dependency (TGD)} is a formula of the form $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$, where $\beta$ and $\eta$ are conjunctions of null-free atoms containing variables from $\vec{x}$ and $\vec{x} \cup \vec{y}$ respectively. The conjunctions $\beta$ and $\eta$ are called the \emph{body} and the \emph{head} of $\tau$, respectively. The set $\Vars(\beta) \cap \Vars(\eta)$ of variables appearing in both the body and the head of $\tau$ is called the \emph{frontier} of $\tau$.
+
+A TGD $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$ without an existential variable (i.e. $\vec{y} = \emptyset$) is said to be \emph{full}. Full TGDs are also called \emph{Datalog} rules. Conversely, a non-full rule is said to be \emph{existential}.
+
+We say that a conjunction $A_1 \wedge \ldots \wedge A_n$ of atoms is \emph{guarded} if there is an atom $A_i$ with $\Vars(A_i) = \Vars(A_1 \wedge \ldots \wedge A_n)$, and that a TGD is a \emph{guarded TGD (GTGD)} if its body $\beta$ is guarded. A GTGD $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$ is \emph{single-headed} if the head $\eta$ only contains a single atom.
+
+\begin{remark}
+  Note that a full rule $\forall \vec{x}.\ \beta \rightarrow H_1 \wedge \ldots \wedge H_n$ can always be split into rules $\forall \vec{x}.\ \beta \rightarrow H_i$ for $1 \leq i \leq n$. We will, therefore, implicitly treat all full rules as single-headed rules.
+\end{remark}
+
+\begin{remark}
+  A non-single-headed existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H_1 \wedge \ldots \wedge H_n$ can also be split, but only if we introduce a new predicate. More precisely, suppose that $\vec{z} \subseteq \vec{x}$ is the frontier of $\tau$, then we can turn $\tau$ into two rules
+  \begin{itemize}
+    \item $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ I(\vec{z}, \vec{y})$, and
+    \item $\forall \vec{z}, \vec{y}.\ I(\vec{z}, \vec{y}) \rightarrow H_1 \wedge \ldots \wedge H_n$, which is full.
+  \end{itemize}
+
+  In general, a set $\Sigma$ of GTGDs can be turned into a set of single-headed GTGDs if we introduce an intermediate predicate for each existential rule in $\Sigma$.
+  \qed
+\end{remark}
+
+A \emph{conjunctive query} is a formula of the form $\exists z_1, \ldots, z_n.\ A_1 \wedge \ldots \wedge A_m$, where each $A_i$ is an atom. We write $FV(Q)$ for the set of free variables in $Q$. A conjunctive query is said to be \emph{Boolean} if it $FV(Q) = \emptyset$.
+
+\section{Database Instances and Homomorphisms}
+
+We now turn our attention to a representation of a relational database. A \emph{(database) instance} is a collection of facts. A base (database) instance is a collection of base facts. We often regard a database instance as a single conjunction of facts. For example, we identify an instance $\{ R(c_1, c_3), T(c_2, c_3, c_3) \}$ with a conjunction $R(c_1, c_3) \wedge T(c_2, c_3, c_3)$.
+
+We use the notion known as \emph{homomorphisms} to describe how an instance satisfies a conjunctive query. In the literature, it is common to define homomorphisms as unrestricted substitutions of variables and nulls to terms. However, we will use a much more constrained notion of homomorphisms in this report.
+
+An \emph{instance homomorphism} $\sigma: \mathcal{D} \rightarrow \mathcal{D}'$ from an instance $\mathcal{D}$ to another instance $\mathcal{D}'$ is an embedding of $\mathcal{D}$ into $\mathcal{D}'$. More precisely, $\sigma$ is a mapping $\sigma: \Nulls(\mathcal{D}) \rightarrow \Terms(\mathcal{D}')$, such that for every fact $F \in \mathcal{D}$, $\sigma(F) \in \mathcal{D}'$.
+
+Similarly, a \emph{query homomorphism} $\sigma: Q \rightarrow \mathcal{D}$ from a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ to an instance $\mathcal{D}$ is a mapping $\sigma: \Vars(Q) \rightarrow \Terms(\mathcal{D})$ such that $\sigma(A_j) \in \mathcal{D}$ for each $j \in J$.
+
+We say that an instance $\mathcal{D}$ \emph{satisfies} a Boolean conjunctive query $Q$, written $\mathcal{D} \models Q$, if there exists a query homomorphism $\sigma: Q \rightarrow \mathcal{D}$. We also say that the instance $\mathcal{D}$ together with a set $\Sigma$ of TGDs \emph{entails} $Q$, written $\mathcal{D} \cup \Sigma \models Q$, if for every extension $\mathcal{D}_\mathrm{ext}$ of $\mathcal{D}$ satisfying $\Sigma$, $\mathcal{D}_\mathrm{ext}$ satisfies $Q$. Note that this definition of query satisfaction is consistent with the ordinary model-theoretic interpretation of $\models$ relation.
 
 \section{Datalog Saturation}
 
@@ -198,7 +238,7 @@ Our ultimate goal is to answer the following problem.
   Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
-% Motivate why we want to compute Datalog rewritings by talking about data complexity, cite the result showing the existence and finally formally define.
+% TODO: Motivate why we want to compute Datalog rewritings by talking about data complexity, cite the result showing the existence and finally formally define.
 
 It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
 
@@ -206,6 +246,8 @@ It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings
   A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma, \mathcal{D} \models \alpha(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog}, \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
   We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the Datalog rewriting.
 \end{definition}
+
+% TODO: talk about Atomic Rewriting, which is a partial solution to the Datalog rewriting problem that works for atomic queries.
 
 This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGD-CQ pairs.
 
@@ -215,7 +257,7 @@ This project aims to derive an algorithm that produces Datalog rewritings for ar
 
 \section{Tree-Like Chase Proofs}
 
-In the presence of existential rules, an object known as the \emph{chase} represents a canonical \emph{completion} of a database concerning some data integration rules. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent fresh constants \cite{fagin_kolaitis_miller_popa_2005}.
+In the presence of existential rules, an object known as the \emph{chase} represents a canonical \emph{completion} of a database concerning some data integration rules. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent Skolem constants \cite{fagin_kolaitis_miller_popa_2005}.
 
 As with Datalog saturations, the chase of an instance $\mathcal{D}$ gives all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
 
@@ -371,7 +413,7 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
 \begin{lemma}
 \label{sctree-subtree-embeds-into-a-chase-proof}
-  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of single-headed GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits a homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
+  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of single-headed GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits an instance homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
   \begin{proof}
     By induction on the structure of $(T, \mu)$.
 
@@ -399,7 +441,7 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
 \begin{remark}
 \label{coinductiveness-of-sctree}
-  A shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $\SCTree{\mathcal{D}}{\Sigma} \downarrow v$ of all descendants (including $v$ itself) of $v$ can be written as $\SCTree{\mathcal{D}}{\Sigma} \downarrow v = \SCTree{\mu(v)}{\Sigma}$.
+  A shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $T_v$ of all descendants (including $v$ itself) of $v$ can be written as $T_v = \SCTree{\mu(v)}{\Sigma}$.
 \end{remark}
 
 \section{Query Satisfaction in Shortcutting Chase Trees}
@@ -466,7 +508,7 @@ We are ready to state the observation.
 
 \begin{lemma}[\emph{Homomorphic image of connected variables is connected}]
 \label{image-of-connected-variables-is-connected}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ a $\Consts(\Sigma)$-free homomorphism, and $Z$ a nonempty, $Q$-connected subset of $\vec{z}$. If we write $T_Z$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ whose bags contain a term in $\sigma(Z)$, then $T_Z$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ a $\Consts(\Sigma)$-free query homomorphism, and $Z$ a nonempty, $Q$-connected subset of $\vec{z}$. If we write $T_Z$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ whose bags contain a term in $\sigma(Z)$, then $T_Z$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
     For each term $t \in \sigma(Z)$, let $V_t \subseteq \SCTree{\mathcal{D}}{\Sigma}$ be the set of nodes in which $t$ appears. We wish to see that $T_Z = \bigcup_{t \in \sigma(Z)} V_t$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$. Since $T_Z$ is nonempty, it suffices to show the connectedness of $T_Z$.
 
@@ -726,7 +768,7 @@ With these observations in mind, we adopt the following strategy for building a 
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
-In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances} and discuss how we could efficiently enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm. Finally, in \Cref{secomputation-optimizations}, we address crucial optimisations in the subquery entailment computation.
+In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances} and discuss how we could efficiently enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm. Finally, in \Cref{secomputation-optimisations}, we address crucial optimisations in the subquery entailment computation.
 
 \section{The Subquery Entailment Problem}
 \label{subquery-entailment-problem-section}
@@ -860,7 +902,7 @@ Putting these concepts together, we obtain the following notion of a subquery.
     \item $\iota$ is an embedding of constants adjacent to $C$ into $I$.
   \end{itemize}
 
-  Given such a triple, its \emph{local realization at $I$}, written $\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$, is the connected Boolean conjunctive query $$
+  Given such a triple, its \emph{local realisation at $I$}, written $\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$, is the connected Boolean conjunctive query $$
   \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota} = \exists \vec{C}. \bigwedge_{j \in J_C} (\sigma_{\Consts(\Sigma)} \cup \sigma_I \cup \iota)(A_j)
   $$
   mentioning local names, where $J_C = \{ j \in J \mid \Vars(A_j) \cap C \neq \emptyset \}$.
@@ -869,7 +911,7 @@ Putting these concepts together, we obtain the following notion of a subquery.
 \end{definition}
 
 \begin{example}
-\label{local-realization-of-subquery-representation}
+\label{local-realisation-of-subquery-representation}
   Let
   $$
     Q = \exists z_1,z_2,z_3,z_4.\ S(c_1, z_1, z_4, z_2) \wedge T(z_1, c_2, z_3) \wedge T(z_3, c_1, z_4),
@@ -911,7 +953,7 @@ Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsect
 Suppose that $C$ is a $Q$-connected set of bound variables in $Q$, and let $Q_\mathrm{sub}$ be the (unsubstituted) subquery induced by $C$. The way in which $Q_\mathrm{sub}$ is satisfied can be fully described by how variables in $\partial_Q C$ are mapped to terms. Therefore, to represent a subquery satisfaction, we introduce the \emph{subgoal predicate} as an intensional predicate $\mathrm{Subgoal}_{Q, C}$ having the arity $|\partial_Q C|$.
 
 For each \textsc{yes} instance of \Cref{subquery-entailment-problem}, we wish to add a Datalog rule (which we will write $\mathrm{SubgoalRule}(\mathcal{I})$) that has the local instance in the body and the subgoal atom as the head.
-For example, suppose that the subquery in \Cref{local-realization-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
+For example, suppose that the subquery in \Cref{local-realisation-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
   \forall x_2, x_4.\ S(c_1, x_2, c_2, x_4) \wedge T(x_4, x_2, c_1) \wedge R(x_2, c_2) \rightarrow \mathrm{Subgoal}_{Q, \{z_1, z_2\}}(r_1, x_2)
 $$
 where $x$ is the variable replacing $z_4$ in the original query.
@@ -932,19 +974,18 @@ Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
 
   Finally, let $\mathrm{SubgoalRule}(\mathcal{I})$ be the Datalog rule given by $$
     \mathrm{SubgoalRule}(\mathcal{I}) = \rho\left(I \rightarrow S\right)
-  $$
-  with all free variables universally quantified.
+  $$ with all free variables universally quantified.
   \qed
 \end{definition}
 
-It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}_{Q,C}(\vec{t})$ with the subquery $\Subq{Q}{C}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
+It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}_{Q,C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
 
 \section{A Rewriting Algorithm}
 \label{a-rewriting-algorithm}
 
 To produce a Datalog rewriting of a pair $(\Sigma, Q)$, it now remains to enumerate subquery entailment instances satisfying \Cref{subquery-entailment-problem}.
 
-We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, since otherwise the partially substituted subquery becomes immediately unsatisfiable in the chased subtree. The corresponding pseudocode can be found in \Cref{naive-subquery-entailment-computation}.
+We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, since otherwise the partially substituted subquery becomes immediately unsatisfiable in the chased subtree. The corresponding pseudocode can be found in \Cref{naive-subquery-entailment-computation}. (TODO: this is not the actual subquery entailment algorithm)
 
 % TODO: revise this!
 \begin{algorithm}
@@ -1000,10 +1041,10 @@ We can solve \Cref{subquery-entailment-problem} with only a minor modification t
 % TODO: present an algorithm. if time permits, add a correctness proof
 %       and the runtime complexity analysis
 
-\section{Some Optimizations on Subquery Entailment Computation}
-\label{secomputation-optimizations}
+\section{Some Optimisations on Subquery Entailment Computation}
+\label{secomputation-optimisations}
 
-% TODO: We would love to write about the "short-circuiting" in the middle of DFS and re-normalization of local instances to {0, ..., K-1}.
+% TODO: We would love to write about the "short-circuiting" in the middle of DFS and re-normalisation of local instances to {0, ..., K-1}.
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
