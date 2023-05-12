@@ -5,11 +5,12 @@ plugins {
 }
 
 dependencies {
-    testImplementation(project(":lib"))
     testImplementation(project(mapOf(
             "path" to ":guarded-saturation-wrapper",
             "configuration" to "gsatJar"
     )))
+    testImplementation(project(":lib"))
+    testImplementation(project(":util-parser"))
     testImplementation("org.javafp:parsecj:0.6")
 }
 

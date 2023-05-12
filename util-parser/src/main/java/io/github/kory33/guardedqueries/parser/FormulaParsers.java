@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.testcases.parser;
+package io.github.kory33.guardedqueries.parser;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

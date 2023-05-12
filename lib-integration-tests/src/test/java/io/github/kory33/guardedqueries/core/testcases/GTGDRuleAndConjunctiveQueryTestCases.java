@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.testcases;
 
-import io.github.kory33.guardedqueries.core.testcases.parser.FormulaParsers;
-import io.github.kory33.guardedqueries.core.testcases.parser.TestCaseParsers;
+import io.github.kory33.guardedqueries.parser.FormulaParsers;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
 
 /**

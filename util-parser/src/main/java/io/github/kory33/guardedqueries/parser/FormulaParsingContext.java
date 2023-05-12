@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.testcases.parser;
+package io.github.kory33.guardedqueries.parser;
 
 import uk.ac.ox.cs.pdq.fol.Constant;
 
