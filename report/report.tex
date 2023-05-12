@@ -763,7 +763,7 @@ More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is satisfied 
   \item used in the substituted body $\sigma(\beta)$, or
   \item inherited by $c$, i.e. facts whose arguments are all in $\sigma(H)$,
 \end{itemize}
-then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As we inherit the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
+then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As $c'$ inherits the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
 Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation, it is possible to deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
 
@@ -776,7 +776,7 @@ With these observations in mind, we adopt the following strategy for building a 
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
-In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances} and discuss how we could efficiently enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm. Finally, in \Cref{secomputation-optimisations}, we address crucial optimisations in the subquery entailment computation.
+In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances}. We then briefly describe how to enumerate instances that entail a subquery in \Cref{section:naive-subquery-entailment-computation}, putting pieces together in \Cref{a-rewriting-algorithm} to present a rewriting algorithm. Finally, we discuss in \Cref{secomputation-optimisations} some optimisations on the naive algorithm presented in \Cref{section:naive-subquery-entailment-computation}.
 
 \section{The Subquery Entailment Problem}
 \label{subquery-entailment-problem-section}
@@ -956,42 +956,10 @@ Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsect
   \qed
 \end{problem}
 
-\subsection{From a Subquery Entailment to a Datalog Rule}
+\section{The Naive Subquery Entailment Computation}
+\label{section:naive-subquery-entailment-computation}
 
-Suppose that $C$ is a $Q$-connected set of bound variables in $Q$, and let $Q_\mathrm{sub}$ be the (unsubstituted) subquery induced by $C$. The way in which $Q_\mathrm{sub}$ is satisfied can be fully described by how variables in $\partial_Q C$ are mapped to terms. Therefore, to represent a subquery satisfaction, we introduce the \emph{subgoal predicate} as an intensional predicate $\mathrm{Subgoal}_{Q, C}$ having the arity $|\partial_Q C|$.
-
-For each \textsc{yes} instance of \Cref{subquery-entailment-problem}, we wish to add a Datalog rule (which we will write $\mathrm{SubgoalRule}(\mathcal{I})$) that has the local instance in the body and the subgoal atom as the head.
-For example, suppose that the subquery in \Cref{local-realisation-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
-  \forall x_2, x_4.\ S(c_1, x_2, c_2, x_4) \wedge T(x_4, x_2, c_1) \wedge R(x_2, c_2) \rightarrow \mathrm{Subgoal}_{Q, \{z_1, z_2\}}(r_1, x_2)
-$$
-where $x$ is the variable replacing $z_4$ in the original query.
-
-Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
-
-\begin{definition}
-  Let $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ be a $Q$-subquery entailment problem instance. Let $S$ be the subgoal atom substituted with local names, defined by $$
-    S = (\sigma_{\Consts(\Sigma)} \cup \sigma_I)\left(\mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)\right).
-  $$
-
-  Let $\rho$ be a renaming of all local names to variables and query constants, defined by $$
-    \rho(n) = \begin{cases}
-      \iota^{-1}(n) & \text{if } n \in \range{\iota} \\
-      x_n & \text{otherwise}
-    \end{cases}
-  $$
-
-  Finally, let $\mathrm{SubgoalRule}(\mathcal{I})$ be the Datalog rule given by $$
-    \mathrm{SubgoalRule}(\mathcal{I}) = \rho\left(I \rightarrow S\right)
-  $$ with all free variables universally quantified.
-  \qed
-\end{definition}
-
-It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}_{Q,C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
-
-\section{A Rewriting Algorithm}
-\label{a-rewriting-algorithm}
-
-To produce a Datalog rewriting of a pair $(\Sigma, Q)$, it now remains to enumerate subquery entailment instances satisfying \Cref{subquery-entailment-problem}.
+The goal of this section is to describe an algorithm for enumerating subquery entailment instances that satisfy \Cref{subquery-entailment-problem}.
 
 We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, since otherwise the partially substituted subquery becomes immediately unsatisfiable in the chased subtree. The corresponding pseudocode can be found in \Cref{naive-subquery-entailment-computation}. (TODO: this is not the actual subquery entailment algorithm)
 
@@ -1044,15 +1012,53 @@ We can solve \Cref{subquery-entailment-problem} with only a minor modification t
 \end{algorithmic}
 \end{algorithm}
 
-% TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
+\section{A Rewriting Algorithm}
+\label{a-rewriting-algorithm}
 
-% TODO: present an algorithm. if time permits, add a correctness proof
-%       and the runtime complexity analysis
+\subsection{From a Subquery Entailment to a Datalog Rule}
 
-\section{Some Optimisations on Subquery Entailment Computation}
+Now that we can enumerate subquery entailments, we show how to turn them into Datalog rules that derive subgoals.
+
+Suppose that $C$ is a $Q$-connected set of bound variables in $Q$, and let $Q_\mathrm{sub}$ be the (unsubstituted) subquery induced by $C$. The way in which $Q_\mathrm{sub}$ is satisfied can be fully described by how variables in $\partial_Q C$ are mapped to terms. Therefore, to represent a subquery satisfaction, we introduce the \emph{subgoal predicate} as an intensional predicate $\mathrm{Subgoal}_{Q, C}$ having the arity $|\partial_Q C|$.
+
+For each \textsc{yes} instance of \Cref{subquery-entailment-problem}, we wish to add a Datalog rule (which we will write $\mathrm{SubgoalRule}(\mathcal{I})$) that has the local instance in the body and the subgoal atom as the head.
+For example, suppose that the subquery in \Cref{local-realisation-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
+  \forall x_2, x_4.\ S(c_1, x_2, c_2, x_4) \wedge T(x_4, x_2, c_1) \wedge R(x_2, c_2) \rightarrow \mathrm{Subgoal}_{Q, \{z_1, z_2\}}(r_1, x_2)
+$$
+where $x$ is the variable replacing $z_4$ in the original query.
+
+Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
+
+\begin{definition}
+  Let $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ be a $Q$-subquery entailment problem instance. Let $S$ be the subgoal atom substituted with local names, defined by $$
+    S = (\sigma_{\Consts(\Sigma)} \cup \sigma_I)\left(\mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)\right).
+  $$
+
+  Let $\rho$ be a renaming of all local names to variables and query constants, defined by $$
+    \rho(n) = \begin{cases}
+      \iota^{-1}(n) & \text{if } n \in \range{\iota} \\
+      x_n & \text{otherwise}
+    \end{cases}
+  $$
+
+  Finally, let $\mathrm{SubgoalRule}(\mathcal{I})$ be the Datalog rule given by $$
+    \mathrm{SubgoalRule}(\mathcal{I}) = \rho\left(I \rightarrow S\right)
+  $$ with all free variables universally quantified.
+  \qed
+\end{definition}
+
+It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}_{Q,C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
+
+\subsection{Glueing Subgoals}
+
+% TODO: talk about subgoal glueing rules, pretty much based on \label{base-connected-query-decomposition}.
+
+\subsection{Putting Pieces Together}
+
+\section{Optimising the Subquery Entailment Computation}
 \label{secomputation-optimisations}
 
-% TODO: We would love to write about the "short-circuiting" in the middle of DFS and re-normalisation of local instances to {0, ..., K-1}.
+% TODO: Write about "memoization", use of DFS and re-normalisation of local instances to {0, ..., K-1}.
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
