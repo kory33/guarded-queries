@@ -64,6 +64,8 @@
 \newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
 \newcommand{\Subq}[3]{\ensuremath{\normalfont{\textrm{Subq}} \left( #1, #2, #3 \right)}}
 \newcommand{\Commq}[2]{\ensuremath{\normalfont{\textrm{Commq}} \left( #1, #2 \right)}}
+\newcommand{\LNames}[1]{\ensuremath{\normalfont{\textrm{LNames}} \left( #1 \right)}}
+\newcommand{\LRealz}[2]{\ensuremath{\normalfont{\textrm{LRealz}}_{ #1 } \left( #2 \right)}}
 
 \title{Rewriting Conjunctive Queries \\ Under Guarded TGDs}
 \author{Ryosuke Kondo}
@@ -265,7 +267,7 @@ In this section, we focus on finite chase trees. The following definition incorp
   \label{tree-like-chase-proof-example-diagram}
 \end{figure}
 
-A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples by using a chase step, commit off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to the ancestor node.
+A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples by using a chase step, stepping off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to its ancestor.
 
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
 
@@ -492,7 +494,7 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
 \begin{figure}[ht]
   \centering
   \includesvg{./diagrams/query-decomposition-example.drawio.svg}
-  \caption{Decomposition of a query in \Cref{bcq-decomposition-example}.}
+  \caption{Decomposition of the query from \Cref{query-connectedness-example} with partial map as in \Cref{bcq-decomposition-example}.}
   \label{bcq-decomposition-example-figure}
 \end{figure}
 
@@ -730,16 +732,140 @@ In \Cref{local-instances-and-the-subquery-entailment-problem}, we define the pre
 \section{Local Instances and the Subquery Entailment Problem}
 \label{local-instances-and-the-subquery-entailment-problem}
 
-To proceed with the strategy, we need to define a data structure that can be input to the following question: "Is this $(K, \Sigma)$-small structure sufficiently large to entail a subquery of $Q$ induced by a $Q$-connected set $C$ of bound variables?"
+To proceed with the strategy, we need to define a data structure that can be input to the following problem.
 
-Moreover, we would like the multiple instances of structures to interconnect each other so that together they can describe a local structure of $\SCTree{\mathcal{D}}{\Sigma}$. We illustrate this problem and a solution we will adopt with the following example.
+\begin{problem}[Informal]
+\label{informal-subquery-entailment-problem}
+  Suppose $I$ is a certain $(K, \Sigma)$-small structure, $C$ a $Q$-connected set of bound variables and $Q_{\mathrm{sub}, C}$ a subquery of $Q$ with existentials $C$. Is $I$ large enough to entail $Q_{\mathrm{sub}, C}$?
+\end{problem}
 
+First, we formalise the $(K, \Sigma)$-small structure.
+
+Since there are at most $K$ (maximum arity of predicates in $\mathcal{D} \cup \Sigma$) non-$\Consts(\Sigma)$-terms in a $(K, \Sigma)$-small bag of facts, we might consider relabelling them with numbers $\{ 1, 2, \ldots, K \}$. However, if we completely identify bags with $\cong_\Sigma$-equivalence, we will no longer be able to recover the structure of $\SCTree{\mathcal{D}}{\Sigma}$. \Cref{sctree-simple-example-equivalence-classes} illustrates the issue with $\SCTree{\mathcal{D}}{\Sigma}$ from \Cref{sctree-simple-example}.
+
+\begin{figure}[ht]
+  \centering
+  \includesvg{./diagrams/sctree-simple-example-bag-structures.drawio.svg}
+  \caption{(Left) The shortcutting chase from \Cref{sctree-simple-example-diagram}. (Top right) If we identify bags with $\cong_\Sigma$ by relabelling terms with numbers, we get three bags representing $\cong_\Sigma$-equivalence classes. (Bottom right) We can no longer assemble these equivalence classes back to a chase structure since there is no way to distinguish between the inheritance and the introduction of terms in a chased node.}
+  \label{sctree-simple-example-equivalence-classes}
+\end{figure}
+
+A trick to solve this issue is to use $2K$ labels, which we call \emph{local names}, with the convention that the same label in adjacent bags represents a term shared between them, as illustrated in \Cref{sctree-simple-example-local-names}. Formally, we work with the following structure.
+
+\begin{figure}[ht]
+  \centering
+  \includesvg{./diagrams/sctree-simple-example-local-names.drawio.svg}
+  \caption{(Left) The shortcutting chase from \Cref{sctree-simple-example-diagram}. (Right) relabelling of the shortcutting chase tree with local names. The same local name in sibling nodes (e.g. $2$ in $v'_2$ and $v'_3$) may represent different terms.}
+  \label{sctree-simple-example-local-names}
+\end{figure}
+
+\begin{definition}
+  A \emph{$(K, \Sigma)$-local instance} is a bag $I$ of facts such that
+  \begin{itemize}
+    \item for every fact $F \in I$, every term in $F$ is either
+    \begin{itemize}
+      \item a constant in $\Sigma$, or
+      \item a \emph{local name} from the set $\{ 1, \ldots, 2K \}$ of constants not intersecting with $\Consts(\Sigma)$
+    \end{itemize}
+    \item there are at most $K$ local names active in $I$.
+  \end{itemize}
+
+  We write $\LNames{I}$ for the set of active local names in $I$.
+  \qed
+\end{definition}
+
+Our next task is to represent a partially substituted subquery. Notice that, for a $Q$-connected set $C$ of variables, the subquery induced by $Q$ should
+\begin{itemize}
+  \item contain only atoms in $Q$ that mention a variable from $C$, and at the same time,
+  \item have all variables not in $C$ substituted with a term.
+\end{itemize}
+It is convenient to introduce the following notion to describe the latter condition.
+
+\begin{definition}
+  For a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a $Q$-connected subset $C$ of $\vec{z}$, the \emph{$Q$-neighbourhood} (written $\partial_Q C$) of $C$ is the set of (either free or bound) variables in $Q$ defined by $$
+    \partial_Q C = \left\{
+      v \in \Vars(Q) \setminus C
+        \;\middle|\;
+      \begin{aligned}
+        & \exists j \in J \text{ such that } \\
+        & \Vars(A_j) \cap C \neq \emptyset \text{ and } v \in \Vars(A_j)
+      \end{aligned}
+    \right\}
+  $$
+  \qed
+\end{definition}
+
+\newpage
 \begin{example}
-\label{local-instance-structure}
-  Recall the shortcutting chase tree in \Cref{sctree-example-diagram}.
+  Let
+  \begin{align*}
+    Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
+    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5).
+  \end{align*}
+  as in \Cref{query-connectedness-example}. Then $\partial_Q \{z_4\} = \{z_3\}$ (\Cref{query-neighbourhood-example}), $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$.
+  \qed
 \end{example}
 
-% TODO: define the notion of "subquery entailment instance" and the "subquery entailment problem".
+\begin{figure}[h]
+  \centering
+  \includesvg{./diagrams/query-neighbourhood-example.drawio.svg}
+  \caption{For the query from \Cref{query-connectedness-example}, the $Q$-neighbourhood of $\{z_4\}$ (red) is $\{z_3\}$ (blue).}
+  \label{query-neighbourhood-example}
+\end{figure}
+
+A variable in $\partial_Q C$ may be mapped either
+\begin{itemize}
+  \item to a constant in $\Consts(\Sigma)$ at the beginning, or
+  \item to a local name while trying to find a successful commit point.
+\end{itemize}
+Putting these concepts together, we obtain the following notion of a subquery.
+
+\begin{definition}
+  Let $Q$ be a conjunctive query, $C$ be a $Q$-connected subset of bound variables in $Q$ and $I$ a $(K, \Sigma)$-local instance. A \emph{representation of a subquery of $Q$ induced by $C$ local to $I$} is a pair $(\sigma_{\Consts(\Sigma)}, \sigma_I)$ of partial mappings
+  \[\begin{array}{rccl}
+    \sigma_{\Consts(\Sigma)}: & \partial_Q C &\rightharpoonup& \Consts(\Sigma) \\
+    \sigma_I: & \partial_Q C &\rightharpoonup& \LNames{I}
+  \end{array}\]
+  whose domains partition $\partial_Q C$.
+\end{definition}
+
+Finally, we must always embed non-$\Consts(\Sigma)$ query constants in the subquery into the local instance; otherwise, we cannot hope for a query entailment. For example, we cannot hope to entail a query $\exists y. T(x, y, c)$ (where $c \not\in \Consts(\Sigma)$) from a local instance $I$ without having a local name in $\LNames{I}$ representing the constant $c$.
+
+Combining notions defined so far, we are ready to formalise \Cref{informal-subquery-entailment-problem}.
+
+\begin{definition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$Q$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota_C)$ where
+  \begin{itemize}
+    \item $C$ is a $Q$-connected set of variables bound in $Q$
+    \item $I$ is a $(K, \Sigma)$-local instance
+    \item $(\sigma_{\Consts(\Sigma)}, \sigma_I)$ is a representation of a subquery of $Q$ induced by $C$ local to $I$
+    \item $\iota_C$ is an embedding of query constants to the set $\LNames{I}$. More formally, let $$
+      S = \left\{
+        c \in \Consts(Q) \setminus \Consts(\Sigma)
+          \;\middle|\;
+        \begin{aligned}
+          & \exists j \in J \text{ such that } \\
+          & \Vars(A_j) \cap C \neq \emptyset \text{ and } c \in \Consts(A_j)
+        \end{aligned}
+      \right\},
+    $$
+    be the set of constants in the subquery induced by $C$, then $\iota_C: S \hookrightarrow\nobreak \LNames{I}$.
+  \end{itemize}
+
+  Given a $Q$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota_C)$, its \emph{local realization}, written $\LRealz{Q}{\mathcal{I}}$, is the Boolean conjunctive query $$
+  \LRealz{Q}{\mathcal{I}} = \exists \vec{C}. \bigwedge_{j \in J_C} ((\sigma_{\Consts(\Sigma)} \cup \sigma_I) \circ \iota_C)(A_j)
+  $$
+  where $J_C = \{ j \in J \mid \Vars(A_j) \cap C \neq \empty \}$.
+  \qed
+\end{definition}
+
+\begin{problem}[Subquery Entailment Problem]
+\label{subquery-entailment-problem}
+  Given a $Q$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota_C)$, does $\mathcal{I} \cup \Sigma \models \LRealz{Q}{\mathcal{I}}$ hold?
+\end{problem}
+
+
+
 % TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
 
 \section{A Rewriting Algorithm}
