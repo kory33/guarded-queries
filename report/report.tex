@@ -139,7 +139,8 @@ We conclude the report with an overview, and discuss some weakness of the algori
 \chapter{Preliminaries}
 
 % TODO: define formula formalism
-% TODO: define TGDs, Datalog rules, full TGDs, guarded TGDs
+% TODO: define TGDs, Datalog rules, full TGDs, guarded TGDs and single-headed GTGDs (whose existential heads are single-headed).
+% TODO: mention how we can turn arbitrary set of GTGDs into single-headed GTGDs by introduce auxiliary, or intensional, predicates
 % TODO: define "instances", and make it clear that we may use a word "bag" in contexts where we don't talk about the whole database
 % TODO: define "homomorphism" as an arrow between two sets of facts mapping nulls and variables in the domain set to terms in the target set, such that facts are preserved, and note that this is a rather unconventional typing
 % TOOD: define "the subtree T \downarrow v of T as the tree induced by all descendants of v in T"
@@ -335,6 +336,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
 \end{definition}
 
 \begin{example}
+\label{sctree-simple-example}
   Consider the rules in \Cref{tree-like-chase-proof-example}. According to an implementation in \cite{Benedikt_Rewriting_the_Infinite}, the set $\Sigma'$ of the following two rules is an atomic rewriting of $\Sigma$.
   \[\begin{array}{ccrcl}
     \tau'_1 & = & \forall x_1, x_2.\ B(x_1, x_2) & \rightarrow & C(x_1, c_1) \wedge A(x_2, c_1) \\
@@ -347,7 +349,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
 
 \begin{figure}[t]
   \centering
-  \includesvg{./diagrams/sctree-example.drawio.svg}
+  \includesvg{./diagrams/sctree-simple-example.drawio.svg}
   \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are the ones obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
   \label{sctree-simple-example-diagram}
 \end{figure}
@@ -616,7 +618,7 @@ We capture the latter intuition with the following.
 \label{renaming-equivalence-class-bound}
   For any shortcutting chase tree $\SCTree{\mathcal{D}}{\Sigma}$, there are only finitely many $\cong_\Sigma$-equivalence classes of bags in $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
-    For any non-root node $v$ of $\SCTree{\mathcal{D}}{\Sigma}$, by \Cref{each-bag-in-sctree-is-k-sigma-small} there are at most $K + |\Consts(\Sigma)|$ terms present in the bag $\mu(v)$. Hence there are at most $|P| \cdot 2^{(K + |\Consts(\Sigma)|)}$ facts in $\mu(v)$, where $P$ is the set of predicates in $\mathcal{D} \cup \Sigma$. In particular, the number of $\cong_\Sigma$-equivalence classes in $\SCTree{\mathcal{D}}{\Sigma}$ is at most $2^{|P| \cdot 2^{K + |\Consts(\Sigma)|}} + 1$, where the bag at the root node accounts for $(+1)$.
+    For any non-root node $v$ of $\SCTree{\mathcal{D}}{\Sigma}$, by \Cref{each-bag-in-sctree-is-k-sigma-small} there are at most $K + |\Consts(\Sigma)|$ terms present in the bag $\mu(v)$. Hence there are at most $|P| \cdot 2^{(K + |\Consts(\Sigma)|)}$ facts in $\mu(v)$, where $P$ is the set of predicates in $\mathcal{D} \cup \Sigma$. In particular, the number of $\cong_\Sigma$-equivalence classes in $\SCTree{\mathcal{D}}{\Sigma}$ is at most $2^{|P| \cdot 2^{(K + |\Consts(\Sigma)|)}} + 1$, where the bag at the root node accounts for $(+1)$.
   \end{proof}
 \end{proposition}
 
@@ -733,8 +735,8 @@ To proceed with the strategy, we need to define a data structure that can be inp
 Moreover, we would like the multiple instances of structures to interconnect each other so that together they can describe a local structure of $\SCTree{\mathcal{D}}{\Sigma}$. We illustrate this problem and a solution we will adopt with the following example.
 
 \begin{example}
-\label{implicit-equality-coding-of-local-names}
-  Consider the following (TODO: translate \Cref{sctree-example-diagram} together with a suitable query into a local instance).
+\label{local-instance-structure}
+  Recall the shortcutting chase tree in \Cref{sctree-example-diagram}.
 \end{example}
 
 % TODO: define the notion of "subquery entailment instance" and the "subquery entailment problem".
