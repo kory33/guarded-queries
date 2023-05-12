@@ -65,7 +65,7 @@
 \newcommand{\Subq}[3]{\ensuremath{\normalfont{\textrm{Subq}} \left( #1, #2, #3 \right)}}
 \newcommand{\Commq}[2]{\ensuremath{\normalfont{\textrm{Commq}} \left( #1, #2 \right)}}
 
-\title{Rewriting A Conjunctive Query Under Guarded TGDs}
+\title{Rewriting Conjunctive Queries \\ Under Guarded TGDs}
 \author{Ryosuke Kondo}
 \date{May 2023}
 
@@ -260,7 +260,7 @@ In this section, we focus on finite chase trees. The following definition incorp
 \begin{figure}[t]
   \centering
   \includesvg{./diagrams/tree-like-chase-proof-example.drawio.svg}
-  \caption{A tree-like chase proof with rules in \Cref{tree-like-chase-proof-example}}
+  \caption{A tree-like chase proof with rules in \Cref{tree-like-chase-proof-example}. At each stage, elements newly added to the chase tree are highlighted in red.}
   \label{tree-like-chase-proof-example-diagram}
 \end{figure}
 
@@ -310,12 +310,12 @@ At the same time, as long as conjunctive queries are concerned, tree-like chase 
 
 Tree-like chase proof is a powerful tool to reason about a fragment of a chase, but unlike a full chase, they do not constitute a model of $\mathcal{D} \cup \Sigma$. Therefore, we wish to construct a model that retains a tree-like structure.
 
-Notice that during a chase proof, we only ever fire an existential rule from a node $n$ in the hope of either
+Notice that during a chase proof, we only ever fire an existential rule from a node $v$ in the hope of either
 \begin{itemize}
-  \item retrieving back a fact to $n$ to accumulate as much facts as possible to $n$, or
-  \item finding an existential witness to the query variable in the subtree of $n$.
+  \item retrieving back a fact to $v$ to accumulate as much facts as possible to $v$, or
+  \item finding an existential witness to the query variable in the subtree of $v$.
 \end{itemize}
-We can immediately achieve the former objective by computing the Datalog saturation of the bag at $n$ using $\ARew{\Sigma}$. This observation motivates the following definition.
+We can immediately achieve the former objective by computing the Datalog saturation of the bag at $v$ using $\ARew{\Sigma}$. This observation motivates the following definition.
 
 \begin{definition}[Shortcutting Chase Trees]
   Let $\Sigma$ be a finite set of single-headed GTGDs and $\mathcal{D}$ an instance. We inductively define an infinite sequence $(T_0, \mu_0), (T_1, \mu_1), \ldots$ of chase trees as follows:
@@ -341,7 +341,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
     \tau'_2 & = & \forall x_1, x_2.\ A(x_1, x_2) & \rightarrow & C(x_1, c_1)
   \end{array}\]
 
-  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{sctree-example-diagram}. The chase tree is continued indefinitely by chasing with existential rules and Datalog-saturating each layer with $\Sigma'$.
+  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{sctree-simple-example-diagram}. The chase tree is continued indefinitely by chasing with existential rules and Datalog-saturating each layer with $\Sigma'$.
   \qed
 \end{example}
 
@@ -349,7 +349,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
   \centering
   \includesvg{./diagrams/sctree-example.drawio.svg}
   \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are the ones obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
-  \label{sctree-example-diagram}
+  \label{sctree-simple-example-diagram}
 \end{figure}
 
 The structure of a shortcutting chase tree is very similar to that of a chase proof.
@@ -386,7 +386,7 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
     ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
     
-    We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ such that $\sigma$ restricts to $\sigma: Q \rightarrow (T, \mu)$. To do so, for each $j \in J$, let $N_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of nodes whose bags contain the fact $\sigma(A_j)$. Choose $n_j \in N_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $n_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
+    We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ such that $\sigma$ restricts to $\sigma: Q \rightarrow (T, \mu)$. To do so, for each $j \in J$, let $V_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of vertices whose bags contain the fact $\sigma(A_j)$. Choose $v_j \in V_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $v_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
 
     By applying \Cref{sctree-subtree-embeds-into-a-chase-proof} to $(T, \mu)$, there is a chase proof of $Q$ from $\mathcal{D}$ under $\Sigma$. By soundness of chase proofs (\Cref{chase-proof-completeness}, $\Longrightarrow$) we are done.
   \end{proof}
@@ -710,6 +710,8 @@ More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is witnessed 
 \end{itemize}
 then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. Moreover, by the construction of $\mathrm{SCtree}$, the subtree $T_{c'}$ rooted at $c'$ and $T_c$ are isomorphic, and in particular, there remains to be a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
+% TODO: example?
+
 Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, if we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$ where only $r_1$ and $r_2$ are constants in $\Sigma$, then we can deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$.
 
 With these observations in mind, we adopt the following strategy for building a rewriting.
@@ -721,14 +723,14 @@ With these observations in mind, we adopt the following strategy for building a 
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
-In \Cref{local-instances-and-the-subquery-entailment-problem}, we define the precise structure of \emph{local instances} and discuss how to enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm.
+In \Cref{local-instances-and-the-subquery-entailment-problem}, we define the precise structure of \emph{local instances} and discuss how we could efficiently enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm. Finally, in \Cref{secomputation-optimizations}, we address crucial optimisations in the subquery entailment computation.
 
 \section{Local Instances and the Subquery Entailment Problem}
 \label{local-instances-and-the-subquery-entailment-problem}
 
-To proceed with the strategy, we need to define a data structure representing an input to the following question: "Is this $(K, \Sigma)$-small structure sufficiently large to entail a subquery of $Q$ induced by a $Q$-connected set $C$ of bound variables?"
+To proceed with the strategy, we need to define a data structure that can be input to the following question: "Is this $(K, \Sigma)$-small structure sufficiently large to entail a subquery of $Q$ induced by a $Q$-connected set $C$ of bound variables?"
 
-Moreover, we would like the multiple instances of structures to interconnect each other so that they can describe a local structure of $\SCTree{\mathcal{D}}{\Sigma}$. We illustrate this problem and a solution we will adopt with the following example.
+Moreover, we would like the multiple instances of structures to interconnect each other so that together they can describe a local structure of $\SCTree{\mathcal{D}}{\Sigma}$. We illustrate this problem and a solution we will adopt with the following example.
 
 \begin{example}
 \label{implicit-equality-coding-of-local-names}
@@ -745,6 +747,7 @@ Moreover, we would like the multiple instances of structures to interconnect eac
 %       and the runtime complexity analysis
 
 \section{Some Optimizations on Subquery Entailment Computation}
+\label{secomputation-optimizations}
 
 % TODO: We would love to write about the "short-circuiting" in the middle of DFS and re-normalization of local instances to {0, ..., K-1}.
 
