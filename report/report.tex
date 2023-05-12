@@ -503,7 +503,7 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
   Let
   \begin{align*}
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
-    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5).
+    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5)
   \end{align*}
   as in \Cref{query-connectedness-example}. Suppose that $\sigma_\mathrm{commit}$ is given by \[\begin{array}{cccc}
     \sigma_\mathrm{commit}: &\Vars(Q) &\rightharpoonup &\{c_1, c_2, c_3\} \\
@@ -707,37 +707,38 @@ However, because of high data complexity, the algorithm is impractical for query
 
 The first important observation is that the entailment of a subquery in a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$ only depends on a tiny fraction of $\mathcal{D}$.
 
-More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is witnessed by a subtree $T_c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a child $c$, which is obtained by firing an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ together with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$. That is, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_c$ mapping all variables in $Q_\mathrm{sub}$ to nulls in $T_c$. If we let $\mathcal{D'}$ be a subset of $\mathcal{D}$ formed by extracting facts in $\mathcal{D}$ that are either
+More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is satisfied in a subtree $T_c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a non-root node $c$, and that $c$ is obtained by firing an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ together with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$. Then there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_c$ mapping all variables in $Q_\mathrm{sub}$ to nulls in $T_c$. If we let $\mathcal{D'}$ be a subset of $\mathcal{D}$ formed by extracting facts in $\mathcal{D}$ that are either
 \begin{itemize}
   \item used in the substituted body $\sigma(\beta)$, or
-  \item inherited to $c$, i.e. facts whose applied terms are all in $\sigma(H)$,
+  \item inherited by $c$, i.e. facts whose arguments are all in $\sigma(H)$,
 \end{itemize}
-then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. Moreover, by the construction of $\mathrm{SCtree}$, the subtree $T_{c'}$ rooted at $c'$ and $T_c$ are isomorphic, and in particular, there remains to be a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
+then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As we inherit the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
-% TODO: example?
-
-Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, if we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$ where only $r_1$ and $r_2$ are constants in $\Sigma$, then we can deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$.
+Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation, it is possible to deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
 
 With these observations in mind, we adopt the following strategy for building a rewriting.
 
 \begin{itemize}
   \item Start with an atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
   \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution.
-  \item For each \emph{local instance} $I$ (to be defined in \Cref{local-instances-and-the-subquery-entailment-problem}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
+  \item For each \emph{local instance} $I$ (to be defined in \Cref{subquery-entailment-problem-section}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
-In \Cref{local-instances-and-the-subquery-entailment-problem}, we define the precise structure of \emph{local instances} and discuss how we could efficiently enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm. Finally, in \Cref{secomputation-optimizations}, we address crucial optimisations in the subquery entailment computation.
+In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances} and discuss how we could efficiently enumerate instances that entail a subgoal. In \Cref{a-rewriting-algorithm}, we briefly discuss how to integrate subgoals and then present a rewriting algorithm. Finally, in \Cref{secomputation-optimizations}, we address crucial optimisations in the subquery entailment computation.
 
-\section{Local Instances and the Subquery Entailment Problem}
-\label{local-instances-and-the-subquery-entailment-problem}
+\section{The Subquery Entailment Problem}
+\label{subquery-entailment-problem-section}
 
 To proceed with the strategy, we need to define a data structure that can be input to the following problem.
 
 \begin{problem}[Informal]
 \label{informal-subquery-entailment-problem}
-  Suppose $I$ is a certain $(K, \Sigma)$-small structure, $C$ a $Q$-connected set of bound variables and $Q_{\mathrm{sub}, C}$ a subquery of $Q$ with existentials $C$. Is $I$ large enough to entail $Q_{\mathrm{sub}, C}$?
+  Suppose $I$ is a certain $(K, \Sigma)$-small structure, $C$ a $Q$-connected set of bound variables and $Q_{\mathrm{sub}, C}$ a subquery of $Q$ with existentials $C$. Does $I$ contain enough facts to entail $Q_{\mathrm{sub}, C}$?
 \end{problem}
+
+\subsection{Local Instances}
+\label{subsection:local-instances}
 
 First, we formalise the $(K, \Sigma)$-small structure.
 
@@ -755,7 +756,7 @@ A trick to solve this issue is to use $2K$ labels, which we call \emph{local nam
 \begin{figure}[ht]
   \centering
   \includesvg{./diagrams/sctree-simple-example-local-names.drawio.svg}
-  \caption{(Left) The shortcutting chase from \Cref{sctree-simple-example-diagram}. (Right) relabelling of the shortcutting chase tree with local names. The same local name in sibling nodes (e.g. $2$ in $v'_2$ and $v'_3$) may represent different terms.}
+  \caption{(Left) The shortcutting chase from \Cref{sctree-simple-example-diagram}. (Right) relabelling of the shortcutting chase tree with local names. Two equal local names in sibling nodes (e.g. $2$ in $v'_2$ and $v'_3$) may represent different terms, while they represent the same term in parent-child nodes (e.g. $2$ in $v'_2$ and $v'_4$).}
   \label{sctree-simple-example-local-names}
 \end{figure}
 
@@ -774,6 +775,13 @@ A trick to solve this issue is to use $2K$ labels, which we call \emph{local nam
   \qed
 \end{definition}
 
+Notice that, as shown in \Cref{sctree-simple-example-local-names}, we can translate a $\SCTree{\mathcal{D}}{\Sigma}$ into a chase-like structure that uses local names. By abuse of notation, we write $\SCTree{I}{\Sigma}$ for the chase-like structure obtained this way.
+
+The structure $\SCTree{I}{\Sigma}$ can be constructed in a way similar to how we construct an ordinary shortcutting chase tree, except that when firing an existential rule, we \emph{reuse} a local name that was inactive at the parent node instead of introducing fresh nulls. For example, at $v'_4$ in \Cref{sctree-simple-example-local-names}, we are using a local name $3$, which is inactive at the parent node $v'_2$, in place of the null $n_4$. We no longer include the local name $1$ in $v'_4$ because no fact containing $1$ is inherited to $v'_4$. We say that such local names are \emph{dropped} by the chase step. If a local name $n$ dropped at $v$ becomes active again in a descendant $v'$ of $v$, then $n$ at $v$ and $v'$ represent different terms.
+
+\subsection{Partially Substituted Subqueries}
+\label{subsection:partially-substituted-subqueries}
+
 Our next task is to represent a partially substituted subquery. Notice that, for a $Q$-connected set $C$ of variables, the subquery induced by $Q$ should
 \begin{itemize}
   \item contain only atoms in $Q$ that mention a variable from $C$, and at the same time,
@@ -782,7 +790,7 @@ Our next task is to represent a partially substituted subquery. Notice that, for
 It is convenient to introduce the following notion to describe the latter condition.
 
 \begin{definition}
-  For a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a $Q$-connected subset $C$ of $\vec{z}$, the \emph{$Q$-neighbourhood} (written $\partial_Q C$) of $C$ is the set of (either free or bound) variables in $Q$ defined by $$
+  For a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a $Q$-connected subset $C$ of $\vec{z}$, the \emph{$Q$-boundary} (written $\partial_Q C$) of $C$ is the set of (either free or bound) variables in $Q$ defined by $$
     \partial_Q C = \left\{
       v \in \Vars(Q) \setminus C
         \;\middle|\;
@@ -795,81 +803,113 @@ It is convenient to introduce the following notion to describe the latter condit
   \qed
 \end{definition}
 
-\newpage
 \begin{example}
   Let
   \begin{align*}
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
-    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5).
+    &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5)
   \end{align*}
-  as in \Cref{query-connectedness-example}. Then $\partial_Q \{z_4\} = \{z_3\}$ (\Cref{query-neighbourhood-example}), $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$.
+  as in \Cref{query-connectedness-example}. Then $\partial_Q \{z_4\} = \{z_3\}$, $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$. The first example is illustrated in \Cref{query-boundary-example}.
   \qed
 \end{example}
 
 \begin{figure}[h]
   \centering
-  \includesvg{./diagrams/query-neighbourhood-example.drawio.svg}
-  \caption{For the query from \Cref{query-connectedness-example}, the $Q$-neighbourhood of $\{z_4\}$ (red) is $\{z_3\}$ (blue).}
-  \label{query-neighbourhood-example}
+  \includesvg{./diagrams/query-boundary-example.drawio.svg}
+  \caption{For the query from \Cref{query-connectedness-example}, the $Q$-boundary $\partial_Q \{z_4\}$ of $\{z_4\}$ (red) is $\{z_3\}$ (blue).}
+  \label{query-boundary-example}
 \end{figure}
 
-A variable in $\partial_Q C$ may be mapped either
+During a search for a successful commit point in $\SCTree{I}{\Sigma}$, a variable in $\partial_Q C$ is mapped either
 \begin{itemize}
-  \item to a constant in $\Consts(\Sigma)$ at the beginning, or
-  \item to a local name while trying to find a successful commit point.
+  \item to a constant in $\Consts(\Sigma)$, or
+  \item to a local name in $I$.
 \end{itemize}
+
+With this observation, we are almost ready to define the notion of a partially substituted subquery. However, before we proceed, we remark on the following corner case regarding constants in the query.
+
+Assume for a moment that there are no rule constants. Observe that, for a local instance $I$ to entail a subquery $\exists y.\ T(1, y, c)$ containing a constant $c$, there must be some fact in $I$ that contains $c$ since otherwise $c$ is never introduced to the shortcutting chase tree.
+
+This remark motivates the following definition.
+
+\begin{definition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $C$ be a $Q$-connected subset of bound variables in $Q$ and $I$ a $(K, \Sigma)$-local instance. An \emph{embedding of constants adjacent to $C$ into $I$} is an injective map $\iota: S_{Q, C} \hookrightarrow \LNames{I}$, where $S_{Q, C}$ is the set of constants in the subquery defined by $$
+  S_{Q, C} = \left\{
+      c \in \Consts(Q) \setminus \Consts(\Sigma)
+        \;\middle|\;
+      \begin{aligned}
+        & \exists j \in J \text{ such that } \\
+        & \Vars(A_j) \cap C \neq \emptyset \text{ and } c \in \Consts(A_j)
+      \end{aligned}
+    \right\}.
+  $$
+\end{definition}
+
 Putting these concepts together, we obtain the following notion of a subquery.
 
 \begin{definition}
-  Let $Q$ be a conjunctive query, $C$ be a $Q$-connected subset of bound variables in $Q$ and $I$ a $(K, \Sigma)$-local instance. A \emph{representation of a subquery of $Q$ induced by $C$ local to $I$} is a pair $(\sigma_{\Consts(\Sigma)}, \sigma_I)$ of partial mappings
+  Let $Q$ be a conjunctive query, $C$ be a $Q$-connected subset of bound variables in $Q$ and $I$ a $(K, \Sigma)$-local instance. A \emph{representation of a subquery of $Q$ induced by $C$ and local to $I$} is a triple $(\sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ of mappings
   \[\begin{array}{rccl}
     \sigma_{\Consts(\Sigma)}: & \partial_Q C &\rightharpoonup& \Consts(\Sigma) \\
-    \sigma_I: & \partial_Q C &\rightharpoonup& \LNames{I}
+    \sigma_I: & \partial_Q C &\rightharpoonup& \LNames{I} \\
+    \iota: & S_{Q,C} &\hookrightarrow& \LNames{I}
   \end{array}\]
-  whose domains partition $\partial_Q C$.
-\end{definition}
-
-Finally, we must always embed non-$\Consts(\Sigma)$ query constants in the subquery into the local instance; otherwise, we cannot hope for a query entailment. For example, we cannot hope to entail a query $\exists y. T(x, y, c)$ (where $c \not\in \Consts(\Sigma)$) from a local instance $I$ without having a local name in $\LNames{I}$ representing the constant $c$.
-
-Combining notions defined so far, we are ready to formalise \Cref{informal-subquery-entailment-problem}.
-
-\begin{definition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$Q$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota_C)$ where
-  \begin{itemize}
-    \item $C$ is a $Q$-connected set of variables bound in $Q$
-    \item $I$ is a $(K, \Sigma)$-local instance
-    \item $(\sigma_{\Consts(\Sigma)}, \sigma_I)$ is a representation of a subquery of $Q$ induced by $C$ local to $I$
-    \item $\iota_C$ is an embedding of query constants to the set $\LNames{I}$. More formally, let $$
-      S = \left\{
-        c \in \Consts(Q) \setminus \Consts(\Sigma)
-          \;\middle|\;
-        \begin{aligned}
-          & \exists j \in J \text{ such that } \\
-          & \Vars(A_j) \cap C \neq \emptyset \text{ and } c \in \Consts(A_j)
-        \end{aligned}
-      \right\},
-    $$
-    be the set of constants in the subquery induced by $C$, then $\iota_C: S \hookrightarrow\nobreak \LNames{I}$.
+  such that \begin{itemize}
+    \item $\{ \dom{\sigma_{\Consts(\Sigma)}}, \dom{\sigma_I} \}$ is a partition of $\partial_Q C$, and
+    \item $\iota$ is an embedding of constants adjacent to $C$ into $I$.
   \end{itemize}
 
-  Given a $Q$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota_C)$, its \emph{local realization}, written $\LRealz{Q}{\mathcal{I}}$, is the Boolean conjunctive query $$
-  \LRealz{Q}{\mathcal{I}} = \exists \vec{C}. \bigwedge_{j \in J_C} ((\sigma_{\Consts(\Sigma)} \cup \sigma_I) \circ \iota_C)(A_j)
+  Given such a triple, its \emph{local realization at $I$}, written $\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$, is the connected Boolean conjunctive query $$
+  \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota} = \exists \vec{C}. \bigwedge_{j \in J_C} (\sigma_{\Consts(\Sigma)} \cup \sigma_I \cup \iota)(A_j)
   $$
-  where $J_C = \{ j \in J \mid \Vars(A_j) \cap C \neq \empty \}$.
+  mentioning local names, where $J_C = \{ j \in J \mid \Vars(A_j) \cap C \neq \emptyset \}$.
+
   \qed
 \end{definition}
 
-\begin{problem}[Subquery Entailment Problem]
+\begin{example}
+\label{local-realization-of-subquery-representation}
+  Let
+  $$
+    Q = \exists z_1,z_2,z_3,z_4.\ S(c_1, z_1, z_4, z_2) \wedge T(z_1, c_2, z_3) \wedge T(z_3, c_1, z_4),
+  $$
+  where $c_1, c_2$ are constants not in $\Sigma$, $C = \{z_1, z_2\}$ and $$I = \{ S(1, 2, 3, 4), T(4, 2, 1), R(2, 3) \}.$$
+  Then $\partial_Q C = \{ z_3, z_4 \}$ and $S_{Q,C} = \{c_1, c_2\}$. If we let
+  \[\begin{array}{rcl}
+    \sigma_{\Consts(\Sigma)} &=& \{ z_3 \mapsto r_1 \} \\
+    \sigma_I &=& \{ z_4 \mapsto 3 \} \\
+    \iota &=& \{ c_1 \mapsto 2, c_2 \mapsto 3 \}
+  \end{array}\]
+  where $r_1 \in \Consts(\Sigma)$, then $$
+  \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota} = \exists z_1, z_2. S(2, z_1, 3, z_2) \wedge T(z_1, 3, r_1).
+  $$
+\end{example}
+
+\subsection{Formalizing the Subquery Entailment Problem}
+
+Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsection:partially-substituted-subqueries}, we can formally re-define the \Cref{informal-subquery-entailment-problem}.
+
+\begin{definition}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$Q$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ where
+  \begin{itemize}
+    \item $C$ is a $Q$-connected set of variables bound in $Q$
+    \item $I$ is a $(K, \Sigma)$-local instance
+    \item $(\sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ is a representation of a subquery of $Q$ induced by $C$ and local to $I$
+  \end{itemize}
+\end{definition}
+
+\begin{problem}[Subquery Entailment Problem, formalisation of \Cref{informal-subquery-entailment-problem}]
 \label{subquery-entailment-problem}
-  Given a $Q$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota_C)$, does $\mathcal{I} \cup \Sigma \models \LRealz{Q}{\mathcal{I}}$ hold?
+  Given a $Q$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$, does $I \cup \Sigma \models \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$ hold?
+  \qed
 \end{problem}
-
-
-
-% TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
 
 \section{A Rewriting Algorithm}
 \label{a-rewriting-algorithm}
+
+We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, otherwise, the subquery becomes immediately unsatisfiable in the chased subtree.
+
+% TODO: describe a DP algorithm for deciding the subquery entailment problem, in line with \Cref{basic-query-answering-procedure}.
 
 % TODO: present an algorithm. if time permits, add a correctness proof
 %       and the runtime complexity analysis
