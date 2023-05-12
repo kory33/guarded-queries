@@ -5,7 +5,7 @@ import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult;
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine;
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
-import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.ShortCircuitingNormalizingDPTableSEComputation;
+import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.DFSNormalizingDPTableSEComputation;
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet;
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet;
 import uk.ac.ox.cs.gsat.GSat;
@@ -65,7 +65,7 @@ public class App {
 
     private static final GuardedRuleAndQueryRewriter rewriter = new GuardedRuleAndQueryRewriter(
             GSat.getInstance(),
-            new ShortCircuitingNormalizingDPTableSEComputation(new NaiveSaturationEngine())
+            new DFSNormalizingDPTableSEComputation(new NaiveSaturationEngine())
     );
 
     private static AppCommand parseCommand(final String line) {

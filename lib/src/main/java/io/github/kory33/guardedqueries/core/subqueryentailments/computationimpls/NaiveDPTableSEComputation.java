@@ -489,7 +489,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //
         //   Out of these four problems,
         //    - Problem 3 has been addressed by NormalizingDPTableSEComputation, and
-        //    - Problem 4 has been further addressed by ShortCircuitingNormalizingDPTableSEComputation.
+        //    - Problem 4 has been further addressed by DFSNormalizingDPTableSEComputation.
         //
         //   The most crucial optimization point is Problem 2, which greatly affects how much
         //   exponential blowup we have to deal with. The challenge is to implement the following:

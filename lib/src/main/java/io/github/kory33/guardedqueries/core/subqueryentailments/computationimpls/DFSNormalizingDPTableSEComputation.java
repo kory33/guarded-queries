@@ -29,12 +29,12 @@ import static io.github.kory33.guardedqueries.core.utils.MappingStreams.*;
 
 /**
  * An implementation of subquery entailment computation using a DP table
- * together with short-circuiting and normalization.
+ * together with efficient DFS traversal and normalization.
  */
-public final class ShortCircuitingNormalizingDPTableSEComputation implements SubqueryEntailmentComputation {
+public final class DFSNormalizingDPTableSEComputation implements SubqueryEntailmentComputation {
     private final DatalogSaturationEngine datalogSaturationEngine;
 
-    public ShortCircuitingNormalizingDPTableSEComputation(final DatalogSaturationEngine datalogSaturationEngine) {
+    public DFSNormalizingDPTableSEComputation(final DatalogSaturationEngine datalogSaturationEngine) {
         this.datalogSaturationEngine = datalogSaturationEngine;
     }
 
@@ -595,7 +595,7 @@ public final class ShortCircuitingNormalizingDPTableSEComputation implements Sub
 
     @Override
     public String toString() {
-        return "ShortCircuitingNormalizingDPTableSEComputation{" +
+        return "DFSNormalizingDPTableSEComputation{" +
                 "datalogSaturationEngine=" + datalogSaturationEngine +
                 '}';
     }
