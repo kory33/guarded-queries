@@ -1,79 +1,188 @@
 package io.github.kory33.guardedqueries.app;
 
+import com.google.common.collect.ImmutableSet;
+import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult;
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine;
+import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
-import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.NaiveDPTableSEComputation;
+import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.ShortCircuitingNormalizingDPTableSEComputation;
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet;
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet;
 import uk.ac.ox.cs.gsat.GSat;
 import uk.ac.ox.cs.gsat.GTGD;
-import uk.ac.ox.cs.pdq.fol.*;
+import uk.ac.ox.cs.pdq.fol.Atom;
+import uk.ac.ox.cs.pdq.fol.Variable;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 public class App {
-    private static String formatRule(final TGD rule) {
-        return rule.getHead() + " :- " + rule.getBody();
+    private static String formatGTGD(final GTGD rule) {
+        final String headString;
+        {
+            final var head = rule.getHead();
+            final String atomsString = Arrays.stream(head.getAtoms())
+                    .map(Atom::toString)
+                    .collect(Collectors.joining(", "));
+
+            final var existentialVariables = ImmutableSet.copyOf(rule.getExistential());
+            if (existentialVariables.isEmpty()) {
+                headString = atomsString;
+            } else {
+                final var variablesString = existentialVariables.stream()
+                        .map(Variable::toString)
+                        .collect(Collectors.joining(" ∧ "));
+                headString = "∃" + variablesString + ". " + atomsString;
+            }
+        }
+
+        final String bodyString;
+        {
+            final var body = rule.getBody();
+            bodyString = Arrays.stream(body.getAtoms())
+                    .map(Atom::toString)
+                    .collect(Collectors.joining(" ∧ "));
+        }
+
+        return bodyString + " -> " + headString;
+    }
+
+    private static String formatDatalogRule(final DatalogRule rule) {
+        final var headString = Arrays.stream(rule.getHead().getAtoms())
+                .map(Atom::toString)
+                .collect(Collectors.joining(", "));
+
+        final var bodyString = Arrays.stream(rule.getBody().getAtoms())
+                .map(Atom::toString)
+                .collect(Collectors.joining(", "));
+
+        return headString + " :- " + bodyString;
+    }
+
+    private static void log(final String message) {
+        System.out.println("[guarded-queries app] " + message);
     }
 
     private static final GuardedRuleAndQueryRewriter rewriter = new GuardedRuleAndQueryRewriter(
             GSat.getInstance(),
-            new NaiveDPTableSEComputation(new NaiveSaturationEngine())
+            new ShortCircuitingNormalizingDPTableSEComputation(new NaiveSaturationEngine())
     );
 
-    private static void runAndReportTime(final List<GTGD> rules, final ConjunctiveQuery query) {
-        final var startTime = System.nanoTime();
-        final var result = rewriter.rewrite(rules, query);
-        final var endTime = System.nanoTime();
+    private static AppCommand parseCommand(final String line) {
+        if (line.startsWith("add-rule ")) {
+            final var ruleString = line.substring("add-rule ".length());
+            final var rule = AppFormulaParsers.gtgd.parse(ruleString);
+            return new AppCommand.RegisterRule(rule);
+        } else if (line.strip().equals("show-rules")) {
+            return new AppCommand.ShowRegisteredRules();
+        } else if (line.strip().equals("atomic-rewrite")) {
+            return new AppCommand.AtomicRewriteRegisteredRules();
+        } else if (line.startsWith("rewrite ")) {
+            final var queryString = line.substring("rewrite ".length());
+            final var query = AppFormulaParsers.conjunctiveQuery.parse(queryString);
+            return new AppCommand.Rewrite(query);
+        } else if (line.strip().equals("help")) {
+            return new AppCommand.Help();
+        } else {
+            throw new IllegalArgumentException("Unknown command: " + line);
+        }
+    }
 
-        System.out.println("================ Input ===============");
-        System.out.println("Rules:");
-        rules.forEach(r -> System.out.println("  " + formatRule(r)));
-        System.out.println("Query: " + query);
-        System.out.println();
-        System.out.println("=========== Rewrite Result ===========");
-        System.out.println("Goal: " + result.goal());
+    private static DatalogRewriteResult minimizeRewriteResultAndLogIntermediateCounts(
+            DatalogRewriteResult originalRewriteResult
+    ) {
+        log("# of subgoal derivation rules in original output: " +
+                originalRewriteResult.subgoalAndGoalDerivationRules().rules().size());
 
-        final var rulesWithoutIP0NI0 = result.subgoalAndGoalDerivationRules().rules().stream()
-                .filter(r -> Arrays.stream(r.getBodyAtoms()).noneMatch(a -> a.getPredicate().getName().equals("IP0_NI_0")))
-                .toList();
+        final var minimalExactBodyMinimizedRewriting = originalRewriteResult
+                .minimizeSubgoalDerivationRulesUsing(MinimalExactBodyDatalogRuleSet::new);
 
-        System.out.println("Goal rules without IP0_NI_0: ");
-        rulesWithoutIP0NI0.forEach(r -> System.out.println("  " + formatRule(r)));
-        System.out.println("Goal rule size without IP0_NI_0: " + rulesWithoutIP0NI0.size());
-        System.out.println("Goal rule size: " + result.subgoalAndGoalDerivationRules().rules().size());
+        log("# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " +
+                minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
 
-        System.out.println("Time taken: " + (endTime - startTime) / 1e6 + "ms");
+        final var minimizedRewriting = minimalExactBodyMinimizedRewriting
+                .minimizeSubgoalDerivationRulesUsing(MinimallyUnifiedDatalogRuleSet::new);
+
+        log("# of subgoal derivation rules in minimizedRewriting: " +
+                minimizedRewriting.subgoalAndGoalDerivationRules().rules().size());
+
+        return minimizedRewriting;
+    }
+
+    private static AppState runCommandAndReturnNewAppState(final AppState currentState, final AppCommand command) {
+        if (command instanceof AppCommand.RegisterRule registerRule) {
+            final var rule = registerRule.rule();
+            log("Registered rule: " + formatGTGD(rule));
+            return currentState.registerRule(rule);
+        } else if (command instanceof AppCommand.ShowRegisteredRules) {
+            log("Registered rules:");
+            currentState.registeredRules().forEach(rule -> log("  " + formatGTGD(rule)));
+            return currentState;
+        } else if (command instanceof AppCommand.AtomicRewriteRegisteredRules) {
+            log("Computing atomic rewriting of registered rules.");
+            log("Registered rules:");
+            currentState.registeredRules().forEach(rule -> log("  " + formatGTGD(rule)));
+
+            final var rewrittenRules = GSat.getInstance().run(currentState.registeredRulesAsDependencies());
+            log("Done computing atomic rewriting of registered rules");
+            log("Rewritten rules:");
+            rewrittenRules.forEach(rule -> log("  " + formatGTGD(rule)));
+        } else if (command instanceof AppCommand.Rewrite rewrite) {
+            log("Rewriting query:" + rewrite.query() + " under the following rules:");
+            currentState.registeredRules().forEach(rule -> log("  " + formatGTGD(rule)));
+
+            final var beginRewriteNanoTime = System.nanoTime();
+            final var rewriteResult = rewriter.rewrite(currentState.registeredRules(), rewrite.query());
+            final var rewriteTimeNanos = System.nanoTime() - beginRewriteNanoTime;
+            log("Done rewriting query in " + rewriteTimeNanos + " nanoseconds.");
+            log("Minimizing the result...");
+
+            final var beginMinimizeNanoTime = System.nanoTime();
+            final var minimizedRewriteResult = minimizeRewriteResultAndLogIntermediateCounts(rewriteResult);
+            final var minimizeTimeNanos = System.nanoTime() - beginMinimizeNanoTime;
+            log("Done minimizing the result in " + minimizeTimeNanos + " nanoseconds.");
+
+            log("Rewritten query:");
+            log("  Goal atom: " + minimizedRewriteResult.goal());
+            log("  Atomic rewriting part:");
+            minimizedRewriteResult.inputRuleSaturationRules().rules().forEach(rule -> log("    " + formatDatalogRule(rule)));
+            log("  Subgoal derivation part:");
+            minimizedRewriteResult.subgoalAndGoalDerivationRules().rules().forEach(rule -> log("    " + formatDatalogRule(rule)));
+        } else if (command instanceof AppCommand.Help) {
+            log("Available commands:");
+            log("  add-rule <rule>");
+            log("  show-rules");
+            log("  atomic-rewrite");
+            log("  rewrite <query>");
+            log("  help");
+            log("  exit");
+        } else {
+            throw new IllegalStateException("Unknown command: " + command);
+        }
+
+        return currentState;
     }
 
     public static void main(String[] args) {
-        final var A = Predicate.create("A", 1);
-        final var U = Predicate.create("U", 1);
-        final var R = Predicate.create("R", 2);
-        final var P = Predicate.create("P", 1);
+        var appState = new AppState();
+        final var scanner = new java.util.Scanner(System.in);
 
-        final var x1 = Variable.create("x1");
-        final var x2 = Variable.create("x2");
+        while (true) {
+            System.out.print("[guarded-queries app] > ");
+            final var nextLine = scanner.nextLine();
 
-        final var x = Variable.create("X");
-        final var y = Variable.create("Y");
-        final var z = Variable.create("Z");
+            if (nextLine.strip().equals("exit")) {
+                break;
+            } else if (nextLine.strip().equals("")) {
+                continue;
+            }
 
-        // A(x1) -> ∃x2. R(x1, x2)
-        // R(x1, x2) -> U(x2)
-        // R(x1, x2), U(x2) -> P(x1)
-        final List<GTGD> rules = List.of(
-                new GTGD(Set.of(Atom.create(A, x1)), Set.of(Atom.create(R, x1, x2))),
-                new GTGD(Set.of(Atom.create(R, x1, x2)), Set.of(Atom.create(U, x2))),
-                new GTGD(Set.of(Atom.create(R, x1, x2), Atom.create(U, x2)), Set.of(Atom.create(P, x1)))
-        );
-
-        // ∃Y. R(X, Y) & R(Y, Z)
-        final var query = ConjunctiveQuery.create(
-                new Variable[]{x, z},
-                new Atom[]{Atom.create(R, x, y), Atom.create(R, y, z)}
-        );
-
-        runAndReportTime(rules, query);
+            try {
+                var command = parseCommand(nextLine);
+                appState = runCommandAndReturnNewAppState(appState, command);
+            } catch (Exception e) {
+                log("Error: " + e);
+            }
+        }
     }
 }
