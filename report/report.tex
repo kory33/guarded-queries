@@ -354,7 +354,7 @@ At the same time, as long as conjunctive queries are concerned, tree-like chase 
 
 \begin{proposition}
 \label{chase-proof-completeness}
-  For any set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $\ C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
+  For any set $\Sigma$ of single-headed GTGDs, an instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $\ C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
   \begin{proof}[Proof (sketch)] $ $\par
     ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. For each $1 \leq i \leq n$, let $I_i = \bigcup_{v \in T_n} \mu_n(v)$ be the instance containing all facts in $(T_i, \mu_i)$. The sequence $I_1, \ldots, I_n$ is known as a \emph{chase sequence}, and \cite{fagin_kolaitis_miller_popa_2005} showed that $Q$ follows from $\mathcal{D}$ if there is a chase sequence ending with $I_n \models Q$.
 
@@ -405,7 +405,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
 \begin{figure}[t]
   \centering
   \includesvg{./diagrams/sctree-simple-example.drawio.svg}
-  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
+  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{corecursiveness-of-sctree}.}
   \label{sctree-simple-example-diagram}
 \end{figure}
 
@@ -423,7 +423,7 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
 \begin{lemma}
 \label{sctree-subtree-embeds-into-a-chase-proof}
-  Let $\mathcal{D}$ be a base instance and $\Sigma$ a finite set of single-headed GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits an instance homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
+  Let $\mathcal{D}$ be an instance and $\Sigma$ a finite set of single-headed GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits an instance homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
   \begin{proof}
     By induction on the structure of $(T, \mu)$.
 
@@ -437,11 +437,11 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 
 \begin{theorem}
 \label{sctree-soundness-completeness}
-  For a set $\Sigma$ of single-headed GTGDs, a base instance $\mathcal{D}$ and a Boolean conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, $\mathcal{D} \cup \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
+  For a set $\Sigma$ of single-headed GTGDs, an instance $\mathcal{D}$ and a Boolean conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, $\mathcal{D} \cup \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
   \begin{proof}[Proof] $ $\par
-    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ of $Q$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
 
-    ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
+    ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
     
     We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ such that $\sigma$ restricts to $\sigma: Q \rightarrow (T, \mu)$. To do so, for each $j \in J$, let $V_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of vertices whose bags contain the fact $\sigma(A_j)$. Choose $v_j \in V_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $v_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
 
@@ -450,8 +450,8 @@ Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D}
 \end{theorem}
 
 \begin{remark}
-\label{coinductiveness-of-sctree}
-  A shortcutting tree chase has a \emph{coinductive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $T_v$ of all descendants (including $v$ itself) of $v$ can be written as $T_v = \SCTree{\mu(v)}{\Sigma}$.
+\label{corecursiveness-of-sctree}
+  A shortcutting tree chase has a \emph{corecursive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $T_v$ of all descendants (including $v$ itself) of $v$ can be written as $T_v = \SCTree{\mu(v)}{\Sigma}$.
 \end{remark}
 
 \section{Query Satisfaction in Shortcutting Chase Trees}
@@ -500,7 +500,7 @@ We are ready to state the observation.
 
 \begin{proposition}
 \label{term-subtree-is-connected-for-non-rule-constants}
-  Let $\SCTree{\mathcal{D}}{\Sigma}$ be a shortcutting chase tree over an instance $\mathcal{D}$. Then for any $t \in \Terms(\SCTree{\mathcal{D}}{\Sigma}) \setminus \Consts(\Sigma)$, the set of $V_t$ of vertices in $\SCTree{\mathcal{D}}{\Sigma}$ that contain $t$ forms a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
+  Let $\SCTree{\mathcal{D}}{\Sigma}$ be a shortcutting chase tree over an instance $\mathcal{D}$. Then for any $t \in \Terms(\SCTree{\mathcal{D}}{\Sigma}) \setminus \Consts(\Sigma)$, the set $V_t$ of vertices in $\SCTree{\mathcal{D}}{\Sigma}$ that contain $t$ forms a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
     Since $t \not\in \Consts(\Sigma)$, $t$ appears in a node only if it is
     \begin{itemize}
@@ -597,14 +597,14 @@ We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolea
 
 \begin{corollary}
 \label{base-connected-query-decomposition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs.
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs.
   
   Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
 \end{corollary}
 
 % TODO: put a helpful diagram
 
-In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{partial}}{C}$ and the coinductive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{coinductiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{bcq-base-connected-query-decomposition}.
+In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{partial}}{C}$ and the corecursive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{corecursiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{bcq-base-connected-query-decomposition}.
 
 \begin{definition}
 \label{successful-commit-point-definition}
@@ -625,7 +625,7 @@ To witness the entailment of a connected Boolean conjunctive query (with all que
   \begin{proof}
     ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful commit point for $Q$.
 
-    By \Cref{coinductiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_\mathrm{commit} = \sigma \upharpoonright B$, then $\sigma_\mathrm{commit}$ is a commit map at $r$.
+    By \Cref{corecursiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_\mathrm{commit} = \sigma \upharpoonright B$, then $\sigma_\mathrm{commit}$ is a commit map at $r$.
 
     ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_\mathrm{commit}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$. Then for each $1 \leq i \leq n$, there is a $\Consts(\Sigma)$-free query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{commit}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$. If we let $\sigma = \sigma_\mathrm{commit} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
   \end{proof}
@@ -635,7 +635,7 @@ To witness the entailment of a connected Boolean conjunctive query (with all que
 \label{remark-towards-query-answering-procedure}
   Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful commit point for $Q$ with a commit map $\sigma_\mathrm{commit}$, we also need to decide if subqueries $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the commit map $\sigma_\mathrm{commit}$ to be a nonempty map, the number of bound variables in each subquery $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ is strictly less than that of $Q$.
 
-  Moreover, for Boolean conjunctive queries, the query entailment is unaffected by a certain renaming of constants. Therefore, we only need to search for successful commit points up to renaming equivalence.
+  Moreover, for Boolean conjunctive queries, the query entailment is unaffected by a certain renaming of constants in the root instance. Therefore, we only need to search for successful commit points up to renaming equivalence.
   \qed
 \end{remark}
 
@@ -1060,7 +1060,10 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
 
 \begin{definition}
 \label{subgoal-glueing-rule}
-  (TODO)
+  For a set $\mathrm{BVars} \subseteq \FV(Q)$, define the \emph{subgoal glueing rule} $\mathrm{SglGlueingRule}_\mathrm{BVars}$ by
+  $$
+    \mathrm{SglGlueingRule}_\mathrm{BVars} = (TODO)
+  $$
 \end{definition}
 
 \subsection{Putting Pieces Together}
