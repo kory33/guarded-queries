@@ -164,7 +164,7 @@ We say that a conjunction $A_1 \wedge \ldots \wedge A_n$ of atoms is \emph{guard
 \end{remark}
 
 \begin{remark}
-  A non-single-headed existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H_1 \wedge \ldots \wedge H_n$ can also be split, but only if we introduce a new predicate. More precisely, suppose that $\vec{z} \subseteq \vec{x}$ is the frontier of $\tau$, then we can turn $\tau$ into two rules
+  We can also split a non-single-headed existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H_1 \wedge \ldots \wedge H_n$, but only if we introduce a new predicate. More precisely, suppose that $\vec{z} \subseteq \vec{x}$ is the frontier of $\tau$, then we can turn $\tau$ into two rules
   \begin{itemize}
     \item $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ I(\vec{z}, \vec{y})$, and
     \item $\forall \vec{z}, \vec{y}.\ I(\vec{z}, \vec{y}) \rightarrow H_1 \wedge \ldots \wedge H_n$, which is full.
@@ -234,7 +234,7 @@ For a general set $\Sigma$ of GTGDs, we can compute a Datalog program, which we 
   Let $\Sigma$ be a finite set of GTGDs. We say that a Datalog program $P$ is an \emph{atomic rewriting} of $\Sigma$ if for every instance $\mathcal{D}$ and every fact $F$, $\mathcal{D} \wedge \Sigma \models F$ if and only if $\mathcal{D} \wedge P \models F$.
 \end{definition}
 
-A recent work \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented an algorithm, called \emph{Guarded-saturation}, for computing an atomic rewriting of an arbitrary GTGD set. For this report, we fix an implementation in Guarded-saturation and call its output \emph{the} atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
+A recent work \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented an algorithm called \emph{Guarded-saturation} for computing an atomic rewriting of an arbitrary GTGD set. For this report, we fix an implementation in Guarded-saturation and call its output \emph{the} atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
 
 \section{Problem Formulation}
 
@@ -318,9 +318,9 @@ In this section, we focus on finite chase trees. The following definition incorp
   \label{tree-like-chase-proof-example-diagram}
 \end{figure}
 
-A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples by using a chase step, stepping off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to its ancestor.
+A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples using a chase step, stepping off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to its ancestor.
 
-Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how $v$ had been derived, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
+Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how we had derived $v$, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
 
 The restriction mentioned above makes the local structure of tree-like chase proofs \emph{small} in the following sense.
 
@@ -403,7 +403,7 @@ We can immediately achieve the former objective by computing the Datalog saturat
 \begin{figure}[t]
   \centering
   \includesvg{./diagrams/sctree-simple-example.drawio.svg}
-  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are the ones obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
+  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{coinductiveness-of-sctree}.}
   \label{sctree-simple-example-diagram}
 \end{figure}
 
@@ -571,7 +571,7 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
   \qed
 \end{example}
 
-Intuitively, the partial map $\sigma_\mathrm{commit}$ represents a partial commitment towards constructing the whole homomorphism. $\Commq{Q}{\sigma_\mathrm{commit}}$ is a collection of atoms which we expect to see in (the Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma_\mathrm{commit}}{C}$ is a query whose entailment tells us if $\sigma_\mathrm{commit}$ had been a valid choice.
+Intuitively, the partial map $\sigma_\mathrm{commit}$ represents a partial commitment towards constructing the whole homomorphism. $\Commq{Q}{\sigma_\mathrm{commit}}$ is a collection of atoms which we expect to see in (the Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma_\mathrm{commit}}{C}$ is a query whose entailment tells us if $\sigma_\mathrm{commit}$ had been a good choice.
 
 As the following lemma states, the original query is satisfied precisely when all split queries are.
 
@@ -776,7 +776,7 @@ With these observations in mind, we adopt the following strategy for building a 
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
-In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances}. We then briefly describe how to enumerate instances that entail a subquery in \Cref{section:naive-subquery-entailment-computation}, putting pieces together in \Cref{a-rewriting-algorithm} to present a rewriting algorithm. Finally, we discuss in \Cref{secomputation-optimisations} some optimisations on the naive algorithm presented in \Cref{section:naive-subquery-entailment-computation}.
+In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances}. We then briefly describe how to enumerate instances that entail a subquery in \Cref{section:naive-subquery-entailment-enumeration}, putting pieces together in \Cref{a-rewriting-algorithm} to present a rewriting algorithm. Finally, we discuss in \Cref{secomputation-optimisations} some optimisations on the naive algorithm presented in \Cref{section:naive-subquery-entailment-enumeration}.
 
 \section{The Subquery Entailment Problem}
 \label{subquery-entailment-problem-section}
@@ -828,7 +828,7 @@ A trick to solve this issue is to use $2K$ labels, which we call \emph{local nam
 
 Notice that, as shown in \Cref{sctree-simple-example-local-names}, we can translate a $\SCTree{\mathcal{D}}{\Sigma}$ into a chase-like structure that uses local names. By abuse of notation, we write $\SCTree{I}{\Sigma}$ for the chase-like structure obtained this way.
 
-The structure $\SCTree{I}{\Sigma}$ can be constructed in a way similar to how we construct an ordinary shortcutting chase tree, except that when firing an existential rule, we \emph{reuse} a local name that was inactive at the parent node instead of introducing fresh nulls. For example, at $v'_4$ in \Cref{sctree-simple-example-local-names}, we are using a local name $3$, which is inactive at the parent node $v'_2$, in place of the null $n_4$. We no longer include the local name $1$ in $v'_4$ because no fact containing $1$ is inherited to $v'_4$. We say that such local names are \emph{dropped} by the chase step. If a local name $n$ dropped at $v$ becomes active again in a descendant $v'$ of $v$, then $n$ at $v$ and $v'$ represent different terms.
+The structure $\SCTree{I}{\Sigma}$ can be constructed in a way similar to how we construct an ordinary shortcutting chase tree, except that when firing an existential rule, we \emph{reuse} a local name that was inactive at the parent node instead of introducing fresh nulls. For example, at $v'_4$ in \Cref{sctree-simple-example-local-names}, we are using a local name $3$, which is inactive at the parent node $v'_2$, in place of the null $n_4$. We no longer include the local name $1$ in $v'_4$ because $v'_4$ inherits no fact containing $1$. We say that such local names are \emph{dropped} by the chase step. If a local name $n$ dropped at $v$ becomes active again in a descendant $v'$ of $v$, then $n$ at $v$ and $v'$ represent different terms.
 
 \subsection{Partially Substituted Subqueries}
 \label{subsection:partially-substituted-subqueries}
@@ -860,7 +860,7 @@ It is convenient to introduce the following notion to describe the latter condit
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
     &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5)
   \end{align*}
-  as in \Cref{query-connectedness-example}. Then $\partial_Q \{z_4\} = \{z_3\}$, $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$. The first example is illustrated in \Cref{query-boundary-example}.
+  as in \Cref{query-connectedness-example}. Then $\partial_Q \{z_4\} = \{z_3\}$, $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$. We illustrate the first example in \Cref{query-boundary-example}.
   \qed
 \end{example}
 
@@ -956,17 +956,17 @@ Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsect
   \qed
 \end{problem}
 
-\section{The Naive Subquery Entailment Computation}
-\label{section:naive-subquery-entailment-computation}
+\section{The Naive Subquery Entailment Enumeration}
+\label{section:naive-subquery-entailment-enumeration}
 
 The goal of this section is to describe an algorithm for enumerating subquery entailment instances that satisfy \Cref{subquery-entailment-problem}.
 
-We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, since otherwise the partially substituted subquery becomes immediately unsatisfiable in the chased subtree. The corresponding pseudocode can be found in \Cref{naive-subquery-entailment-computation}. (TODO: this is not the actual subquery entailment algorithm)
+We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names in $\range{\sigma_I} \cup \range{\iota}$, since otherwise the partially substituted subquery becomes immediately unsatisfiable in the chased subtree. The corresponding pseudocode can be found in \Cref{naive-subquery-entailment-enumeration}. (TODO: this is not the actual subquery entailment algorithm)
 
 % TODO: revise this!
 \begin{algorithm}
-\caption{Naive Subquery Entailment Computation}
-\label{naive-subquery-entailment-computation}
+\caption{Naive Subquery Entailment Enumeration}
+\label{naive-subquery-entailment-enumeration}
 \begin{algorithmic}[1]
 \State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
 \State // $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
@@ -1047,7 +1047,7 @@ Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
   \qed
 \end{definition}
 
-It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}_{Q,C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
+Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is an \textsc{yes} instance of \Cref{subquery-entailment-problem}.
 
 \subsection{Glueing Subgoals}
 
@@ -1055,10 +1055,10 @@ It is clear that, under the identification of the subgoal atom $\mathrm{Subgoal}
 
 \subsection{Putting Pieces Together}
 
-\section{Optimising the Subquery Entailment Computation}
+\section{Optimising the Subquery Entailment Enumeration}
 \label{secomputation-optimisations}
 
-% TODO: Write about "memoization", use of DFS and re-normalisation of local instances to {0, ..., K-1}.
+% TODO: Write about "memoisation", use of DFS and re-normalisation of local instances to {0, ..., K-1}.
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
