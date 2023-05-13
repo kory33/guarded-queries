@@ -53,6 +53,7 @@
 \addbibresource{references.bib}
 
 % Symbol definitions
+\def\FV{{\mathrm{FV}}}
 \def\Vars{{\mathrm{Vars}}}
 \def\Consts{{\mathrm{Consts}}}
 \def\Terms{{\mathrm{Terms}}}
@@ -151,16 +152,16 @@ This chapter introduces terminologies and notations, which we will use throughou
 
 We fix countably infinite collections of \emph{constants}, \emph{variables} and \emph{nulls}. Nulls are similar to variables but play a similar role as Skolem constants (at the beginning of \Cref{characterising-query-entailment-under-gtgds}, we will see examples illustrating the use of nulls). A \emph{term} is either a constant, a variable or a null.
 
-We also fix a countably infinite set of \emph{predicates}. A predicate $P$ has its associated arity $\Arity{P}$. An \emph{atom} is a string of the form $P(t_1, \ldots, t_{\Arity{P}})$, where each $t_i$ is a term. A \emph{fact} is an atom not containing a variable, and a \emph{base fact} is a fact not containing nulls. We write $\Terms(S)$, $\Consts(S)$, $\Vars(S)$ and $\Nulls(S)$ for the sets of terms, constants, variables and nulls in an object $S$ (such as a conjunction of atoms).
+We also fix a countably infinite set of \emph{predicates}. A predicate $P$ has its associated arity $\Arity{P} \in \mathbb{N}_{\geq 0}$. An \emph{atom} is a string of the form $P(t_1, \ldots, t_{\Arity{P}})$, where each $t_i$ is a term. A \emph{fact} is an atom not containing a variable, and a \emph{base fact} is a fact not containing nulls. We write $\Terms(S)$, $\Consts(S)$, $\Vars(S)$ and $\Nulls(S)$ for the sets of terms, constants, variables and nulls appearing in an object $S$ (such as a conjunction of atoms).
 
 A \emph{tuple-generating dependency (TGD)} is a formula of the form $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$, where $\beta$ and $\eta$ are conjunctions of null-free atoms containing variables from $\vec{x}$ and $\vec{x} \cup \vec{y}$ respectively. The conjunctions $\beta$ and $\eta$ are called the \emph{body} and the \emph{head} of $\tau$, respectively. The set $\Vars(\beta) \cap \Vars(\eta)$ of variables appearing in both the body and the head of $\tau$ is called the \emph{frontier} of $\tau$.
 
-A TGD $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$ without an existential variable (i.e. $\vec{y} = \emptyset$) is said to be \emph{full}. Full TGDs are also called \emph{Datalog} rules. Conversely, a non-full rule is said to be \emph{existential}.
+A TGD $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$ without an existential variable (i.e. $\vec{y} = \emptyset$) is said to be \emph{full}. Full TGDs are also called \emph{Datalog} rules. Conversely, a non-full rule is said to be \emph{existential}. A finite set of Datalog rules is called a \emph{Datalog program}.
 
 We say that a conjunction $A_1 \wedge \ldots \wedge A_n$ of atoms is \emph{guarded} if there is an atom $A_i$ with $\Vars(A_i) = \Vars(A_1 \wedge \ldots \wedge A_n)$, and that a TGD is a \emph{guarded TGD (GTGD)} if its body $\beta$ is guarded. A GTGD $\forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ \eta$ is \emph{single-headed} if the head $\eta$ only contains a single atom.
 
 \begin{remark}
-  Note that a full rule $\forall \vec{x}.\ \beta \rightarrow H_1 \wedge \ldots \wedge H_n$ can always be split into rules $\forall \vec{x}.\ \beta \rightarrow H_i$ for $1 \leq i \leq n$. We will, therefore, implicitly treat all full rules as single-headed rules.
+  Note that a full rule $\forall \vec{x}.\ \beta \rightarrow H_1 \wedge \ldots \wedge H_n$ can always be split into $n$ rules $\forall \vec{x}.\ \beta \rightarrow H_i$ for $1 \leq i \leq n$. We will, therefore, implicitly treat all full rules as single-headed rules.
 \end{remark}
 
 \begin{remark}
@@ -174,7 +175,7 @@ We say that a conjunction $A_1 \wedge \ldots \wedge A_n$ of atoms is \emph{guard
   \qed
 \end{remark}
 
-A \emph{conjunctive query} is a formula of the form $\exists z_1, \ldots, z_n.\ A_1 \wedge \ldots \wedge A_m$, where each $A_i$ is an atom. We write $FV(Q)$ for the set of free variables in $Q$. A conjunctive query is said to be \emph{Boolean} if it $FV(Q) = \emptyset$.
+A \emph{conjunctive query} is a formula of the form $\exists z_1, \ldots, z_n.\ A_1 \wedge \ldots \wedge A_m$, where $n \geq 0$, $m \geq 1$, and each $A_i$ is an atom. We write $\FV(Q)$ for the set of free variables in $Q$. A conjunctive query is said to be \emph{Boolean} if $\FV(Q) = \emptyset$.
 
 \section{Database Instances and Homomorphisms}
 
@@ -182,18 +183,18 @@ We now turn our attention to a representation of a relational database. A \emph{
 
 We use \emph{homomorphisms} to describe how an instance satisfies a conjunctive query.
 
-An \emph{instance homomorphism} $\sigma: \mathcal{D} \rightarrow \mathcal{D}'$ from an instance $\mathcal{D}$ to another instance $\mathcal{D}'$ is an embedding of $\mathcal{D}$ into $\mathcal{D}'$. More precisely, $\sigma$ is a mapping $\sigma: \Nulls(\mathcal{D}) \rightarrow \Terms(\mathcal{D}')$, such that for every fact $F \in \mathcal{D}$, $\sigma(F) \in \mathcal{D}'$.
+An \emph{instance homomorphism} $\sigma: \mathcal{D} \rightarrow \mathcal{D}'$ from an instance $\mathcal{D}$ to another instance $\mathcal{D}'$ is an ``embedding" of $\mathcal{D}$ into $\mathcal{D}'$. More precisely, $\sigma$ is a mapping $\sigma: \Nulls(\mathcal{D}) \rightarrow \Terms(\mathcal{D}')$, such that for every fact $F \in \mathcal{D}$, $\sigma(F) \in \mathcal{D}'$.
 
 Similarly, a \emph{query homomorphism} $\sigma: Q \rightarrow \mathcal{D}$ from a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ to an instance $\mathcal{D}$ is a mapping $\sigma: \Vars(Q) \rightarrow \Terms(\mathcal{D})$ such that $\sigma(A_j) \in \mathcal{D}$ for each $j \in J$.
 
-We say that an instance $\mathcal{D}$ \emph{satisfies} a Boolean conjunctive query $Q$, written $\mathcal{D} \models Q$, if there exists a query homomorphism $\sigma: Q \rightarrow \mathcal{D}$. We also say that the instance $\mathcal{D}$ together with a set $\Sigma$ of TGDs \emph{entails} $Q$, written $\mathcal{D} \cup \Sigma \models Q$, if for every extension $\mathcal{D}_\mathrm{ext}$ of $\mathcal{D}$ satisfying $\Sigma$, $\mathcal{D}_\mathrm{ext}$ satisfies $Q$. Note that this definition of query satisfaction is consistent with the ordinary model-theoretic interpretation of $\models$ relation.
+We say that an instance $\mathcal{D}$ \emph{satisfies} a Boolean conjunctive query $Q$, written $\mathcal{D} \models Q$, if there exists a query homomorphism $\sigma: Q \rightarrow \mathcal{D}$. We also say that the instance $\mathcal{D}$ together with a set $\Sigma$ of TGDs \emph{entails} $Q$, written $\mathcal{D} \cup \Sigma \models Q$, if for every extension $\mathcal{D}_\mathrm{ext}$ of $\mathcal{D}$ satisfying $\Sigma$, $\mathcal{D}_\mathrm{ext}$ satisfies $Q$. Note that this definition of query satisfaction and entailment is consistent with the ordinary model-theoretic interpretation of $\models$ relation.
 
 \section{Datalog Saturation}
 
 Consider the following problem:
 
 \begin{problem}
-   Given an existential free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions (each of which is an \emph{answer} to the query) $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \alpha(Q)$.
+   Given an existential-free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions (each of which is an \emph{answer} to the query) $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \alpha(Q)$.
 \end{problem}
 
 Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation} (\Cref{naive-evaluation-algorithm}). Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
@@ -213,7 +214,7 @@ Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_
     \EndFor
     \State
     \If{$\mathcal{D}_\mathrm{next} \neq \mathcal{D}_\mathrm{current}$}
-      \State $\mathcal{D}_\mathrm{next} \gets \mathcal{D}_\mathrm{current}$
+      \State $\mathcal{D}_\mathrm{current} \gets \mathcal{D}_\mathrm{next}$
     \Else
       \State \Return{$\mathcal{D}_\mathrm{current}$}
     \EndIf
@@ -226,12 +227,12 @@ Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_
 \end{algorithmic}
 \end{algorithm}
 
-We call the database instance $\textsc{DatalogSaturate}(P, \mathcal{D})$ the \emph{Datalog saturation of $\mathcal{D}$ with $P$}. Intuitively, a Datalog saturation results from \emph{supplementing} the input instance by adding all but nothing other than facts derivable from the original instance.
+We call the database instance $\textsc{DatalogSaturate}(P, \mathcal{D})$ the \emph{Datalog saturation of $\mathcal{D}$ with $P$}. Intuitively, a Datalog saturation results from \emph{supplementing} the input instance by adding all (but nothing other than) facts derivable from the original instance.
 
 For a general set $\Sigma$ of GTGDs, we can compute a Datalog program, which we call an \emph{atomic rewriting}, that gives the same answers as $\Sigma$ for atomic queries. More precisely,
 
 \begin{definition}
-  Let $\Sigma$ be a finite set of GTGDs. We say that a Datalog program $P$ is an \emph{atomic rewriting} of $\Sigma$ if for every instance $\mathcal{D}$ and every fact $F$, $\mathcal{D} \wedge \Sigma \models F$ if and only if $\mathcal{D} \wedge P \models F$.
+  Let $\Sigma$ be a finite set of GTGDs. We say that a Datalog program $P$ is an \emph{atomic rewriting} of $\Sigma$ if for every instance $\mathcal{D}$ and every fact $F$, $\mathcal{D} \cup \Sigma \models F$ if and only if $\mathcal{D} \cup P \models F$.
 \end{definition}
 
 A recent work \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented an algorithm called \emph{Guarded-saturation} for computing an atomic rewriting of an arbitrary GTGD set. For this report, we fix an implementation in Guarded-saturation and call its output \emph{the} atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
@@ -243,20 +244,20 @@ Our ultimate goal is to answer the following problem.
 
 \begin{problem}[GTGD-CQ Answering]
 \label{GTGD-CQ-Answering}
-  Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j(\vec{u})$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
+  Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
 It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
 
 \begin{definition}
-  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ such that for every base instance $\mathcal{D}$ and a substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\Sigma \cup \mathcal{D} \models \alpha(Q) \textit{ if and only if } \Sigma_\mathrm{Datalog} \cup \mathcal{D} \models \alpha(Q_\mathrm{atomic}).$$
+  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ with $\FV(Q_\mathrm{atomic}) = \FV(Q)$, such that for every base instance $\mathcal{D}$ and a substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\mathcal{D} \cup \Sigma \models \alpha(Q) \textit{ if and only if } \mathcal{D} \cup \Sigma_\mathrm{Datalog} \models \alpha(Q_\mathrm{atomic}).$$
   We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the Datalog rewriting.
   \qed
 \end{definition}
 
-In order to answer \Cref{GTGD-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
+In order to answer \Cref{GTGD-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
 
-This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGD-CQ pairs. We achieve this by using the atomic rewriting produced by the Guarded-saturation algorithm.
+This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGD-CQ pairs. We achieve this using the atomic rewriting produced by the Guarded-saturation algorithm.
 
 \newpage
 \chapter{Characterising Query Entailment under GTGDs}
@@ -266,12 +267,12 @@ This project aims to derive an algorithm that produces Datalog rewritings for ar
 
 In the presence of existential rules, an object known as the \emph{chase} represents a canonical \emph{completion} of a database concerning some data integration rules. Chases are constructed similarly to Datalog saturations by adding tuples produced by rules, except we need to replace existential variables with \emph{nulls}, which represent Skolem constants \cite{fagin_kolaitis_miller_popa_2005}.
 
-As with Datalog saturations, the chase of an instance $\mathcal{D}$ gives all possible answers $\sigma: \vec{z} \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
+As with Datalog saturations, the chase of an instance $\mathcal{D}$ gives all possible answers $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ to a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$. That is, we can find all answers to $Q$ by evaluating a join query $\bigwedge_{j \in J} A_j$ on the chase and projecting $\vec{z}$ away.
 
-However, with recursive rules such as $R(x, y) \rightarrow \exists z.\ R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
+However, with recursive rules\footnote{A TGD is recursive if a predicate appears both in the body and the head.} such as $R(x, y) \rightarrow \exists z.\ R(y, z)$, the chase procedure may have to be continued indefinitely, producing an infinite chase. Moreover, as one keeps populating the database instance with tuples regardless of whether they eventually affect query output, the chase lacks a structure with which we can reason about query entailments.
 
 % TODO: which paper introduced tree-like chase proofs for Datalog+-?
-To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes.
+To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} introduced the notion of \emph{tree-like chase proofs}, which essentially capture instants of ongoing chase processes. To precisely describe this, we will use the following terminology.
 
 \begin{definition}
   A \emph{chase tree} is a pair of a (potentially infinite) rooted directed tree $T$ together with a function $\mu$ mapping each vertex $v \in T$ to a set of facts (possibly with nulls). We usually refer to the instance $\mu(v)$ as a \emph{bag of facts at $v$} to distinguish it from the input base instance.
@@ -289,21 +290,24 @@ In this section, we focus on finite chase trees. The following definition incorp
     \item $C_1 = (T, \mu)$ is a chase tree with a single vertex $v$ together with $\mu(v) = \mathcal{D}$.
     \item for each $i < n$, $C_{i + 1}$ is obtained from $C_i = (T, \mu)$ by applying one of the following transformation steps.
     \begin{itemize}
-      \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ to constants in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
+      \item \emph{a chase step} from a vertex $v \in T$ with $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ to terms in $\mu(v)$, provided that $\sigma(\beta) \subseteq \mu(v)$. The result $(T', \mu')$ of this step depends on whether $\tau$ is full, i.e. if $|\vec{y}| = 0$:
       \begin{itemize}
         \item If $\tau$ is full, we simply add the head atom $H$ of $\tau$ to the instance at $v$. That is, we keep $T' = T$, and set $\mu'(v) = \mu(v) \cup \sigma(H)$ while maintaining $\mu$ and $\mu'$ equal on $T \setminus \{v\}$.
-        \item If $\tau$ is existential, we create a fresh child of $v$, put produced fact in it and \emph{inherit} facts from the parent instance. To do so, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the bag $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
+        \item If $\tau$ is existential, we create a fresh child of $v$, put the generated tuple in it and \emph{inherit} facts from the parent bag. Formally, we first extend $\sigma$ to a substitution $\sigma'$ that maps variables in $\vec{y}$ to fresh nulls. We define the bag $I$ containing \emph{inherited facts} as $$I = \{ F \in \mu(v) \mid \Terms(F) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}.$$ Finally, we prepare a fresh vertex $c$, form $T'$ by making $c$ a child of $v$, and extend $\mu$ to $\mu'$ with $\mu'(c) = \{\sigma'(H)\} \cup I$.
       \end{itemize}
-      \item \emph{a propagation step} from a vertex $v \in T$ to an ancestor $a \in T$ of $v$ with a fact $f \in \mu(v)$, provided that $f \not\in \mu(a)$ and $\Terms(f) \subseteq \Terms(\mu(a)) \cup \Consts(\Sigma)$. The resulting chase tree is $(T, \mu')$, where $\mu'$ agrees with $\mu$ everywhere except at $a$, and $\mu'(a) = \mu(a) \cup \{f\}$.
+      \item \emph{a propagation step} from a vertex $v \in T$ to an ancestor $a \in T$ of $v$ with a fact $F \in \mu(v)$, provided that $F \not\in \mu(a)$ and $\Terms(F) \subseteq \Terms(\mu(a)) \cup \Consts(\Sigma)$. The resulting chase tree is $(T, \mu')$, where $\mu'$ agrees with $\mu$ everywhere except at $a$, and $\mu'(a) = \mu(a) \cup \{F\}$.
     \end{itemize}
   \end{itemize}
+  \qed
 \end{definition}
+
+A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples using a chase step, stepping off to a child node when firing an existential rule. With a propagation step, we can retrieve a fact derived at a descendant node to its ancestor.
 
 \begin{example}
 \label{tree-like-chase-proof-example}
   Suppose that $\Sigma$ contains the following single-headed GTGDs, where $c_1$ is a constant.
   \[\begin{array}{rcrcl}
-    \tau_1 &=& \forall x_1,x_2.\ A(x_1, x_2) &\rightarrow& \exists y. B(x_1, y) \\
+    \tau_1 &=& \forall x_1,x_2.\ A(x_1, x_2) &\rightarrow& \exists y.\ B(x_1, y) \\
     \tau_2 &=& \forall x_1,x_2.\ B(x_1, x_2) &\rightarrow& C(x_1, c_1) \wedge A(x_2, c_1) \\
     \tau_3 &=& \forall x_1,x_2.\ A(x_1, x_2) \wedge C(x_1, x_2) &\rightarrow& \exists y.\ D(x_2, y)
   \end{array}\]
@@ -318,8 +322,6 @@ In this section, we focus on finite chase trees. The following definition incorp
   \label{tree-like-chase-proof-example-diagram}
 \end{figure}
 
-A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples using a chase step, stepping off to a child node when introducing nulls corresponding to existential values. With a propagation step, we can retrieve a fact derived at a descendant node to its ancestor.
-
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how we had derived $v$, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
 
 The restriction mentioned above makes the local structure of tree-like chase proofs \emph{small} in the following sense.
@@ -330,7 +332,7 @@ The restriction mentioned above makes the local structure of tree-like chase pro
 
 \begin{proposition}[Tree-width of chase proofs]
 \label{chase-proofs-tree-width}
-  Let $\Sigma$ be a set of \emph{single-headed} GTGDs, $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then for every $1 \leq i < n$ and every non-root vertex $v$ of $T_i$, $\mu_i(v)$ is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $(T_i, \mu_i)$ are $(K, \Sigma)$-small.
+  Let $\Sigma$ be a set of \emph{single-headed} GTGDs, $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then for every $1 \leq i \leq n$ and every non-root vertex $v$ of $T_i$, $\mu_i(v)$ is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $(T_i, \mu_i)$ are $(K, \Sigma)$-small.
   \begin{proof}
     By induction on $i$. The base case $i = 1$ is vacuous. We look at the rule used to derive $(T_{i+1}, \mu_{i+1})$ from $(T_{i}, \mu_{i})$ and examine the bag at the modified node.
     \begin{itemize}
@@ -380,9 +382,9 @@ We can immediately achieve the former objective by computing the Datalog saturat
     More precisely, let $L_i$ be the set of leaf nodes in $T_i$. For each $l \in L_i$, an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ and a substitution $\sigma$ mapping $\vec{x}$ into $\Terms(\mu_i(l))$ such that $\sigma(\beta) \subseteq \mu_i(l)$, define
     \begin{itemize}
       \item $\sigma'$ as an extension of $\sigma$ that maps all variables in $\vec{y}$ to fresh nulls
-      \item the bag $B_{l, \tau, \sigma}$ of facts \emph{inherited from $\mu_i(l)$ through $\tau$ and $\sigma$} as $$I_{l, \tau, \sigma} = \{ F \in \mu_i(l) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}$$
+      \item the bag $B_{l, \tau, \sigma}$ of facts \emph{inherited from $\mu_i(l)$ through $\tau$ and $\sigma$} as $$B_{l, \tau, \sigma} = \{ F \in \mu_i(l) \mid \Terms(f) \subseteq \Terms(\sigma'(H)) \cup \Consts(\Sigma) \}$$
     \end{itemize}
-    We construct $T_{i+1}$ as an extension of $T_i$ by adding a vertex $c_{l, \tau, \sigma}$ as a child of $l$ for each such $l \in L_i$, $\tau$ and $\sigma$. We extend $\mu_i$ to $\mu_{i+1}$ by setting $$\mu_{i+1}(c_{l, \tau, \sigma}) = \textsc{DatalogSaturate}(\ARew{\Sigma}, \{ \sigma'(H) \} \cup I_{l, \tau, \sigma}).$$
+    We construct $T_{i+1}$ as an extension of $T_i$ by adding a vertex $c_{l, \tau, \sigma}$ as a child of $l$ for each such $l \in L_i$, $\tau$ and $\sigma$. We extend $\mu_i$ to $\mu_{i+1}$ by setting $$\mu_{i+1}(c_{l, \tau, \sigma}) = \textsc{DatalogSaturate}(\ARew{\Sigma}, \{ \sigma'(H) \} \cup B_{l, \tau, \sigma}).$$
   \end{itemize}
   Finally, the \emph{shortcutting chase tree $\SCTree{\mathcal{D}}{\Sigma}$ of $\mathcal{D}$ over $\Sigma$} is a chase tree defined as the limit $(\bigcup_{i = 0}^\infty T_i, \bigcup_{i = 0}^\infty \mu_i)$ of the sequence defined above.
   \qed
@@ -597,7 +599,7 @@ We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolea
 \label{base-connected-query-decomposition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs.
   
-  Then for a substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
+  Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
 \end{corollary}
 
 % TODO: put a helpful diagram
@@ -727,7 +729,7 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \State
 \State // computes if the query is satisfied with a partial substitution $\sigma_\mathrm{partial}$
 \Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
-  \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq FV(Q)$
+  \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq \FV(Q)$
   \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ARew{\Sigma}, \mathcal{D})$
   \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Commq{Q}{\sigma_\mathrm{partial}}$
   \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}}$
@@ -737,8 +739,8 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \EndProcedure
 \State
 \Procedure{AnswerConjunctiveQuery}{$\mathcal{D}$, $\Sigma$, conjunctive query $Q$}
-  \ForAll{substitution $\alpha: FV(Q) \rightarrow \Terms(\mathcal{D}) \cup \Consts(\Sigma)$}
-    \ForAll{substitution $\sigma_{\Consts(\Sigma)}: (\Vars(Q) \setminus FV(Q)) \rightharpoonup \Consts(\Sigma)$}
+  \ForAll{substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D}) \cup \Consts(\Sigma)$}
+    \ForAll{substitution $\sigma_{\Consts(\Sigma)}: (\Vars(Q) \setminus \FV(Q)) \rightharpoonup \Consts(\Sigma)$}
       \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\alpha \cup \sigma_{\Consts(\Sigma)}$)}
         \State \textbf{output} $\alpha$ as an answer
         \State \textbf{break} inner loop
@@ -754,7 +756,7 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 
 In \Cref{characterising-query-entailment-under-gtgds}, we developed \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over single-headed GTGDs.
 
-However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
+However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
 
 The first important observation is that the entailment of a subquery in a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$ only depends on a tiny fraction of $\mathcal{D}$.
 
@@ -1052,9 +1054,9 @@ Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ 
 \subsection{Glueing Subgoals}
 \label{glueing-subgoals}
 
-As a final step in the Datalog rewriting algorithm, we need to generate rules that combine subgoals to derive the final goal. To this end, we introduce the \emph{goal atom} $\mathrm{Goal}\left( \overrightarrow{FV(Q)} \right)$ having $FV(Q)$ as arguments.
+As a final step in the Datalog rewriting algorithm, we need to generate rules that combine subgoals to derive the final goal. To this end, we introduce the \emph{goal atom} $\mathrm{Goal}\left( \overrightarrow{\FV(Q)} \right)$ having $\FV(Q)$ as arguments.
 
-Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the set $C$ of bound variables are witnessed existentially with a partial substitution $\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}$ to the boundary of $C$. By \Cref{base-connected-query-decomposition}, if we fix the set $BVars \supseteq FV(Q)$ of variables to be witnessed at the base, we can add the following rule.
+Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the set $C$ of bound variables are witnessed existentially with a partial substitution $\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}$ to the boundary of $C$. For a set $\mathrm{BVars} \supseteq \FV(Q)$ of variables to be witnessed at the base, the following rule is sound by \Cref{base-connected-query-decomposition}.
 
 \begin{definition}
 \label{subgoal-glueing-rule}
