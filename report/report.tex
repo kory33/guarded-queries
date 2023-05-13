@@ -1052,7 +1052,7 @@ Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
   \qed
 \end{definition}
 
-Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is sound if and only if $\mathcal{I}$ is a subquery entailment. To be formal, we claim the following.
+Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is ``sound" if and only if $\mathcal{I}$ is a subquery entailment. To be formal, we claim the following.
 
 \begin{proposition}
 \label{subgoal-captures-subquery-fulfilment}
@@ -1089,7 +1089,7 @@ Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ 
 \subsection{Glueing Subgoals}
 \label{glueing-subgoals}
 
-As a final step in the Datalog rewriting algorithm, we need to generate rules that combine subgoals to derive the final goal. To this end, we introduce the \emph{goal atom} $\mathrm{Goal}\left( \overrightarrow{\FV(Q)} \right)$ having $\FV(Q)$ as arguments.
+As a final step in the Datalog rewriting algorithm, we need to generate rules that combine subgoals to derive the final goal. To this end, we introduce the \emph{goal atom} $\mathrm{Goal}_Q\left( \overrightarrow{\FV(Q)} \right)$ having $\FV(Q)$ as arguments.
 
 Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the set $C$ of bound variables are witnessed existentially with a partial substitution $\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}$ to the boundary of $C$. For a set $\mathrm{BVars} \supseteq \FV(Q)$ of variables, which we expect to be substituted by constants either in the base or in $\Sigma$, we define the following rule.
 
@@ -1100,7 +1100,7 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
     \forall \overrightarrow{\mathrm{BVars}}. \left(
       \bigwedge_{C \in \mathcal{C}_\mathrm{BVars}} \mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)
     \right) \wedge \mathrm{Atoms}_\mathrm{BVars}
-    \rightarrow \mathrm{Goal}\left( \overrightarrow{\FV(Q)} \right)
+    \rightarrow \mathrm{Goal}_Q\left( \overrightarrow{\FV(Q)} \right)
   $$
   where $\mathrm{Atoms}_\mathrm{BVars}$ is the conjunction of atoms given by $$
     \mathrm{Atoms}_\mathrm{BVars} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} A_j
@@ -1108,23 +1108,30 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
   \qed
 \end{definition}
 
-% TODO: add an example
+\begin{example}
+\label{example:glueing-rule}
+  Consider the query
+  \begin{align*}
+    Q = \exists z_1,z_4,z_5,z_6.&\ S(z_1, w_2) \wedge S(z_1,w_3) \wedge R(w_2, w_3) \\
+    &\wedge R(w_3, z_4) \wedge R(w_3, z_5) \wedge T(w_2, z_6, z_5).
+  \end{align*}
+  $Q$ is similar to the query in \Cref{query-connectedness-example}, except except that we replaced $z_2$ and $z_3$ with free variables $w_2$ and $w_3$. If we let $\mathrm{BVars} = \{w_2, w_3, z_5\}$, then \begin{align*}
+    \mathrm{SglGlueingRule}_{\mathrm{BVars}}
+      &= \mathrm{Subgoal}_{Q, \{z_1\}}(w_2, w_3) \wedge \mathrm{Subgoal}_{Q, \{z_4\}}(w_3) \\
+      &\wedge \mathrm{Subgoal}_{Q, \{z_6\}}(w_2, w_3, z_5) \\
+      &\wedge R(w_2, w_3) \wedge R(w_3, z_5) \\
+      &\rightarrow \mathrm{Goal}_Q(w_2, w_3).
+  \end{align*}
+\end{example}
 
 \begin{remark}
 \label{glueing-rule-soundness-and-completeness}
-  Each $\mathrm{SglGlueingRule}_\mathrm{BVars}$ is sound (in a sense as in \Cref{subgoal-captures-subquery-fulfilment}, by identifying subgoals with subquery fulfilments and the goal atom with query fulfilment), and also collectively complete (i.e. we can derive all answers to $Q$ as goal facts if we can use all glueing rules) by \Cref{base-connected-query-decomposition}.  
+  Each $\mathrm{SglGlueingRule}_\mathrm{BVars}$ is ``sound" (in a sense as in \Cref{subgoal-captures-subquery-fulfilment}, by identifying subgoals with subquery fulfilments and the goal atom with query fulfilment), and also collectively complete (i.e. we can derive all answers to $Q$ as goal facts if we can use all glueing rules) by \Cref{base-connected-query-decomposition} and \Cref{subgoal-captures-subquery-fulfilment}.
 \end{remark}
 
 \subsection{Putting Pieces Together}
 
 Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subquery-entailment-to-datalog-rule} and \Cref{glueing-subgoals}.
-
-\begin{theorem}
-  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgd-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
-  \begin{proof}
-    By correctness of \Cref{naive-subquery-entailment-enumeration}, \Cref{subgoal-captures-subquery-fulfilment} and \Cref{glueing-rule-soundness-and-completeness}.
-  \end{proof}
-\end{theorem}
 
 \begin{algorithm}
 \caption{A rewriting procedure for GTGD-CQ pairs}
@@ -1143,7 +1150,14 @@ Finally, we combine components from \Cref{section:naive-subquery-entailment-enum
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
-  
+
+\begin{theorem}
+  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgd-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
+  \begin{proof}
+    By correctness of \Cref{naive-subquery-entailment-enumeration}, \Cref{subgoal-captures-subquery-fulfilment} and \Cref{glueing-rule-soundness-and-completeness}.
+  \end{proof}
+\end{theorem}
+
 \section{Optimising the Subquery Entailment Enumeration}
 \label{secomputation-optimisations}
 
