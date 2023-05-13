@@ -207,8 +207,8 @@ Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_
   \State $\mathcal{D}_\mathrm{current} \gets \mathcal{D}$
   \While{true}
     \State $\mathcal{D}_\mathrm{next} \gets \mathcal{D}_\mathrm{current}$
-    \ForAll{$r \in P$}
-      \ForAll{$\sigma \in $ result of matching the body of $r$ on $\mathcal{D}_\mathrm{current}$}
+    \For{\textbf{each} $r \in P$}
+      \For{\textbf{each} $\sigma \in $ result of matching the body of $r$ on $\mathcal{D}_\mathrm{current}$}
         \State add all head atoms of $r$ substituted with $\sigma$ to $\mathcal{D}_\mathrm{next}$
       \EndFor
     \EndFor
@@ -247,7 +247,7 @@ Our ultimate goal is to answer the following problem.
   Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
-It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These are Datalog programs with a designated \emph{goal atom} that, when run on any base instance, give the same set of answers as the original rule-query pair. More precisely:
+It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These Datalog programs with a designated \emph{goal atom} give the same set of answers as the original rule-query pair when run on any base instance. More precisely:
 
 \begin{definition}
   A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ with $\FV(Q_\mathrm{atomic}) = \FV(Q)$, such that for every base instance $\mathcal{D}$ and a substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\mathcal{D} \cup \Sigma \models \alpha(Q) \textit{ if and only if } \mathcal{D} \cup \Sigma_\mathrm{Datalog} \models \alpha(Q_\mathrm{atomic}).$$
@@ -710,7 +710,7 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
 \State // $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
 \Procedure{EntailsConnectedBCQ}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
-  \ForAll{equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
+  \For{\textbf{each} equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
     \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
       \State \textbf{return true}
     \EndIf
@@ -719,7 +719,7 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \EndProcedure
 \State
 \Procedure{IsSuccessfulBranchingPoint}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
-  \ForAll{nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D}) \setminus \Consts(\Sigma)$}
+  \For{\textbf{each} nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D}) \setminus \Consts(\Sigma)$}
     \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{commit}$)}
       \State \Return{\textbf{true}}
     \EndIf
@@ -739,8 +739,8 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \EndProcedure
 \State
 \Procedure{AnswerConjunctiveQuery}{$\mathcal{D}$, $\Sigma$, conjunctive query $Q$}
-  \ForAll{substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D}) \cup \Consts(\Sigma)$}
-    \ForAll{substitution $\sigma_{\Consts(\Sigma)}: (\Vars(Q) \setminus \FV(Q)) \rightharpoonup \Consts(\Sigma)$}
+  \For{\textbf{each} substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D}) \cup \Consts(\Sigma)$}
+    \For{\textbf{each} substitution $\sigma_{\Consts(\Sigma)}: (\Vars(Q) \setminus \FV(Q)) \rightharpoonup \Consts(\Sigma)$}
       \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\alpha \cup \sigma_{\Consts(\Sigma)}$)}
         \State \textbf{output} $\alpha$ as an answer
         \State \textbf{break} inner loop
@@ -975,7 +975,7 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 \State // $\sigma: Q \rightarrow \SCTree{I}{\Sigma}$ for a BCQ $Q$ with only
 \State // $\LNames{I}$ as query constants
 \Procedure{EntailsConnectedBCQ}{$I$, $N$, $\Sigma$, connected BCQ $Q$}
-  \ForAll{local instance $I'$ in $\SCTree{I}{\Sigma}$ that can be reached\par
+  \For{\textbf{each} local instance $I'$ in $\SCTree{I}{\Sigma}$ that can be reached\par
   without dropping local names $\LNames{I} \cap \Consts(Q)$}
     \If{\textsc{IsSuccessfulBranchingPoint}($I$, $\Sigma$, $Q$)}
       \State \textbf{return true}
@@ -985,7 +985,7 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 \EndProcedure
 \State
 \Procedure{IsSuccessfulBranchingPoint}{$I$, $\Sigma$, connected BCQ $Q$}
-  \ForAll{nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \LNames{I}$}
+  \For{\textbf{each} nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \LNames{I}$}
     \If{\textsc{BooleanQSatisfiedWith}($I$, $\Sigma$, $Q$, $\sigma_\mathrm{commit}$)}
       \State \Return{\textbf{true}}
     \EndIf
@@ -1006,7 +1006,7 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 \State
 \Procedure{EnumerateSubqueryEntailments}{\par
   finite set $\Sigma$ of single-headed GTGDs, conjunctive query $Q$}
-  \ForAll{$Q$-subquery entailment instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$}
+  \For{\textbf{each} $Q$-subquery entailment instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$}
     \If{\textsc{BCQSatisfiedWith}($I$, $\Sigma$, $\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$, $\emptyset$)}
       \State \textbf{output} $\mathcal{I}$
     \EndIf
@@ -1065,7 +1065,7 @@ Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ 
     A routine calculation proves both directions.
 
     ($\Longrightarrow$):
-      Let $\rho$, $I$ and $S$ be as defined in \Cref{definition:subgoal-rule}. Let $\lambda$ be an assignment that maps each variable $x_n$ in $\mathrm{SubgoalRule}(\mathcal{I})$ to a local name $n$. Then by applying the substitution $\lambda$, we have $\Sigma \cup \{ \Phi_{Q, C} \} \models \iota^{-1}(I \rightarrow S)$. Since $S$ does not contain a local name, $$
+      Let $\rho$, $I$, and $S$ be as defined in \Cref{definition:subgoal-rule}. Let $\lambda$ be an assignment that maps each variable $x_n$ in $\mathrm{SubgoalRule}(\mathcal{I})$ to a local name $n$. Then by applying the substitution $\lambda$, we have $\Sigma \cup \{ \Phi_{Q, C} \} \models \iota^{-1}(I \rightarrow S)$. Since $S$ does not contain a local name, $$
       \Sigma \cup \{ \Phi_{Q, C} \} \models \iota^{-1}(I) \rightarrow (\sigma_{\Consts(\Sigma)} \cup \sigma_I)\left(\mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)\right).
       $$
       By using ($\rightarrow$) of $\Phi_{Q,C}$, we have
@@ -1117,10 +1117,33 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
 
 \subsection{Putting Pieces Together}
 
-Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subquery-entailment-to-datalog-rule} and \Cref{glueing-subgoals}. The following algorithm produces a Datalog rewriting of a GTGD-CQ pair.
+Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subquery-entailment-to-datalog-rule} and \Cref{glueing-subgoals}.
 
-(TODO)
+\begin{theorem}
+  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgd-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
+  \begin{proof}
+    By correctness of \Cref{naive-subquery-entailment-enumeration}, \Cref{subgoal-captures-subquery-fulfilment} and \Cref{glueing-rule-soundness-and-completeness}.
+  \end{proof}
+\end{theorem}
 
+\begin{algorithm}
+\caption{A rewriting procedure for GTGD-CQ pairs}
+\label{gtgd-cq-rewriting-procedure}
+\begin{algorithmic}[1]
+\Procedure{Rewrite}{Single-headed GTGDs $\Sigma$, Conjunctive query $Q$}
+  \State $result \gets \emptyset$
+  \State $result.addAll(\ARew{\Sigma})$
+  \For{\textbf{each} $\mathcal{I} \in $\textsc{EnumerateSubqueryEntailments}($\Sigma$, $Q$)}
+    \State $result.add(\mathrm{SubgoalRule}(\mathcal{I}))$
+  \EndFor
+  \For{\textbf{each} $\FV(Q) \subseteq \mathrm{BVars} \subseteq \Vars(Q)$ }
+    \State $result.add(\mathrm{SglGlueingRule}_{\mathrm{BVars}})$
+  \EndFor
+  \State \Return{$result$}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+  
 \section{Optimising the Subquery Entailment Enumeration}
 \label{secomputation-optimisations}
 
