@@ -1060,11 +1060,19 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
 
 \begin{definition}
 \label{subgoal-glueing-rule}
-  For a set $\mathrm{BVars} \subseteq \FV(Q)$, define the \emph{subgoal glueing rule} $\mathrm{SglGlueingRule}_\mathrm{BVars}$ by
+  For a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ set $\mathrm{BVars} \supseteq \FV(Q)$, define the \emph{subgoal glueing rule} $\mathrm{SglGlueingRule}_\mathrm{BVars}$ given by
   $$
-    \mathrm{SglGlueingRule}_\mathrm{BVars} = (TODO)
+    \forall \overrightarrow{\mathrm{BVars}}. \left(
+      \bigwedge_{C \in \mathcal{C}_\mathrm{BVars}} \mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)
+    \right) \wedge \mathrm{Atoms}_\mathrm{BVars}
+    \rightarrow \mathrm{Goal}\left( \overrightarrow{\FV(Q)} \right)
   $$
+  where $\mathrm{Atoms}_\mathrm{BVars}$ is the conjunction of atoms given by $$
+    \mathrm{Atoms}_\mathrm{BVars} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} A_j
+  $$ and $\mathcal{C}_\mathrm{BVars}$ is the family of $Q$-connected components of $(\vec{z} \setminus \mathrm{BVars})$.
 \end{definition}
+
+Moreover, again by \Cref{base-connected-query-decomposition}, $\vec{t}$ is an answer to the query only if some subgoal rule can be fired.
 
 \subsection{Putting Pieces Together}
 
