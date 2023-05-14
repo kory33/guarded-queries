@@ -67,6 +67,7 @@
 \newcommand{\NullVars}[1]{\ensuremath{\normalfont{\textrm{NullVars}} \left( #1 \right)}}
 \newcommand{\SCTree}[2]{\ensuremath{\normalfont{\textrm{SCTree}} \left( #1, #2 \right)}}
 \newcommand{\Subq}[3]{\ensuremath{\normalfont{\textrm{Subq}} \left( #1, #2, #3 \right)}}
+\newcommand{\Subi}[3]{\ensuremath{\normalfont{\textrm{Subi}} \left( #1, #2, #3 \right)}}
 \newcommand{\Commq}[2]{\ensuremath{\normalfont{\textrm{Commq}} \left( #1, #2 \right)}}
 \newcommand{\LNames}[1]{\ensuremath{\normalfont{\textrm{LNames}} \left( #1 \right)}}
 \newcommand{\LRealz}[2]{\ensuremath{\normalfont{\textrm{LRealz}}_{ #1 } \left( #2 \right)}}
@@ -242,22 +243,22 @@ A recent work \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented an
 % Define output of GSat as "atomic rewriting" of a GTGD set
 Our ultimate goal is to answer the following problem.
 
-\begin{problem}[GTGD-CQ Answering]
-\label{GTGD-CQ-Answering}
+\begin{problem}[GTGDs-CQ Answering]
+\label{GTGDs-CQ-Answering}
   Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
 It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings} \cite{barany_benedikt_cate_2013}. These Datalog programs with a designated \emph{goal atom} give the same set of answers as the original rule-query pair when run on any base instance. More precisely:
 
 \begin{definition}
-  A \emph{Datalog rewriting} of a GTGD-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ with $\FV(Q_\mathrm{atomic}) = \FV(Q)$, such that for every base instance $\mathcal{D}$ and a substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\mathcal{D} \cup \Sigma \models \alpha(Q) \textit{ if and only if } \mathcal{D} \cup \Sigma_\mathrm{Datalog} \models \alpha(Q_\mathrm{atomic}).$$
+  A \emph{Datalog rewriting} of a GTGDs-CQ pair $(\Sigma, Q)$ is a Datalog program $\Sigma_\mathrm{Datalog}$ together with an atomic query $Q_\mathrm{atomic}$ with $\FV(Q_\mathrm{atomic}) = \FV(Q)$, such that for every base instance $\mathcal{D}$ and a substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ for $Q$, $$\mathcal{D} \cup \Sigma \models \alpha(Q) \textit{ if and only if } \mathcal{D} \cup \Sigma_\mathrm{Datalog} \models \alpha(Q_\mathrm{atomic}).$$
   We call $Q_\mathrm{atomic}$ the \emph{goal atom} in the Datalog rewriting.
   \qed
 \end{definition}
 
-In order to answer \Cref{GTGD-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
+In order to answer \Cref{GTGDs-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
 
-This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGD-CQ pairs. We achieve this using the atomic rewriting produced by the Guarded-saturation algorithm.
+This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGDs-CQ pairs. We achieve this using the atomic rewriting produced by the Guarded-saturation algorithm.
 
 \newpage
 \chapter{Characterising Query Entailment under GTGDs}
@@ -533,13 +534,14 @@ We are ready to state the observation.
 We will use \Cref{image-of-connected-variables-is-connected} to develop a query-answering procedure. To begin with, we define a way to split the query entailment checking problem into smaller problems by a partial guess of the query homomorphism.
 
 \begin{definition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query and $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup T$ a partial map from query variables to a set $T$ of terms. Let $\mathrm{BVars} = \dom{\sigma_\mathrm{commit}}$.
+\label{definition:query-splitting}
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query and $\sigma_{\mathrm{commit}}: \Vars(Q) \rightharpoonup T$ a partial map from query variables to a set $T$ of terms. Let $\mathrm{BVars} = \dom{\sigma_{\mathrm{commit}}}$.
 
-  We define the \emph{committed part $\Commq{Q}{\sigma_\mathrm{commit}}$ of $Q$ according to $\sigma_\mathrm{commit}$} as the variable-free query
-  $$\Commq{Q}{\sigma_\mathrm{commit}} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} \sigma_\mathrm{commit}(A_j).$$
+  We define the \emph{committed part $\Commq{Q}{\sigma_{\mathrm{commit}}}$ of $Q$ according to $\sigma_{\mathrm{commit}}$} as the variable-free query
+  $$\Commq{Q}{\sigma_{\mathrm{commit}}} = \bigwedge_{\substack{j \in J \\ \Vars(A_j) \subseteq \mathrm{BVars}}} \sigma_{\mathrm{commit}}(A_j).$$
 
-  For each $Q$-connected component $C$ of $(\vec{z} \setminus \mathrm{BVars})$, the \emph{subquery $\Subq{Q}{\sigma_\mathrm{commit}}{C}$ of $Q$ induced by $\sigma_\mathrm{commit}$ and $C$} is the connected Boolean conjunctive query defined by
-  $$\Subq{Q}{\sigma_\mathrm{commit}}{C} = \exists \vec{C}. \bigwedge_{j \in J'} \sigma_\mathrm{commit}(A_j),$$
+  For each $Q$-connected component $C$ of $(\vec{z} \setminus \mathrm{BVars})$, the \emph{subquery $\Subq{Q}{\sigma_{\mathrm{commit}}}{C}$ of $Q$ induced by $\sigma_{\mathrm{commit}}$ and $C$} is the connected Boolean conjunctive query defined by
+  $$\Subq{Q}{\sigma_{\mathrm{commit}}}{C} = \exists \vec{C}. \bigwedge_{j \in J'} \sigma_{\mathrm{commit}}(A_j),$$
   where $$J' = \{ j \in J \mid \Vars(A_j) \subseteq C \cup \mathrm{BVars} \}.$$
   \qed
 \end{definition}
@@ -558,38 +560,38 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
     &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5)
   \end{align*}
-  as in \Cref{query-connectedness-example}. Suppose that $\sigma_\mathrm{commit}$ is given by \[\begin{array}{cccc}
-    \sigma_\mathrm{commit}: &\Vars(Q) &\rightharpoonup &\{c_1, c_2, c_3\} \\
+  as in \Cref{query-connectedness-example}. Suppose that $\sigma_{\mathrm{commit}}$ is given by \[\begin{array}{cccc}
+    \sigma_{\mathrm{commit}}: &\Vars(Q) &\rightharpoonup &\{c_1, c_2, c_3\} \\
     &z_2 &\mapsto &c_1 \\
     &z_3 &\mapsto &c_3
   \end{array}\]
-  then $\Commq{Q}{\sigma_\mathrm{commit}} = R(c_1, c_3)$. The split connected components are $C_1 = \{z_1\}$, $C_2 = \{z_4\}$ and $C_3 = \{z_5, z_6\}$, and their corresponding subqueries are
+  then $\Commq{Q}{\sigma_{\mathrm{commit}}} = R(c_1, c_3)$. The split connected components are $C_1 = \{z_1\}$, $C_2 = \{z_4\}$ and $C_3 = \{z_5, z_6\}$, and their corresponding subqueries are
   \begin{align*}
-    \Subq{Q}{\sigma_\mathrm{commit}}{C_1} &= \exists z_1.\ S(z_1, c_1) \wedge S(z_1, c_3) \\
-    \Subq{Q}{\sigma_\mathrm{commit}}{C_2} &= \exists z_4.\ R(c_3, z_4) \\
-    \Subq{Q}{\sigma_\mathrm{commit}}{C_3} &= \exists z_5, z_6.\ R(c_3, z_5) \wedge T(c_1, z_6, z_5)
+    \Subq{Q}{\sigma_{\mathrm{commit}}}{C_1} &= \exists z_1.\ S(z_1, c_1) \wedge S(z_1, c_3) \\
+    \Subq{Q}{\sigma_{\mathrm{commit}}}{C_2} &= \exists z_4.\ R(c_3, z_4) \\
+    \Subq{Q}{\sigma_{\mathrm{commit}}}{C_3} &= \exists z_5, z_6.\ R(c_3, z_5) \wedge T(c_1, z_6, z_5)
   \end{align*}
-  The decomposition after applying $\sigma_\mathrm{commit}$ is illustrated in \Cref{bcq-decomposition-example-figure}.
+  The decomposition after applying $\sigma_{\mathrm{commit}}$ is illustrated in \Cref{bcq-decomposition-example-figure}.
   \qed
 \end{example}
 
-Intuitively, the partial map $\sigma_\mathrm{commit}$ represents a partial commitment towards constructing the whole homomorphism. $\Commq{Q}{\sigma_\mathrm{commit}}$ is a collection of atoms which we expect to see in (the Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma_\mathrm{commit}}{C}$ is a query whose entailment tells us if $\sigma_\mathrm{commit}$ had been a good choice.
+Intuitively, the partial map $\sigma_{\mathrm{commit}}$ represents a partial commitment towards constructing the whole homomorphism. $\Commq{Q}{\sigma_{\mathrm{commit}}}$ is a collection of atoms which we expect to see in (the Datalog saturation of) the input instance, and for each $C$, $\Subq{Q}{\sigma_{\mathrm{commit}}}{C}$ is a query whose entailment tells us if $\sigma_{\mathrm{commit}}$ had been a good choice.
 
 As the following lemma states, the original query is satisfied precisely when all split queries are.
 
 \begin{lemma}[Base-connected query decomposition]
 \label{bcq-base-connected-query-decomposition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_\mathrm{partial}: \vec{z} \rightharpoonup \Terms(\mathcal{D}) \cup \Consts(\Sigma)$ such that
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_{\mathrm{partial}}: \vec{z} \rightharpoonup \Terms(\mathcal{D}) \cup \Consts(\Sigma)$ such that
   \begin{itemize}
-    \item $\mathcal{D} \cup \Sigma \models \Commq{Q}{\sigma_\mathrm{partial}}$
-    \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$.
+    \item $\mathcal{D} \cup \Sigma \models \Commq{Q}{\sigma_{\mathrm{partial}}}$
+    \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_{\mathrm{partial}}}})$.
   \end{itemize}
   \begin{proof}
     ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \vec{z} \mid \sigma(v) \in \Terms(\mathcal{D}) \cup \Consts(\Sigma) \},$$ then $(\sigma \upharpoonright B)$ is a partial map satisfying conditions in the lemma.
 
-    ($\Longleftarrow$): Suppose that $\sigma_\mathrm{partial}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_\mathrm{partial}}})$. For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{partial}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_\mathrm{partial}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_\mathrm{partial} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
+    ($\Longleftarrow$): Suppose that $\sigma_{\mathrm{partial}}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_{\mathrm{partial}}}})$. For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_{\mathrm{partial}}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_{\mathrm{partial}}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_{\mathrm{partial}} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
     
-    Since every atom $A_j$ in $Q$ appears either in $\Commq{Q}{\sigma_\mathrm{partial}}$ or in precisely one $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$, and therefore $\mathcal{D} \cup \Sigma \models Q$.
+    Since every atom $A_j$ in $Q$ appears either in $\Commq{Q}{\sigma_{\mathrm{partial}}}$ or in precisely one $\Subq{Q}{\sigma_{\mathrm{partial}}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$, and therefore $\mathcal{D} \cup \Sigma \models Q$.
   \end{proof}
 \end{lemma}
 
@@ -599,20 +601,20 @@ We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolea
 \label{base-connected-query-decomposition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs.
   
-  Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
+  Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_{\mathrm{partial}}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
 \end{corollary}
 
 % TODO: put a helpful diagram
 
-In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_\mathrm{partial}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_\mathrm{partial}}{C}$ and the corecursive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{corecursiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{bcq-base-connected-query-decomposition}.
+In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ and the corecursive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{corecursiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{bcq-base-connected-query-decomposition}.
 
 \begin{definition}
 \label{successful-commit-point-definition}
-  Let $Q$ be a connected Boolean conjunctive query and $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree. We say that a vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$ with the associated bag $\mu(v)$ of facts is a \emph{successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$} if there exists a $\Consts(\Sigma)$-free partial map $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mu(v)) \setminus \Consts(\Sigma)$, which we call a \emph{commit map at $v$}, such that
+  Let $Q$ be a connected Boolean conjunctive query and $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree. We say that a vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$ with the associated bag $\mu(v)$ of facts is a \emph{successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$} if there exists a $\Consts(\Sigma)$-free partial map $\sigma_{\mathrm{commit}}: \Vars(Q) \rightharpoonup \Terms(\mu(v)) \setminus \Consts(\Sigma)$, which we call a \emph{commit map at $v$}, such that
   \begin{itemize}
-    \item $\dom{\sigma_\mathrm{commit}}$ is nonempty,
-    \item $\mu(v) \models \Commq{Q}{\sigma_\mathrm{commit}}$, and
-    \item for each $Q$-connected component $C$ of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$, there exists a $\Consts(\Sigma)$-free query homomorphism $\sigma_C: \Subq{Q}{\sigma_\mathrm{commit}}{C} \rightarrow \SCTree{\mu(v)}{\Sigma}$.
+    \item $\dom{\sigma_{\mathrm{commit}}}$ is nonempty,
+    \item $\mu(v) \models \Commq{Q}{\sigma_{\mathrm{commit}}}$, and
+    \item for each $Q$-connected component $C$ of $(\Vars(Q) \setminus \dom{\sigma_{\mathrm{commit}}})$, there exists a $\Consts(\Sigma)$-free query homomorphism $\sigma_C: \Subq{Q}{\sigma_{\mathrm{commit}}}{C} \rightarrow \SCTree{\mu(v)}{\Sigma}$.
   \end{itemize}
   \qed
 \end{definition}
@@ -625,15 +627,15 @@ To witness the entailment of a connected Boolean conjunctive query (with all que
   \begin{proof}
     ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful commit point for $Q$.
 
-    By \Cref{corecursiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_\mathrm{commit} = \sigma \upharpoonright B$, then $\sigma_\mathrm{commit}$ is a commit map at $r$.
+    By \Cref{corecursiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_{\mathrm{commit}} = \sigma \upharpoonright B$, then $\sigma_{\mathrm{commit}}$ is a commit map at $r$.
 
-    ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_\mathrm{commit}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_\mathrm{commit}})$. Then for each $1 \leq i \leq n$, there is a $\Consts(\Sigma)$-free query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_\mathrm{commit}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$. If we let $\sigma = \sigma_\mathrm{commit} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
+    ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_{\mathrm{commit}}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_{\mathrm{commit}}})$. Then for each $1 \leq i \leq n$, there is a $\Consts(\Sigma)$-free query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_{\mathrm{commit}}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$. If we let $\sigma = \sigma_{\mathrm{commit}} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
   \end{proof}
 \end{theorem}
 
 \begin{remark}
 \label{remark-towards-query-answering-procedure}
-  Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful commit point for $Q$ with a commit map $\sigma_\mathrm{commit}$, we also need to decide if subqueries $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the commit map $\sigma_\mathrm{commit}$ to be a nonempty map, the number of bound variables in each subquery $\Subq{Q}{\sigma_\mathrm{commit}}{C_i}$ is strictly less than that of $Q$.
+  Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful commit point for $Q$ with a commit map $\sigma_{\mathrm{commit}}$, we also need to decide if subqueries $\Subq{Q}{\sigma_{\mathrm{commit}}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the commit map $\sigma_{\mathrm{commit}}$ to be a nonempty map, the number of bound variables in each subquery $\Subq{Q}{\sigma_{\mathrm{commit}}}{C_i}$ is strictly less than that of $Q$.
 
   Moreover, for Boolean conjunctive queries, the query entailment is unaffected by a certain renaming of constants in the root instance. Therefore, we only need to search for successful commit points up to renaming equivalence.
   \qed
@@ -691,7 +693,7 @@ We are ready to present a query-answering procedure \Cref{basic-query-answering-
 We will only use \Cref{basic-query-answering-procedure} as an intermediate step towards producing a rewriting. We will not go through the algorithm line by line, but we shall sketch the proof of its correctness and termination.
 
 \begin{theorem}
-  The procedure \textsc{AnswerConjunctiveQuery} in \Cref{basic-query-answering-procedure} produces all valid answers to \hyperref[GTGD-CQ-Answering]{GTGD-CQ Answering} in finite time.
+  The procedure \textsc{AnswerConjunctiveQuery} in \Cref{basic-query-answering-procedure} produces all valid answers to \hyperref[GTGDs-CQ-Answering]{GTGDs-CQ Answering} in finite time.
   \begin{proof}[Proof (sketch)]
     Termination is clear since
     \begin{itemize}
@@ -711,30 +713,30 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \State // $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
 \Procedure{EntailsConnectedBCQ}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
   \For{\textbf{each} equivalence class $[\mathcal{G}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$}
-    \If{\textsc{IsSuccessfulBranchingPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
+    \If{\textsc{IsSuccessfulCommitPoint}($\mathcal{G}$, $\Sigma$, $Q$)}
       \State \textbf{return true}
     \EndIf
   \EndFor
   \State \textbf{return false}
 \EndProcedure
 \State
-\Procedure{IsSuccessfulBranchingPoint}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
-  \For{\textbf{each} nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D}) \setminus \Consts(\Sigma)$}
-    \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{commit}$)}
+\Procedure{IsSuccessfulCommitPoint}{$\mathcal{D}$, $\Sigma$, connected BCQ $Q$}
+  \For{\textbf{each} nonempty $\sigma_{\mathrm{commit}}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D}) \setminus \Consts(\Sigma)$}
+    \If{\textsc{SatisfiedWith}($\mathcal{D}$, $\Sigma$, $Q$, $\sigma_{\mathrm{commit}}$)}
       \State \Return{\textbf{true}}
     \EndIf
   \EndFor
   \State \Return{\textbf{false}}
 \EndProcedure
 \State
-\State // computes if the query is satisfied with a partial substitution $\sigma_\mathrm{partial}$
-\Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, $Q$, $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
-  \State \textbf{require} $\dom{\sigma_\mathrm{partial}} \supseteq \FV(Q)$
+\State // computes if the query is satisfied with a partial substitution $\sigma_{\mathrm{partial}}$
+\Procedure{SatisfiedWith}{$\mathcal{D}$, $\Sigma$, $Q$, $\sigma_{\mathrm{partial}}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$}
+  \State \textbf{require} $\dom{\sigma_{\mathrm{partial}}} \supseteq \FV(Q)$
   \State $\mathcal{D}_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ARew{\Sigma}, \mathcal{D})$
-  \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Commq{Q}{\sigma_\mathrm{partial}}$
-  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}}$
+  \State $\mathrm{baseSatisfied} \gets \mathcal{D}_\mathrm{Dsat} \models \Commq{Q}{\sigma_{\mathrm{partial}}}$
+  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_{\mathrm{partial}}}$
   \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
-  \State \hskip1.5em \textsc{EntailsConnectedBCQ}($\mathcal{D}_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$)
+  \State \hskip1.5em \textsc{EntailsConnectedBCQ}($\mathcal{D}_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_{\mathrm{partial}}}{C_i}$)
   \State \Return{baseSatisfied \textbf{and} allComponentsSatisfied}
 \EndProcedure
 \State
@@ -765,7 +767,7 @@ More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is satisfied 
   \item used in the substituted body $\sigma(\beta)$, or
   \item inherited by $c$, i.e. facts whose arguments are all in $\sigma(H)$,
 \end{itemize}
-then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As $c'$ inherits the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup Q$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
+then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As $c'$ inherits the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup \{Q\}$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
 Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation, it is possible to deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
 
@@ -886,6 +888,7 @@ Assume for a moment that there are no rule constants. Observe that, for a local 
 This remark motivates the following definition.
 
 \begin{definition}
+\label{definition:embedding-of-constants-adjacent-to-c}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $C$ be a $Q$-connected subset of variables bound in $Q$ and $I$ a $(K, \Sigma)$-local instance. An \emph{embedding of constants adjacent to $C$ into $I$} is an injective map $\iota: S_{Q, C} \hookrightarrow \LNames{I}$, where $S_{Q, C}$ is the set of constants in the subquery defined by $$
   S_{Q, C} = \left\{
       c \in \Consts(Q) \setminus \Consts(\Sigma)
@@ -939,22 +942,22 @@ Putting these concepts together, we obtain the following notion of a subquery.
   \qed
 \end{example}
 
-\subsection{Formalizing the Subquery Entailment Problem}
+\subsection{Formalising the Subquery Entailment Problem}
 
 Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsection:partially-substituted-subqueries}, we can formally re-define the \Cref{informal-subquery-entailment-problem}.
 
 \begin{definition}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$Q$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ where
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$(\Sigma, Q)$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ where
   \begin{itemize}
     \item $C$ is a $Q$-connected set of variables bound in $Q$
-    \item $I$ is a $(K, \Sigma)$-local instance
+    \item $I$ is a $(K, \Sigma)$-local instance, where $$K = \max_{P \in \Predicates(\Sigma \cup \{Q\})} \Arity{P}$$
     \item $(\sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ is a representation of a subquery of $Q$ induced by $C$ and local to $I$
   \end{itemize}
 \end{definition}
 
 \begin{problem}[Subquery Entailment Problem, formalisation of \Cref{informal-subquery-entailment-problem}]
 \label{subquery-entailment-problem}
-  Given a $Q$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$, does $I \cup \Sigma \models \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$ hold?
+  Given a $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$, does $I \cup \Sigma \models \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$ hold?
   \qed
 \end{problem}
 
@@ -974,19 +977,19 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 \State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
 \State // $\sigma: Q \rightarrow \SCTree{I}{\Sigma}$ for a BCQ $Q$ with only
 \State // $\LNames{I}$ as query constants
-\Procedure{EntailsConnectedBCQ}{$I$, $N$, $\Sigma$, connected BCQ $Q$}
+\Procedure{EntailsConnectedBCQ}{$I$, $\Sigma$, connected BCQ $Q$}
   \For{\textbf{each} local instance $I'$ in $\SCTree{I}{\Sigma}$ that can be reached\par
   without dropping local names $\LNames{I} \cap \Consts(Q)$}
-    \If{\textsc{IsSuccessfulBranchingPoint}($I$, $\Sigma$, $Q$)}
+    \If{\textsc{IsSuccessfulCommitPoint}($I$, $\Sigma$, $Q$)}
       \State \textbf{return true}
     \EndIf
   \EndFor
   \State \textbf{return false}
 \EndProcedure
 \State
-\Procedure{IsSuccessfulBranchingPoint}{$I$, $\Sigma$, connected BCQ $Q$}
-  \For{\textbf{each} nonempty $\sigma_\mathrm{commit}: \Vars(Q) \rightharpoonup \LNames{I}$}
-    \If{\textsc{BooleanQSatisfiedWith}($I$, $\Sigma$, $Q$, $\sigma_\mathrm{commit}$)}
+\Procedure{IsSuccessfulCommitPoint}{$I$, $\Sigma$, connected BCQ $Q$}
+  \For{\textbf{each} nonempty $\sigma_{\mathrm{commit}}: \Vars(Q) \rightharpoonup \LNames{I}$}
+    \If{\textsc{BooleanQSatisfiedWith}($I$, $\Sigma$, $Q$, $\sigma_{\mathrm{commit}}$)}
       \State \Return{\textbf{true}}
     \EndIf
   \EndFor
@@ -994,20 +997,21 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 \EndProcedure
 \State
 \State // computes if Boolean $Q$ that only has $\LNames{I}$ as query constants
-\State // is satisfied with a partial substitution $\sigma_\mathrm{partial}: \Vars(Q) \rightharpoonup \LNames{I}$
-\Procedure{BCQSatisfiedWith}{$I$, $\Sigma$, $Q$, $\sigma_\mathrm{partial}$}
+\State // is satisfied with a partial substitution $\sigma_{\mathrm{partial}}: \Vars(Q) \rightharpoonup \LNames{I}$
+\Procedure{BCQSatisfiedWith}{$I$, $\Sigma$, $Q$, $\sigma_{\mathrm{partial}}$}
   \State $I_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ARew{\Sigma}, I)$
-  \State $\mathrm{baseSatisfied} \gets I_\mathrm{Dsat} \models \Commq{Q}{\sigma_\mathrm{partial}}$
-  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_\mathrm{partial}}$
+  \State $\mathrm{baseSatisfied} \gets I_\mathrm{Dsat} \models \Commq{Q}{\sigma_{\mathrm{partial}}}$
+  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $\Vars(Q) \setminus \dom{\sigma_{\mathrm{partial}}}$
   \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
-  \State \hskip1.5em \textsc{EntailsConnectedBCQ}($I_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_\mathrm{partial}}{C_i}$)
+  \State \hskip1.5em \textsc{EntailsConnectedBCQ}($I_\mathrm{Dsat}$, $\Sigma$, $\Subq{Q}{\sigma_{\mathrm{partial}}}{C_i}$)
   \State \Return{baseSatisfied \textbf{and} allComponentsSatisfied}
 \EndProcedure
 \State
 \Procedure{EnumerateSubqueryEntailments}{\par
   finite set $\Sigma$ of single-headed GTGDs, conjunctive query $Q$}
-  \For{\textbf{each} $Q$-subquery entailment instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$}
-    \If{\textsc{BCQSatisfiedWith}($I$, $\Sigma$, $\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$, $\emptyset$)}
+  \For{\textbf{each} $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I}$}
+    \State $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota) \gets \mathcal{I}$
+    \If{\textsc{EntailsConnectedBCQ}($I$, $\Sigma$, $\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$)}
       \State \textbf{output} $\mathcal{I}$
     \EndIf
   \EndFor
@@ -1035,7 +1039,7 @@ Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
 
 \begin{definition}
 \label{definition:subgoal-rule}
-  Let $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ be a $Q$-subquery entailment problem instance. Let $S$ be the subgoal atom substituted with local names, defined by $$
+  Let $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ be a $(\Sigma, Q)$-subquery entailment problem instance. Let $S$ be the subgoal atom substituted with local names, defined by $$
     S = (\sigma_{\Consts(\Sigma)} \cup \sigma_I)\left(\mathrm{Subgoal}_{Q, C}\left(\overrightarrow{\partial_Q C}\right)\right).
   $$
 
@@ -1056,7 +1060,7 @@ Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ 
 
 \begin{proposition}
 \label{subgoal-captures-subquery-fulfilment}
-  Let $Q$ be a conjunctive query and $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ a $Q$-subquery entailment problem instance. Let $\Phi_{Q, C}$ be the formula stating the identification of subgoal facts with subquery satisfactions, given by $$
+  Let $Q$ be a conjunctive query and $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ a $(\Sigma, Q)$-subquery entailment problem instance. Let $\Phi_{Q, C}$ be the formula stating the identification of subgoal facts with subquery satisfactions, given by $$
     \Phi_{Q, C} = \forall \vec{t}. \left( \mathrm{Subgoal}_{Q,C}(\vec{t}) \leftrightarrow \Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C} \right).
   $$
   
@@ -1134,8 +1138,8 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
 Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subquery-entailment-to-datalog-rule} and \Cref{glueing-subgoals}.
 
 \begin{algorithm}
-\caption{A rewriting procedure for GTGD-CQ pairs}
-\label{gtgd-cq-rewriting-procedure}
+\caption{A rewriting procedure for GTGDs-CQ pairs}
+\label{gtgds-cq-rewriting-procedure}
 \begin{algorithmic}[1]
 \Procedure{Rewrite}{Single-headed GTGDs $\Sigma$, Conjunctive query $Q$}
   \State $result \gets \emptyset$
@@ -1152,7 +1156,7 @@ Finally, we combine components from \Cref{section:naive-subquery-entailment-enum
 \end{algorithm}
 
 \begin{theorem}
-  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgd-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
+  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgds-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
   \begin{proof}
     By correctness of \Cref{naive-subquery-entailment-enumeration}, \Cref{subgoal-captures-subquery-fulfilment} and \Cref{glueing-rule-soundness-and-completeness}.
   \end{proof}
@@ -1161,7 +1165,126 @@ Finally, we combine components from \Cref{section:naive-subquery-entailment-enum
 \section{Optimising the Subquery Entailment Enumeration}
 \label{secomputation-optimisations}
 
-% TODO: Write about "memoisation", use of DFS and re-normalisation of local instances to {0, ..., K-1}.
+When rewriting a GTGDs-CQ pair ($\Sigma, Q$) with \Cref{gtgds-cq-rewriting-procedure}, the apparent bottleneck is the call \textsc{EnumerateSubqueryEntailments}($\Sigma, Q$) because we need to
+\begin{itemize}
+  \item visit every $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I}$ and test if $\mathcal{I}$ satisfies \Cref{subquery-entailment-problem}, and
+  \item descend a part of $\SCTree{I}{\Sigma}$ (where $I$ is the local instance in $\mathcal{I}$) and recursively search for a successful commit point.
+\end{itemize}
+
+\begin{remark}
+\label{naive-seenumeration-inefficiencies}
+  As an illustrating example, consider the query $$Q = \exists z_1,z_2,z_3.\ S(z_1, z_2) \wedge R(z_1, z_3).$$ We remark on the following inefficiencies with the naive implementation \Cref{naive-subquery-entailment-enumeration} of \textsc{EnumerateSubqueryEntailments}:
+
+  \begin{enumerate}
+    \item \textit{We are testing entailment relation for multiple isomorphic instances}. For example, consider the instance $$
+      \mathcal{I}_1 = (C, I_1, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota) = (\{z_1, z_2\}, \{ S(1, 2), T(1, 1, 2) \}, \emptyset, \{ z_3 \mapsto 1 \}, \emptyset).
+    $$ If we consider another instance $$
+      \mathcal{I}_2 = (\{z_1, z_2\}, \{ S(3, 2), T(3, 3, 2) \}, \emptyset, \{ z_3 \mapsto 3 \}, \emptyset),
+    $$ it is clear that $\mathcal{I}_1$ is a subquery entailment if and only if $\mathcal{I}_2$ is because there is a renaming $\{ 1 \mapsto 3, 2 \mapsto 2 \}$ of local names. If we have tested the entailment for $\mathcal{I}_1$, we need not repeat the process for $\mathcal{I}_2$.
+    \item Generalising (1), \textit{we are testing entailment relation for subsumed instances}. For example, let $\mathcal{I}_1$ as in (1), and let $$
+      \mathcal{I}_3 = (\{z_1, z_2\}, \{ S(1, 1), T(1, 1, 1), T(1, 3, 2), S(2, 2) \}, \emptyset, \{ z_3 \mapsto 1 \}, \emptyset).
+    $$ If we already know that $\mathcal{I}_1$ is an entailment, then we may immediately conclude that $\mathcal{I}_3$ is also an entailment: The local instance $I_3$ of $\mathcal{I}_3$ is strictly \emph{stronger than} $I_1$, by which we mean that there is a map $\sigma = \{1 \mapsto 1, 2 \mapsto 1\}$ from names in $I_1$ to names in $I_3$ such that for each $F \in I_1$, $\sigma(F) \in I_3$.
+    \item \textit{We seem to be computing the same entailment problem repeatedly}. For example, consider the instance $\mathcal{I}_3$ from (2). The local realisation of $\mathcal{I}_3$ is $Q' = \exists z_1, z_2.\ S(z_1, z_2) \wedge R(z_1, 1)$ since $z_3$ is mapped to $1$. The call
+    $$\textsc{EntailsConnectedBCQ}(I_3, \Sigma, Q'),$$ may first try \textsc{IsSuccessfulCommitPoint} with the root instance $I_3$. Within \textsc{IsSuccessfulCommitPoint}, we might guess a commit map $\{ z_2 \mapsto 3 \}$ and check if this is a good guess by calling 
+    $$\textsc{BooleanQSatisfiedWith}(I_3, \Sigma, Q', \{ z_2 \mapsto 3 \}).$$
+    As a result, we will make a recursive call
+    $$\textsc{EntailsConnectedBCQ}(I_3, \Sigma, \exists z_1. S(z_1, 3) \wedge R(z_1, 1)).$$ But this is exactly the first call to \textsc{EntailsConnectedBCQ} when we decide if $$(\{z_1\}, I_3, \emptyset, \{ z_2 \mapsto 3, z_3 \mapsto 1 \}, \emptyset)$$ is an entailment.
+  \end{enumerate}
+  \qed
+\end{remark}
+
+In the remainder of this chapter, we describe three optimisation techniques: two that address the issue (3) in \Cref{subsection:dp-optimisation} and in \Cref{subsection:dfs-optimisation}, and the other that partially resolves (1) in \Cref{subsection:instance-normalisation}. However, as we shall briefly discuss in \Cref{section:limitations-and-future-work}, we leave (2) as a problem for future work.
+
+\subsection{Dynamic Programming}
+\label{subsection:dp-optimisation}
+
+As observed in \Cref{naive-seenumeration-inefficiencies}, the issue is that
+\begin{itemize}
+  \item even though we are working with locally realised subqueries, we are essentially deciding split subquery entailment instances, yet
+  \item we are not making use of the result of past invocations.
+\end{itemize}
+
+The obvious solution is to work directly with subquery entailment instances instead, memoise all past results in a hash map, fill in the hash map from smaller (i.e. instances with smaller $C$) instances and finally output all results at the end of \textsc{EnumerateSubqueryEntailments}. We call this optimisation the \emph{dynamic programming optimisation}.
+
+To proceed, we need to define the process of ``splitting" a subquery entailment problem instance, a process which is necessarily similar to \Cref{definition:query-splitting}.
+
+\begin{definition}
+\label{definition:subquery-entailment-problem-splitting}
+  Let $Q$ be a conjunctive query, $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ a $(\Sigma, Q)$-subquery entailment problem instance and $\sigma_{\mathrm{commit}}: C \rightharpoonup \LNames{I}$ a partial map.
+
+  The \emph{committed part $\Commq{\mathcal{I}}{\sigma_{\mathrm{commit}}}$ of $\mathcal{I}$ according to $\sigma_{\mathrm{commit}}$} is the variable-free query $\Commq{\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}}{\sigma_{\mathrm{commit}}}$.
+
+  For each $Q$-connected component $C'$ of $(C \setminus \dom{\sigma_{\mathrm{commit}}})$, the \emph{subinstance $\Subi{\mathcal{I}}{\sigma_{\mathrm{commit}}}{C'}$ of $\mathcal{I}$ induced by $\sigma_{\mathrm{commit}}$ and $C'$} is the $(\Sigma, Q)$-subquery entailment problem instance defined by
+  $$\Subi{\mathcal{I}}{\sigma_{\mathrm{commit}}}{C} = (C', I, \sigma'_{\Consts(\Sigma)}, \sigma'_I, \iota'),$$
+  where \begin{align*}
+    \sigma'_{\Consts(\Sigma)} &= \sigma_{\Consts(\Sigma)} \upharpoonright \partial_Q C', \\
+    \sigma'_I &= (\sigma_I \cup \sigma_{\mathrm{commit}}) \upharpoonright \partial_Q C', \\
+    \iota' &= \iota \upharpoonright S_{Q, C'},
+  \end{align*}
+  and $S_{Q, C'}$ defined as in \Cref{definition:embedding-of-constants-adjacent-to-c}.
+
+  \qed
+\end{definition}
+
+\begin{algorithm}
+\caption{Recursive Subquery Entailment Enumeration}
+\label{algorithm:recursive-subquery-entailment-enumeration}
+\begin{algorithmic}[1]
+\State // decides if $\mathcal{I}$ is a $(\Sigma, Q)$-subquery entailment
+\State // we can optionally cache the answer of this function using a hash map
+\Procedure{IsSubqueryEntailment}{$\mathcal{I} = (C, I, \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$}
+  \For{\textbf{each} local instance $I'$ in $\SCTree{I}{\Sigma}$ that can be reached\par
+  without dropping local names $\range{\sigma_I} \cup \range{\iota}$}
+    \If{\textsc{IsSuccessfulCommitPoint}($(C, I', \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$)}
+      \State \textbf{return true}
+    \EndIf
+  \EndFor
+  \State \textbf{return false}
+\EndProcedure
+\State
+\State // decides if $\mathcal{I}$ splits into subquery entailments
+\Procedure{Splits}{$\mathcal{I} = (C, I, \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$}
+  \For{\textbf{each} nonempty $\sigma_{\mathrm{commit}}: C \rightharpoonup \LNames{I}$}
+    \If{\textsc{SplitsWith}($\mathcal{I}$, $\sigma_{\mathrm{commit}}$)}
+      \State \Return{\textbf{true}}
+    \EndIf
+  \EndFor
+  \State \Return{\textbf{false}}
+\EndProcedure
+\State
+\State // decides if $\mathcal{I}$ splits into subquery entailments
+\State // with commit map $\sigma_{\mathrm{commit}}: \Vars(Q) \rightharpoonup \LNames{I}$
+\Procedure{SplitsWith}{$\mathcal{I} = (C, I, \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$, $\sigma_{\mathrm{commit}}$}
+  \State $I_\mathrm{Dsat} \gets \textsc{DatalogSaturate}(\ARew{\Sigma}, I)$
+  \State $\mathrm{baseSatisfied} \gets I_\mathrm{Dsat} \models \Commq{\mathcal{I}}{\sigma_{\mathrm{commit}}}$
+  \State $C_1, \ldots, C_n \gets$ $Q$-connected components of $C \setminus \dom{\sigma_{\mathrm{commit}}}$
+  \State $\mathrm{allComponentsSatisfied} \gets \bigwedge_{i = 1}^n$
+  \State \hskip1.5em \textsc{IsSubqueryEntailment}($\Subi{\mathcal{I}}{\sigma_{\mathrm{commit}}}{C_i}$)
+  \State \Return{baseSatisfied \textbf{and} allComponentsSatisfied}
+\EndProcedure
+\State
+\Procedure{EnumerateSubqueryEntailments}{\par
+  finite set $\Sigma$ of single-headed GTGDs, conjunctive query $Q$}
+  \For{\textbf{each} $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I}$}
+    \If{\textsc{IsSubqueryEntailment}($\mathcal{I}$)}
+      \State \textbf{output} $\mathcal{I}$
+    \EndIf
+  \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\Cref{algorithm:recursive-subquery-entailment-enumeration} is another implementation of \nobreak\textsc{EnumerateSubqueryEntailments} based on \Cref{definition:subquery-entailment-problem-splitting}. The algorithm is equivalent to \Cref{naive-subquery-entailment-enumeration}, but since \textsc{IsSubqueryEntailment} is a boolean function of $(\Sigma, Q)$-subquery entailment problem instances, we can memoise answers of \textsc{IsSubqueryEntailment} and avoid recomputations.
+
+\subsection{DFS Optimisation}
+\label{subsection:dfs-optimisation}
+
+% TODO: write about DFS
+
+\subsection{Instance Normalisation}
+\label{subsection:instance-normalisation}
+
+% TODO: Write about re-normalisation of local instances to {0, ..., K-1}.
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
@@ -1176,6 +1299,7 @@ Finally, we combine components from \Cref{section:naive-subquery-entailment-enum
 \chapter{Conclusions and Further Discussion}
 
 \section{Liminations and Future Work}
+\label{section:limitations-and-future-work}
 
 % TODO: talk about search space pruning with an example
 % TODO: talk about how we do not really need to solve subquery entailment problem for most queries (ones that are "contractible"), and the possibility of exploiting the acyclicity in the middle of SE computation
