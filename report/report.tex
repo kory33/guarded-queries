@@ -1204,7 +1204,7 @@ As observed in \Cref{naive-seenumeration-inefficiencies}, the issue is that
   \item we are not making use of the result of past invocations.
 \end{itemize}
 
-The obvious solution is to work directly with subquery entailment instances instead, memoise all past results in a hash map, fill in the hash map from smaller (i.e. instances with smaller $C$) instances and finally output all results at the end of \textsc{EnumerateSubqueryEntailments}. We call this optimisation the \emph{dynamic programming optimisation}.
+The obvious solution is to work directly with subquery entailment instances instead, memoise all past results in a hash map, fill in the hash map (which we call the \emph{DP table}) from smaller (i.e. instances with smaller $C$) instances and finally output all results at the end of \textsc{EnumerateSubqueryEntailments}. We call this optimisation the \emph{dynamic programming optimisation}.
 
 To proceed, we need to define the process of ``splitting" a subquery entailment problem instance, a process which is necessarily similar to \Cref{definition:query-splitting}.
 
@@ -1235,7 +1235,7 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
 \Procedure{IsSubqueryEntailment}{$\mathcal{I} = (C, I, \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$}
   \For{\textbf{each} local instance $I'$ in $\SCTree{I}{\Sigma}$ that can be reached\par
   without dropping local names $\range{\sigma_I} \cup \range{\iota}$}
-    \If{\textsc{IsSuccessfulCommitPoint}($(C, I', \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$)}
+    \If{\textsc{Splits}($(C, I', \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$)}
       \State \textbf{return true}
     \EndIf
   \EndFor
@@ -1279,12 +1279,59 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
 \subsection{DFS Optimisation}
 \label{subsection:dfs-optimisation}
 
-% TODO: write about DFS
+As discussed briefly at the end of \Cref{characterising-query-entailment-under-gtgds}, instead of computing the set of all local instances $I'$ satisfying the condition at line 4 of \Cref{algorithm:recursive-subquery-entailment-enumeration}, we can use a depth-first search (DFS) to explore the space of all such local instances.
+
+During this process of deciding whether $\mathcal{I} = (C, I, \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$ is a subquery entailment, each instance $I'$ we encounter in the DFS corresponds to a problem instance $\mathcal{I'} = (C, I', \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$. If we use the DP optimisation, we can check if we have already seen $\mathcal{I'}$, and if so, immediately stop exploring the chase tree. We illustrate this process in \Cref{figure:sctree-dfs-process}.
+
+\begin{figure}[t]
+\centering
+\includesvg{./diagrams/sctree-dfs-process.drawio.svg}
+\caption{A state during a DFS of the chase tree. Red nodes ($\{v'_1, v'_2\}$) indicate unsuccessful subquery entailment instances. We had already seen $v'_1$ before this search, so we terminated the fruitless search below $v'_1$. Yellow nodes are the instances whose entailment we are not yet certain. We explore the grey node $v_4$ only if we give up the search below $v_2$.}
+\label{figure:sctree-dfs-process}
+\end{figure}
+
+If we find a node $v$ that admits a splitting into subquery entailments, we mark all ancestors of $v$ as \textbf{true}, and if the exploration below a node $v$ is unsuccessful, we mark $v$ \textbf{false}, move up and try siblings of $v$. We show this marking process in \Cref{figure:sctree-dfs-marking}.
+
+\begin{figure}[t]
+  \centering
+  \includesvg{./diagrams/sctree-dfs-marking.drawio.svg}
+  \caption{The marking process in chase tree DFS. If we start from the state on the top-left and find out that $v_3$ does not admit a splitting, we mark $v_3$ false since $v_3$ has no children. We move up to $v_2$, but as $v_2$ has no unexplored children, we mark $v_2$ false too (top-right). We try the sibling node $v_4$ of $v_2$ and descend further to $v_5$ (bottom-left). Finally, $v_5$ admits a splitting, so we mark all ancestors of $v_5$ true (bottom-right).}
+  \label{figure:sctree-dfs-marking}
+\end{figure}
+
+We call this efficient traversal of the chase tree the \emph{DFS optimisation}. Combined with DP optimisation from \Cref{subsection:dp-optimisation}, we never need to compute \textsc{splits} twice for the same instance.
 
 \subsection{Instance Normalisation}
 \label{subsection:instance-normalisation}
 
-% TODO: Write about re-normalisation of local instances to {0, ..., K-1}.
+Finally, we address the first point of \Cref{naive-seenumeration-inefficiencies} concerning isomorphic instances.
+
+Recall that we use $2K$ local names since the set of $K$ names is insufficient to maintain a tree-like structure of local instances (\Cref{sctree-simple-example-equivalence-classes}).
+
+However, in \Cref{algorithm:recursive-subquery-entailment-enumeration}, even with DP and DFS optimisations in place, we only partially use the structure between local instances when we descend the chase tree. All we require is that the local names in $\range{\sigma_I} \cup \range{\iota}$ be preserved. In particular, we do not care if a local name (not in $\range{\sigma_I} \cup \range{\iota}$) at a node $v$ is introduced at $v$ or is inherited from the parent of $v$.
+
+This observation implies that, during the DFS, we are free to ``re-normalise'' local instances as long as we fix the names in $\range{\sigma_I} \cup \range{\iota}$. Since at most $K$ local names are active in a local instance, we can always work with local instances whose active names are from the set $\{ 1, \ldots, K \}$. We call the following strategy the \emph{instance normalisation}:
+
+\begin{itemize}
+  \item In the top-level function \textsc{EnumerateSubqueryEntailments}, we only enumerate local instances over local names from $\{ 1, \ldots, K \}$. 
+  \item Within \textsc{IsSubqueryEntailment}, we always re-map local names in chased instances to the range $\{ 1, \ldots, K \}$, provided that we fix all names in $\range{\sigma_I} \cup \range{\iota}$.
+  \item Consequently, the DP table only remembers entailment relations for instances over $\{ 1, \ldots, K \}$.
+\end{itemize}
+
+\begin{remark}
+  Combining all optimisations so far, we obtain the following asymptotic performance characteristic.
+  
+  Suppose for simplicity that $Q$ only contains constants from $\Sigma$. Let $\mathrm{sig} = \Predicates(\Sigma \cup \{Q\})$, $K = \max_{P \in \mathrm{sig}} \Arity{P}$. Then there are $K + |\Consts(\Sigma)|$ terms we use in a local instance.
+
+  Suppose further that all $P \in \mathrm{sig}$ have arity $K$. Then there are $|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K$ facts that we can form. Therefore there are $2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K\right)}$ local instances for which we need to decide subquery entailments. Since there are at most $2^{|\Vars(Q)|}$ connected variable sets, each of which has at most $(K + |\Consts(\Sigma)|)^{|\Vars(Q)|}$ different realisations, we estimate to test about \begin{multline}
+  \label{equation:subquery-entailment-instances-number-estimation}
+    2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K\right)} \times 2^{|\Vars(Q)|} \times (K + |\Consts(\Sigma)|)^{|\Vars(Q)|} \\
+    = 2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K + |\Vars(Q)|\right)} \times (K + |\Consts(\Sigma)|)^{|\Vars(Q)|}
+  \end{multline}
+  instances for subquery entailment. Each instance is tested only once (by DP and DFS optimisations), and each test takes time exponential to $|\ARew{\Sigma}|$ due to Datalog-saturating local instances.
+
+  Overall, the algorithm produces a rewriting in time doubly exponential to the input.
+\end{remark}
 
 \newpage
 \chapter{Implementation, Testing and Evaluation}
