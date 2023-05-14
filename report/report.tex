@@ -200,6 +200,7 @@ Consider the following problem:
 
 Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation} (\Cref{naive-evaluation-algorithm}). Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
 
+%TC:ignore
 \begin{algorithm}
 \caption{Answering Datalog query using Naive Evaluation}
 \label{naive-evaluation-algorithm}
@@ -227,6 +228,7 @@ Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+%TC:endignore
 
 We call the database instance $\textsc{DatalogSaturate}(P, \mathcal{D})$ the \emph{Datalog saturation of $\mathcal{D}$ with $P$}. Intuitively, a Datalog saturation results from \emph{supplementing} the input instance by adding all (but nothing other than) facts derivable from the original instance.
 
@@ -705,6 +707,7 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
   \end{proof}
 \end{theorem}
 
+%TC:ignore
 \begin{algorithm}
 \caption{Basic query answering procedure}
 \label{basic-query-answering-procedure}
@@ -752,6 +755,7 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+%TC:endignore
 
 \newpage
 \chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
@@ -970,6 +974,7 @@ We can solve \Cref{subquery-entailment-problem} with only a minor modification t
 
 Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{naive-subquery-entailment-enumeration}. Nevertheless, for now, we proceed to the other components of the rewriting algorithm to see how outputs from \Cref{naive-subquery-entailment-enumeration} can be assembled into a Datalog rewriting.
 
+%TC:ignore
 \begin{algorithm}
 \caption{Naive Subquery Entailment Enumeration}
 \label{naive-subquery-entailment-enumeration}
@@ -1018,6 +1023,7 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+%TC:endignore
 
 \section{A Rewriting Algorithm}
 \label{a-rewriting-algorithm}
@@ -1137,6 +1143,7 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
 
 Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subquery-entailment-to-datalog-rule} and \Cref{glueing-subgoals}.
 
+%TC:ignore
 \begin{algorithm}
 \caption{A rewriting procedure for GTGDs-CQ pairs}
 \label{gtgds-cq-rewriting-procedure}
@@ -1154,6 +1161,7 @@ Finally, we combine components from \Cref{section:naive-subquery-entailment-enum
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+%TC:endignore
 
 \begin{theorem}
   Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgds-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
@@ -1226,6 +1234,7 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
   \qed
 \end{definition}
 
+%TC:ignore
 \begin{algorithm}
 \caption{Recursive Subquery Entailment Enumeration}
 \label{algorithm:recursive-subquery-entailment-enumeration}
@@ -1273,6 +1282,7 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+%TC:endignore
 
 \Cref{algorithm:recursive-subquery-entailment-enumeration} is another implementation of \nobreak\textsc{EnumerateSubqueryEntailments} based on \Cref{definition:subquery-entailment-problem-splitting}. The algorithm is equivalent to \Cref{naive-subquery-entailment-enumeration}, but since \textsc{IsSubqueryEntailment} is a boolean function of $(\Sigma, Q)$-subquery entailment problem instances, we can memoise answers of \textsc{IsSubqueryEntailment} and avoid recomputations.
 
@@ -1319,7 +1329,8 @@ This observation implies that, during the DFS, we are free to ``re-normalise'' l
 \end{itemize}
 
 \begin{remark}
-  Combining all optimisations so far, we obtain the following asymptotic performance characteristic.
+\label{remark:rewriting-complexity}
+  Combining all optimisations so far, we obtain the following performance characteristic.
   
   Suppose for simplicity that $Q$ only contains constants from $\Sigma$. Let $\mathrm{sig} = \Predicates(\Sigma \cup \{Q\})$, $K = \max_{P \in \mathrm{sig}} \Arity{P}$. Then there are $K + |\Consts(\Sigma)|$ terms we use in a local instance.
 
@@ -1336,22 +1347,67 @@ This observation implies that, during the DFS, we are free to ``re-normalise'' l
 \newpage
 \chapter{Implementation, Testing and Evaluation}
 
-% TODO: talk about the implementation architecture (the codebase, how the rewriting system makes a single call to an implementation of "SubqueryEntailmentComputation", and how the CLI implementation subsumes the rules before presenting the output to the user) and briefly indicate how the user can try running the rewrite algorithm using the fat jar
+We built an \href{https://github.com/kory33/guarded-queries}{open-sourced} prototypical rewriting system in Java by combining all ideas from \Cref{characterising-query-entailment-under-gtgds} and \Cref{deriving-a-rewriting}. The system has a command-line interface where an end-user can interact with the rewriter.
 
-% TODO: talk about test queries with "contractible" hypergraph structures 
+\section{Architecture}
 
-% TODO: include example performance for some test queries (with three implementations of SEComputation), with some simple calculation on the size of Subquery Entailment Problem space we need to solve for each test case
+Our implementation sits on top of two libraries: \emph{Guarded-saturation} \cite{Benedikt_Rewriting_the_Infinite}, which provides implementations for computing atomic rewritings, and its dependency \href{https://github.com/ProofDrivenQuerying/pdq/releases/tag/v2.0.0}{\texttt{pdq-common-2.0.0}}, which provides a foundation for expressing first-order formulae.
+
+The implementation of the rewriter closely follows \Cref{gtgds-cq-rewriting-procedure}. For \\ \textsc{EnumerateSubqueryEntailments}, we provide three implementations based on \Cref{algorithm:recursive-subquery-entailment-enumeration}, which respectively have (\emph{DP}), (\emph{DP + normalisation}) and (\emph{DP + normalisation + DFS}) optimisations applied.
+
+Further, to minimise the evaluation time of the output Datalog program, we apply \emph{rule subsumption} at the end: If we obtained two rules $\tau_1 = \beta_1 \rightarrow \eta_1$ and $\tau_2 = \beta_2 \rightarrow \eta_2$, and there exists a homomorphism $\sigma: \beta_1 \rightarrow \beta_2$ such that $\sigma(\eta_1) \supseteq \sigma(\eta_2)$, then we discard $\tau_2$ in favour of $\tau_1$.
+
+We illustrate the overall architecture in \Cref{figure:implementation-architecture}.
+
+\begin{figure}[h]
+\centering
+\includesvg{./diagrams/rewriter-architecture.drawio.svg}
+\caption{The overall architecture of the rewriting system. (Top) The rewriter is a composition of an atomic rewriter with an implementation of \textsc{EnumerateSubqueryEntailments}. Every dotted line indicates a call through an interface. The architecture is flexible in that one can apply optimisations to one or more components independently. (Bottom) when a CLI user or an integration test performs a rewriting, the result is minimised by a subsumption logic.}
+\label{figure:implementation-architecture}
+\end{figure}
+
+\section{Tests}
+\label{section:tests}
+
+The codebase contains a naive Datalog engine, a (nested-loop) join algorithm, output rule subsumption and many utility methods, all of which are extensively property-based-tested with ScalaCheck \cite{scalacheck}. In addition, the overall rewriting system is integration-tested with JUnit 5 \cite{junit}.
+
+Since there are no other implementations for GTGDs-CQ rewriting, we could not compare our algorithm to existing implementations.
+
+However, we can translate an ``acyclic" existential query into an atomic query by adding a few guarded rules. For instance, the query $Q = \exists x, y. R(w, x) \wedge S(y, x)$, but if we add rules \begin{align*}
+  \forall x, y.\ S(y, x) &\rightarrow \mathrm{Goal}_1(x) \\
+  \forall w, x.\ R(w, x) \wedge \mathrm{Goal}_1(x) &\rightarrow \mathrm{Goal}(w)
+\end{align*}
+where $\mathrm{Goal}_1$ and $\mathrm{Goal}$ are fresh, then $Q$ and $\mathrm{Goal}(w)$ are equivalent queries.
+
+With this observation, we manually translated a few acyclic queries, rewritten both the translated and the original rule sets using \emph{Guarded-saturation} and our rewriting system, and finally tested if two rewritings agreed when run on randomly generated instances.
+
+\section{Example Runs}
+\label{section:example-runs}
+
+(TODO: include something here)
 
 \newpage
 \chapter{Conclusions and Further Discussion}
 
+With the help of atomic rewritings, we revised the theory of GTGD chases by introducing the notion of \emph{shortcutting chase trees}. Furthermore, we discussed how the connectedness of the query is related to the decomposition of a query homomorphism and devised a recursive decision procedure based on such decompositions.
+
+By further analysing the structure of the shortcutting chase tree, we observed that \emph{local instances} can convey how queries are satisfied. Based on this analysis, we developed a rewriting algorithm employing the notion of \emph{subquery entailments} and discussed possible optimisations.
+
+Finally, we provided an implementation of the algorithm, which is capable of handling arity-2 rules and a few constants in the rule and the query.
+
 \section{Liminations and Future Work}
 \label{section:limitations-and-future-work}
 
+The current implementation suffers from blowups, doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}). Our system, therefore, cannot be applied as-is to real-world ontologies, which typically contain many constants and predicates.
+
+To deal with a higher number of constants and predicates, we must trim down the subquery entailment problem space as much as possible, possibly by analysing the structure of the input rules. For instance, if a rule constant $c$ only appears in a head, it does not make sense to consider a local instance containing $c$ because there is no additional rule we can fire by having such a fact. Another crucial thing to consider is the possibility of instance subsumption, as discussed in \Cref{naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing any fact with $R$ no longer need to be tested for entailment, drastically reducing the search space.
+
+As remarked in \Cref{section:tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. However, our system does not perform any such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even if induced subqueries are acyclic.
+
+Finally, our prototypical system spends most CPU time in Datalog-saturating and chasing the local instances. This is primarily due to using an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
+
 % TODO: talk about search space pruning with an example
 % TODO: talk about how we do not really need to solve subquery entailment problem for most queries (ones that are "contractible"), and the possibility of exploiting the acyclicity in the middle of SE computation
-% TODO: talk about integrating an optimised datalog saturation engine
-% TODO: talk about "strict existential subquery entailments" for minimising the output rule size
 
 \printbibliography
 
