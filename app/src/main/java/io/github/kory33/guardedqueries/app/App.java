@@ -6,6 +6,8 @@ import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSatur
 import io.github.kory33.guardedqueries.core.fol.DatalogRule;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
 import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.DFSNormalizingDPTableSEEnumeration;
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NaiveDPTableSEEnumeration;
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NormalizingDPTableSEEnumeration;
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet;
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet;
 import uk.ac.ox.cs.gsat.GSat;
@@ -63,7 +65,17 @@ public class App {
         System.out.println("[guarded-queries app] " + message);
     }
 
-    private static final GuardedRuleAndQueryRewriter rewriter = new GuardedRuleAndQueryRewriter(
+    private static final GuardedRuleAndQueryRewriter naiveDPRewriter = new GuardedRuleAndQueryRewriter(
+            GSat.getInstance(),
+            new NaiveDPTableSEEnumeration(new NaiveSaturationEngine())
+    );
+
+    private static final GuardedRuleAndQueryRewriter normalizingDPRewriter = new GuardedRuleAndQueryRewriter(
+            GSat.getInstance(),
+            new NormalizingDPTableSEEnumeration(new NaiveSaturationEngine())
+    );
+
+    private static final GuardedRuleAndQueryRewriter dfsNormalizingDPRewriter = new GuardedRuleAndQueryRewriter(
             GSat.getInstance(),
             new DFSNormalizingDPTableSEEnumeration(new NaiveSaturationEngine())
     );
@@ -78,9 +90,25 @@ public class App {
         } else if (line.strip().equals("atomic-rewrite")) {
             return new AppCommand.AtomicRewriteRegisteredRules();
         } else if (line.startsWith("rewrite ")) {
-            final var queryString = line.substring("rewrite ".length());
-            final var query = AppFormulaParsers.conjunctiveQuery.parse(queryString);
-            return new AppCommand.Rewrite(query);
+            var restString = line.substring("rewrite ".length());
+
+            final AppCommand.Rewrite.EnumerationImplChoice enumerationImplChoice;
+            if (restString.startsWith("naive ")) {
+                enumerationImplChoice = new AppCommand.Rewrite.EnumerationImplChoice.Naive();
+                restString = restString.substring("naive ".length());
+            } else if (restString.startsWith("normalizing ")) {
+                enumerationImplChoice = new AppCommand.Rewrite.EnumerationImplChoice.Normalizing();
+                restString = restString.substring("normalizing ".length());
+            } else if (restString.startsWith("dfs-normalizing ")) {
+                enumerationImplChoice = new AppCommand.Rewrite.EnumerationImplChoice.DFSNormalizing();
+                restString = restString.substring("dfs-normalizing ".length());
+            } else {
+                throw new RuntimeException("Expected one of naive, normalizing, dfs-normalizing for enumeration implementation choice");
+            }
+
+            final var query = AppFormulaParsers.conjunctiveQuery.parse(restString);
+
+            return new AppCommand.Rewrite(query, enumerationImplChoice);
         } else if (line.strip().equals("help")) {
             return new AppCommand.Help();
         } else {
@@ -128,9 +156,18 @@ public class App {
             log("Rewritten rules:");
             rewrittenRules.forEach(rule -> log("  " + formatGTGD(rule)));
         } else if (command instanceof AppCommand.Rewrite rewrite) {
-            log("Rewriting query:" + rewrite.query() + " under the following rules:");
-            currentState.registeredRules().forEach(rule -> log("  " + formatGTGD(rule)));
+            final GuardedRuleAndQueryRewriter rewriter;
+            if (rewrite.implChoice() instanceof AppCommand.Rewrite.EnumerationImplChoice.Naive) {
+                rewriter = naiveDPRewriter;
+            } else if (rewrite.implChoice() instanceof AppCommand.Rewrite.EnumerationImplChoice.Normalizing) {
+                rewriter = normalizingDPRewriter;
+            } else {
+                rewriter = dfsNormalizingDPRewriter;
+            }
 
+            log("Rewriting query:" + rewrite.query());
+            log("  using " + rewriter + ", with registered rules:");
+            currentState.registeredRules().forEach(rule -> log("  " + formatGTGD(rule)));
             final var beginRewriteNanoTime = System.nanoTime();
             final var rewriteResult = rewriter.rewrite(currentState.registeredRules(), rewrite.query());
             final var rewriteTimeNanos = System.nanoTime() - beginRewriteNanoTime;
@@ -153,7 +190,7 @@ public class App {
             log("  add-rule <rule>");
             log("  show-rules");
             log("  atomic-rewrite");
-            log("  rewrite <query>");
+            log("  rewrite <naive|normalizing|dfs-normalizing> <query>");
             log("  help");
             log("  exit");
         } else {

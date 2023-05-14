@@ -13,7 +13,17 @@ public sealed interface AppCommand {
     record AtomicRewriteRegisteredRules() implements AppCommand {
     }
 
-    record Rewrite(ConjunctiveQuery query) implements AppCommand {
+    record Rewrite(ConjunctiveQuery query, EnumerationImplChoice implChoice) implements AppCommand {
+        public sealed interface EnumerationImplChoice {
+            record Naive() implements EnumerationImplChoice {
+            }
+
+            record Normalizing() implements EnumerationImplChoice {
+            }
+
+            record DFSNormalizing() implements EnumerationImplChoice {
+            }
+        }
     }
 
     record Help() implements AppCommand {
