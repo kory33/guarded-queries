@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls;
+package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -11,7 +11,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact;
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
@@ -29,10 +29,14 @@ import java.util.stream.Stream;
 
 import static io.github.kory33.guardedqueries.core.utils.MappingStreams.*;
 
-public final class NormalizingDPTableSEComputation implements SubqueryEntailmentComputation {
+/**
+ * An implementation of subquery entailment enumeration using a DP table
+ * plus a simple normalization.
+ */
+public final class NormalizingDPTableSEEnumeration implements SubqueryEntailmentEnumeration {
     private final DatalogSaturationEngine datalogSaturationEngine;
 
-    public NormalizingDPTableSEComputation(final DatalogSaturationEngine datalogSaturationEngine) {
+    public NormalizingDPTableSEEnumeration(final DatalogSaturationEngine datalogSaturationEngine) {
         this.datalogSaturationEngine = datalogSaturationEngine;
     }
 
@@ -79,7 +83,7 @@ public final class NormalizingDPTableSEComputation implements SubqueryEntailment
                 // the existential rule to the instance by a join algorithm,
                 // and then filter out those that do not preserve the names.
                 //
-                // NORMALIZATION: unlike in NaiveDPTableSEComputation,
+                // NORMALIZATION: unlike in NaiveDPTableSEEnumeration,
                 // when we apply an existential rule, we "reuse" local names below
                 // maxArityOfAllPredicatesUsedInRules (since we don't care
                 // about the identity of local names at all, we can ignore the
@@ -510,7 +514,7 @@ public final class NormalizingDPTableSEComputation implements SubqueryEntailment
 
     @Override
     public String toString() {
-        return "NormalizingDPTableSEComputation{" +
+        return "NormalizingDPTableSEEnumeration{" +
                 "datalogSaturationEngine=" + datalogSaturationEngine +
                 '}';
     }

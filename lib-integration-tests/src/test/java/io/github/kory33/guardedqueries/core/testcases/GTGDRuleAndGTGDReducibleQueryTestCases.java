@@ -104,7 +104,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
     }
 
     public static class Arity3Rule_0 {
-        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation / NormalizingDPTableSEComputation
+        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEEnumeration / NormalizingDPTableSEEnumeration
         public static final GTGDRuleAndGTGDReducibleQuery existentialJoinQuery = new GTGDRuleAndGTGDReducibleQuery(
                 GTGDRuleSets.arity3Rule_0,
                 new GTGDReducibleConjunctiveQuery(
@@ -127,7 +127,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
                 )
         );
 
-        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation / NormalizingDPTableSEComputation
+        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEEnumeration / NormalizingDPTableSEEnumeration
         public static final GTGDRuleAndGTGDReducibleQuery existentialGuardedQuery_0 = new GTGDRuleAndGTGDReducibleQuery(
                 GTGDRuleSets.arity4Rule,
                 new GTGDReducibleConjunctiveQuery(
@@ -139,7 +139,7 @@ public class GTGDRuleAndGTGDReducibleQueryTestCases {
                 )
         );
 
-        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEComputation / NormalizingDPTableSEComputation
+        // WARNING: This particular query takes too much time + heap space to rewrite using NaiveDPTableSEEnumeration / NormalizingDPTableSEEnumeration
         public static final GTGDRuleAndGTGDReducibleQuery existentialJoinQuery_0 = new GTGDRuleAndGTGDReducibleQuery(
                 GTGDRuleSets.arity4Rule,
                 new GTGDReducibleConjunctiveQuery(

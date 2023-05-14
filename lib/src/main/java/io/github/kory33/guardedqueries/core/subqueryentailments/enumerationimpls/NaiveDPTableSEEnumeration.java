@@ -1,4 +1,4 @@
-package io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls;
+package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -11,7 +11,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact;
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery;
@@ -29,10 +29,13 @@ import java.util.stream.Stream;
 
 import static io.github.kory33.guardedqueries.core.utils.MappingStreams.*;
 
-public final class NaiveDPTableSEComputation implements SubqueryEntailmentComputation {
+/**
+ * An implementation of subquery entailment enumeration using a DP table.
+ */
+public final class NaiveDPTableSEEnumeration implements SubqueryEntailmentEnumeration {
     private final DatalogSaturationEngine datalogSaturationEngine;
 
-    public NaiveDPTableSEComputation(final DatalogSaturationEngine datalogSaturationEngine) {
+    public NaiveDPTableSEEnumeration(final DatalogSaturationEngine datalogSaturationEngine) {
         this.datalogSaturationEngine = datalogSaturationEngine;
     }
 
@@ -488,8 +491,8 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
         //        The implementation in this class completely ignores this aspect of the tree-structure of the chase.
         //
         //   Out of these four problems,
-        //    - Problem 3 has been addressed by NormalizingDPTableSEComputation, and
-        //    - Problem 4 has been further addressed by DFSNormalizingDPTableSEComputation.
+        //    - Problem 3 has been addressed by NormalizingDPTableSEEnumeration, and
+        //    - Problem 4 has been further addressed by DFSNormalizingDPTableSEEnumeration.
         //
         //   The most crucial optimization point is Problem 2, which greatly affects how much
         //   exponential blowup we have to deal with. The challenge is to implement the following:
@@ -510,7 +513,7 @@ public final class NaiveDPTableSEComputation implements SubqueryEntailmentComput
 
     @Override
     public String toString() {
-        return "NaiveDPTableSEComputation{" +
+        return "NaiveDPTableSEEnumeration{" +
                 "datalogSaturationEngine=" + datalogSaturationEngine +
                 '}';
     }

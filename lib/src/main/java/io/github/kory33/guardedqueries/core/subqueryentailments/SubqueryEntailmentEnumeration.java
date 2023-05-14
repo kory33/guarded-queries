@@ -105,7 +105,7 @@ import java.util.stream.Stream;
  * </ol>
  */
 @FunctionalInterface
-public interface SubqueryEntailmentComputation {
+public interface SubqueryEntailmentEnumeration {
     Stream<SubqueryEntailmentInstance> apply(
             FunctionFreeSignature extensionalSignature,
             SaturatedRuleSet<? extends NormalGTGD> saturatedRuleSet,

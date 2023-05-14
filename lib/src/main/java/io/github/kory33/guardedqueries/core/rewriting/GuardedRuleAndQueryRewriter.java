@@ -12,7 +12,7 @@ import io.github.kory33.guardedqueries.core.fol.LocalVariableContext;
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentComputation;
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;
 import io.github.kory33.guardedqueries.core.utils.extensions.*;
 import uk.ac.ox.cs.gsat.AbstractSaturation;
@@ -28,23 +28,23 @@ import java.util.stream.Stream;
  * given set of guarded rules and the given conjunctive query.
  * <p>
  * Each object of this class makes use of a {@link AbstractSaturation} from
- * Guarded-Saturation and a {@link SubqueryEntailmentComputation} object.
+ * Guarded-Saturation and a {@link SubqueryEntailmentEnumeration} object.
  * The former is used to compute the guarded saturation of the given guarded rules,
  * and the latter is used to compute the entailment relation of "small test instances"
  * to subqueries of the given query.
  * <p>
- * We convert each outcome of {@link SubqueryEntailmentComputation} into a
+ * We convert each outcome of {@link SubqueryEntailmentEnumeration} into a
  * Datalog rule deriving a "subgoal", which is then combined into the final
  * goal predicate using what we call the "subgoal binding rule".
  * <p>
- * Depending on the implementation of the {@link SubqueryEntailmentComputation} used,
+ * Depending on the implementation of the {@link SubqueryEntailmentEnumeration} used,
  * the outcome of the rewriting could be huge, so it is highly recommended to
  * "minimize" the outcome using {@link DatalogRewriteResult#minimizeSubgoalDerivationRulesUsing}
  * before running the output program on a database instance.
  */
 public record GuardedRuleAndQueryRewriter(
         AbstractSaturation<? extends GTGD> saturation,
-        SubqueryEntailmentComputation subqueryEntailmentComputation
+        SubqueryEntailmentEnumeration subqueryEntailmentEnumeration
 ) {
     /**
      * A result of rewriting a single maximally bound-variable-connected component of the
@@ -145,7 +145,7 @@ public record GuardedRuleAndQueryRewriter(
                                     return ruleLocalVariableContext.getFreshVariable();
                                 }
                             } else {
-                                // the contract of SubqueryEntailmentComputation guarantees that
+                                // the contract of SubqueryEntailmentEnumeration guarantees that
                                 // local names bound to bound variables should not be bound
                                 // to a query constant
                                 assert !queryConstantEmbeddingInverse.containsKey(localName);
@@ -243,7 +243,7 @@ public record GuardedRuleAndQueryRewriter(
         );
 
         final Collection<DatalogRule> subgoalDerivationRules =
-                subqueryEntailmentComputation
+                subqueryEntailmentEnumeration
                         .apply(extensionalSignature, saturatedRules, boundVariableConnectedQuery)
                         .map(subqueryEntailment -> subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms))
                         .toList();
@@ -396,7 +396,7 @@ public record GuardedRuleAndQueryRewriter(
     public String toString() {
         return "GuardedRuleAndQueryRewriter{" +
                 "saturation=" + saturation +
-                ", subqueryEntailmentComputation=" + subqueryEntailmentComputation +
+                ", subqueryEntailmentEnumeration=" + subqueryEntailmentEnumeration +
                 '}';
     }
 }

@@ -2,18 +2,18 @@ package io.github.kory33.guardedqueries.core.gsatequivalencetests;
 
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine;
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter;
-import io.github.kory33.guardedqueries.core.subqueryentailments.computationimpls.NormalizingDPTableSEComputation;
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.DFSNormalizingDPTableSEEnumeration;
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQueryTestCases;
 import io.github.kory33.guardedqueries.core.testharnesses.GSatEquivalenceTestHarness;
 import org.junit.jupiter.api.Test;
 import uk.ac.ox.cs.gsat.GSat;
 
-public class NormalizingDPTableSEComputationTests {
+public class DFSNormalizingDPTableSEEnumerationTests {
     private static final GSatEquivalenceTestHarness harness = new GSatEquivalenceTestHarness(
             GSat.getInstance(),
             new GuardedRuleAndQueryRewriter(
                     GSat.getInstance(),
-                    new NormalizingDPTableSEComputation(new NaiveSaturationEngine())
+                    new DFSNormalizingDPTableSEEnumeration(new NaiveSaturationEngine())
             )
     );
 
