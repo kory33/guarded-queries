@@ -1366,14 +1366,14 @@ We illustrate the overall architecture in \Cref{figure:implementation-architectu
 \label{figure:implementation-architecture}
 \end{figure}
 
-\section{Tests}
-\label{section:tests}
+\section{Correctness Tests}
+\label{section:correctness-tests}
 
 The codebase contains a naive Datalog engine, a (nested-loop) join algorithm, output rule subsumption and many utility methods, all of which are extensively property-based-tested with ScalaCheck \cite{scalacheck}. In addition, the overall rewriting system is integration-tested with JUnit 5 \cite{junit}.
 
-Since there are no other implementations for GTGDs-CQ rewriting, we could not compare our algorithm to existing implementations.
+Since there are no other implementations for GTGDs-CQ rewriting, we could not compare our algorithm to existing implementations on general queries.
 
-However, we can translate an ``acyclic" existential query into an atomic query by adding a few guarded rules. For instance, the query $Q = \exists x, y. R(w, x) \wedge S(y, x)$, but if we add rules \begin{align*}
+However, we can translate an ``acyclic" existential query into an atomic query by adding a few guarded rules. For instance, the query $Q = \exists x, y. R(w, x) \wedge S(y, x)$ is existential, but if we add rules \begin{align*}
   \forall x, y.\ S(y, x) &\rightarrow \mathrm{Goal}_1(x) \\
   \forall w, x.\ R(w, x) \wedge \mathrm{Goal}_1(x) &\rightarrow \mathrm{Goal}(w)
 \end{align*}
@@ -1389,22 +1389,22 @@ With this observation, we manually translated a few acyclic queries, rewritten b
 \newpage
 \chapter{Conclusions and Further Discussion}
 
-With the help of atomic rewritings, we revised the theory of GTGD chases by introducing the notion of \emph{shortcutting chase trees}. Furthermore, we discussed how the connectedness of the query is related to the decomposition of a query homomorphism and devised a recursive decision procedure based on such decompositions.
+With the help of atomic rewritings, we revised the theory of GTGD chases by introducing the notion of \emph{shortcutting chase trees}. Furthermore, we observed how a query homomorphism is decomposed in a shortcutting chase tree and devised a recursive decision procedure based on the observation. By further analysing the structure of the chase tree, we showed that \emph{local instances} can convey how queries are satisfied. Based on this analysis, we developed a rewriting algorithm employing the notion of \emph{subquery entailments}.
 
-By further analysing the structure of the shortcutting chase tree, we observed that \emph{local instances} can convey how queries are satisfied. Based on this analysis, we developed a rewriting algorithm employing the notion of \emph{subquery entailments} and discussed possible optimisations.
+We discussed issues encountered by a naive algorithm for enumerating subquery entailments and provided a few optimisation techniques. Finally, we implemented the optimised version of the algorithm, which can handle arity-2 rules and a few constants in the rule and the query.
 
-Finally, we provided an implementation of the algorithm, which can handle arity-2 rules and a few constants in the rule and the query.
-
-\section{Liminations and Future Work}
+\section{Limitations and Future Work}
 \label{section:limitations-and-future-work}
 
-The current implementation suffers from blowups, doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}). Our system, therefore, cannot yet be applied to real-world ontologies, which typically contain many constants and predicates.
+% extension to wider class of TGDs?
 
-To deal with a higher number of constants and predicates, we must trim down the subquery entailment problem space as much as possible, possibly by analysing the structure of the input rules. For instance, if a rule constant $c$ only appears in a head, it does not make sense to consider a local instance containing $c$ because there is no additional rule we can fire by having such a fact. Another crucial thing to consider is the possibility of instance subsumption, as discussed in \Cref{naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing any fact with $R$ no longer need to be tested for entailment, drastically reducing the search space.
+The current implementation lacks optimisations for trimming down the space of subquery entailment problem instances. Instead, it always explores the whole space, whose size is doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}), making it impractical to rewrite large inputs such as real-world ontologies. For instance, if a rule constant $c$ only appears in heads, it is redundant to consider a local instance containing facts with $c$ since there is no rule we can fire only by having such facts.
 
-As remarked in \Cref{section:tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. However, our system does not perform any such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even if induced subqueries are acyclic.
+Another crucial optimisation concerns instance subsumption, as discussed in \Cref{naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing a fact with $R$ no longer need to be tested for entailment, reducing the search space by a factor of $16 = 2^4$. We leave for future work the method for efficiently controlling the search space.
 
-Finally, our prototypical system spends most CPU time in Datalog-saturating and chasing the local instances. This is primarily due to using an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
+Moreover, as remarked in \Cref{section:correctness-tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. Our system does not perform any such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even when induced subqueries are acyclic. Investigating the effectiveness of such input transformation is left for future work.
+
+Finally, our prototypical system spends most CPU time in Datalog-saturating and chasing the local instances. For simplicity, we use an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
 
 \printbibliography
 
