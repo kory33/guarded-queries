@@ -83,50 +83,58 @@
 \maketitle
 
 \newpage
-\section*{Abstract}
+\thispagestyle{empty}
+\
+\newpage
+\pagenumbering{roman}
 
-The class of Guarded Tuple-Generating Dependencies (GTGDs) is an expressive class of first-order formulae for which conjunctive query answering is decidable. Even though the problem is \textsc{2Exptime}-complete in general, it has been shown that, by essentially performing enough pre-computation, one can \emph{rewrite} GTGD conjunctive query answering problem to a Datalog query, which can be run in time polynomial to the size of the input database. Nevertheless, no work has implemented the rewriting algorithm for general conjunctive queries under GTGDs. By utilising the recent implementation for rewriting GTGDs over atomic queries, we revisit the theory of \emph{chases}, derive a rewriting algorithm for general queries and discuss its implementation and further optimisations.
+\chapter*{\centering Abstract}
 
+The class of Guarded Tuple-Generating Dependencies (GTGDs) is an expressive class of first-order formulae for which conjunctive query answering is decidable. Even though the problem is \textsc{2Exptime}-complete in general, it has been shown that, by essentially performing enough pre-computation, one can \emph{rewrite} GTGD conjunctive query answering problem to a Datalog query, which can be run in time polynomial to the size of the input database. Nevertheless, no work has implemented the rewriting algorithm for general conjunctive queries under GTGDs. By utilising the recent implementation for rewriting GTGDs over atomic queries, we revisit the theory of chases, derive a rewriting algorithm for general queries and discuss its implementation and further optimisations.
+
+\newpage
+\
 \newpage
 \tableofcontents
 \newpage
 
 \newpage
+\pagenumbering{arabic}
 \chapter{Introduction}
 
 \section{Background}
 
-Consider the following situation: (TODO; Think about some OMQA instance where two independent parties provide a data over which we would like to perform an existential join query.)
+\emph{Query answering} under data integration rules is one of the central problems in knowledge representation and reasoning. To give an idea of the problem, consider the following \emph{relational database}, a collection of tuples in relations.
 
-We would now like to find out (TODO; insert here the query content in English). This amounts to finding all \emph{answers} to a first-order existential sentence (TODO; insert here the query in first-order language), where each answer is a \emph{substitution} mapping free variables (TODO) to constants in data sources that make the sentence true.
+$$
+\mathcal{D} = \{ U(a), R(b, c), S(d, d) \}
+$$
 
-Unlike querying a single relational database, it is not sufficient to perform a non-existential join query (TODO; insert here the query with existentials stripped away) and project the resulting tuples to ignore uninteresting components. Even though no constant in the input database matches variables in the partially-applied query (TODO; insert here a partially-applied query), we can deduce from the constraints that there must be some \emph{unknown} values that matches (TODO; insert here a partially-applied query).
+Suppose that, as domain knowledge, we know that
+\begin{itemize}
+  \item for any $X$, if $U(X)$ is a relation then there should be some value $Z$ with $R(X, Z)$, and
+  \item for any $X$, $Y$, $R(X, Y)$ should imply $S(X, X)$.
+\end{itemize}
 
-In general, the problem of answering queries given (1) a collection of \emph{incomplete} data sources, (2) a finite set of \emph{data integration rules} that can derive the existence of new tuples and (3) a conjunctive query (CQ) is called Ontology-Mediated Query Answering (OMQA) \cite{bienvenu16}.
+The database $\mathcal{D}$ is \emph{incomplete}, as it does not satisfy the abovementioned constraints. Nevertheless, we could still ask a question of the form: ``\emph{If} the database had been fixed by adding some facts not yet recorded by the information system at the moment, what values $v$ would satisfy $S(v, v)$?'' In the example above, we can say that all of $a$, $b$, and $d$ become answers to this question regardless of how we fix $\mathcal{D}$.
 
-Data integration rules in OMQA problem instances are often written as Tuple-Generating Dependencies (TGDs), which are first-order sentences of the form $\forall \vec{x}.\ \Phi(\vec{x}, \vec{c}) \rightarrow \exists \vec{y}.\ \Psi(\vec{x}, \vec{y}, \vec{c}')$. In the example above, for instance, the rules can be translated into logical formulae (TODO: translate the rules into TGDs). Formulated this way, we can think of OMQA problems as finding all assignments $\sigma$ of free variables in the input query that validate the logical entailment relation $\mathcal{D} \cup \Sigma \models \sigma(Q)$, where $\mathcal{D}$ is the conjunction of all records present in data sources, $\Sigma$ is the data integration rules and $Q$ is the input CQ.
+This type of problem typically arises when data sources are distributed, such as in the Semantic Web, and the querying party needs to integrate the data to make sense of possibly incomplete data.
 
-Unfortunately, however, OMQA problems with general TGDs turned out to be undecidable \cite{beeri_vardi_1981}. In response to this, \cite{cali_gottlob_kifer_2013} identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves OMQA problems decidable, yet expressive enough to contain several classes of description logics.
+A class of logical formulas known as Tuple Generating Dependencies (TGDs), which are of the form $\forall \vec{x}. \beta \rightarrow \exists \vec{y}.\ \eta$, could describe data integrity rules. In the example above, the two rules would be written as $\forall X.\ U(X) \rightarrow \exists Z.\ R(X, Z)$ and $\forall X, Y.\ R(X, Y) \rightarrow S(X, X)$.
 
-Despite OMQA problems over GTGDs being known to be decidable for several years, only a small number of work have been done to develop computationally tractable algorithms for these problems. A recent work \cite{kappelmann_2019} suggested that we can efficiently rewrite a set of GTGD rules into a so-called \emph{Datalog saturation} of it, which is a set of existential-free TGDs that is "equivalent" to the original rule set for existential-free queries. The rewriting algorithm has been improved, implemented and evaluated in \cite{benedikt_buron_germano_kappelmann_motik_2022}. 
+Unfortunately, query answering under general TGDs is undecidable \cite{beeri_vardi_1981}. A line of work, including \cite{cali_gottlob_kifer_2013}, identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves query-answering decidable yet much more expressive than description logics used for ontological reasoning.
 
-(TODO: include a diagram indicating the scheme of how Datalog saturation is incorporated into OMQA)
+The first result that opened up the possibility towards practical query answering is shown in \cite{barany_benedikt_cate_2013}, which states that we can compute a \emph{Datalog rewriting} of (frontier) guarded TGDs and a conjunctive query. Roughly speaking, a Datalog rewriting is a set of existential-free TGDs that gives the same answer as the original query. It is well-known that a fixed Datalog program can be run in a polynomial time on a database.
 
-Even though the implementation by \cite{benedikt_buron_germano_kappelmann_motik_2022} only supports atomic queries out-of-the-box, we can reduce any \emph{acyclic} existential queries into a few guarded rules and a single goal atom containing just the free variables in the original query. For the (TODO: reference to the example given at the beginning of Section 1.1) query, we can add a (TODO)-ary goal predicate $\mathrm{Goal}(-, -)$ and rules (TODO: apply the reduction). However, such reduction does not apply to cyclic queries (e.g. a \emph{triangle query} $\exists x,y,z.\ R(w, x, y) \land S(y, z) \land S(z, x)$) in general.
+More recently, \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented the system for answering \emph{atomic} queries over GTGDs. Their algorithm takes the GTGD rule set $\Sigma$ as an input and outputs a Datalog program that derives all tuples which could have been derived using $\Sigma$. We call this program an \emph{atomic rewriting} of $\Sigma$ to distinguish from rewritings of general conjunctive queries.
 
-(TODO: The following two paragraphs clearly do not fit here, but I think they should be present in the introduction, or else the exact problem I worked on is very difficult to communicate. Reorganize?)
-
-It has been known that the entailment $\mathcal{D} \cup \Sigma \models \sigma(Q)$ holds if and only if $\sigma(Q)$ is witnessed by the \emph{chase} of $\mathcal{D}$, which, informally speaking, is the result of \emph{repairing} $\mathcal{D}$ by generating tuples using rules in $\Sigma$ infinitely many times. % citation needed
-
-Moreover, it has also been known that there exists a \emph{Datalog rewriting} of a finite set of GTGD rules and an arbitrary CQ \cite{barany_benedikt_cate_2013}. We will refer the problem of finding a Datalog rewriting of a GTGD rule set and a CQ by \emph{GTGD-Datalog Rewriting}. Note that Datalog-saturating a GTGD rule set is a special case of GTGD-Datalog Rewriting problem where the query is always atomic.
-
-\emph{To the best of my knowledge, however, no work has implemented a query-answering procedure for general CQs under GTGDs}. This project aims to bring the theory closer to implementations using atomic rewritings produced by \cite{benedikt_buron_germano_kappelmann_motik_2022}. Ultimately, we provide a working prototype of a query-answering system that works with GTGDs.
+To our knowledge, however, no work has yet implemented a query-answering procedure for general conjunctive queries under GTGDs. This project aims to bring the theory closer to implementations using atomic rewritings produced by \cite{benedikt_buron_germano_kappelmann_motik_2022}. Ultimately, we provide a working prototype of a query-answering system that works with GTGDs.
 
 \section{Contribution of This Work}
 
 The primary theoretical contribution of this work is the development of a concrete Datalog rewriting algorithm. On our way, we introduce a variant of chase which we call \emph{shortcutting chase tree} and develop some theory concerning query satisfaction within the chase structure. We then apply the theory to derive a Datalog rewriting, demonstrating room for further optimisations.
 
-In addition to the theoretical work, we provide the first implementation of the GTGD rewriting algorithm in Java, incorporating some optimisations which we discuss.
+In addition to the theoretical work, we provide the first implementation of the GTGD rewriting algorithm in Java, incorporating some optimisations we will have discussed.
 
 \section{Outline of This Report}
 
@@ -1384,7 +1392,6 @@ under rules
   \forall x_1.\ R(x_1, c_1) \wedge P(x_1) &\rightarrow \exists y_1.\ R(c_1, y_1) \wedge R(y_1, x_1) \wedge P(y_1), \\
   \forall x_1.\ R(c_1, x_1) &\rightarrow R(x_1, c_1) \wedge P(x_1).
 \end{align*}
-
 The experiment is performed on a Windows 11 computer with an Intel Core i9-9900 CPU @ 3.10 GHz and 64 GB of RAM.
 
 \begin{figure}
@@ -1423,7 +1430,7 @@ Rewritten query:
     IP0_GOAL(w) :- R(w,c_3), IP0_SQ0_GOAL(w)
 \end{Verbatim}
 %TC:endignore
-\caption{An interaction with the command-line interface.}
+\caption{An interaction with the command-line interface. The user uses the algorithm with all three optimisations applied.}
 \label{figure:example-command-line-interaction}
 \end{figure}
 
