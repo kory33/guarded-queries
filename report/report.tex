@@ -90,7 +90,6 @@
 
 \newpage
 \chapter{Introduction}
-\label{introduction}
 
 \section{Background}
 
@@ -153,7 +152,7 @@ This chapter introduces terminologies and notations, which we will use throughou
 
 \section{Formulas}
 
-We fix countably infinite collections of \emph{constants}, \emph{variables} and \emph{nulls}. Nulls are similar to variables but play a similar role as Skolem constants (at the beginning of \Cref{characterising-query-entailment-under-gtgds}, we will see examples illustrating the use of nulls). A \emph{term} is either a constant, a variable or a null.
+We fix countably infinite collections of \emph{constants}, \emph{variables} and \emph{nulls}. Nulls are similar to variables but play a similar role as Skolem constants (at the beginning of \Cref{chapter:characterising-query-entailment-under-gtgds}, we will see examples illustrating the use of nulls). A \emph{term} is either a constant, a variable or a null.
 
 We also fix a countably infinite set of \emph{predicates}. A predicate $P$ has its associated arity $\Arity{P} \in \mathbb{N}_{\geq 0}$. An \emph{atom} is a string of the form $P(t_1, \ldots, t_{\Arity{P}})$, where each $t_i$ is a term. A \emph{fact} is an atom not containing a variable, and a \emph{base fact} is a fact not containing nulls. We write $\Terms(S)$, $\Consts(S)$, $\Vars(S)$ and $\Nulls(S)$ for the sets of terms, constants, variables and nulls appearing in an object $S$ (such as a conjunction of atoms).
 
@@ -200,12 +199,12 @@ Consider the following problem:
    Given an existential-free conjunctive query $Q$, an input database $\mathcal{D}$ and a Datalog program $P$, find all substitutions (each of which is an \emph{answer} to the query) $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup P \models \alpha(Q)$.
 \end{problem}
 
-Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation} (\Cref{naive-evaluation-algorithm}). Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
+Several algorithms for this problem are known, and \cite{bancilhon_ramakrishnan_1986} compared a few classic algorithms. One of the simplest is the \emph{Naive Evaluation} (\Cref{algorithm:naive-evaluation-algorithm}). Roughly speaking, we keep adding tuples produced by rules in $P$ to the input database until we reach a fix-point. We then evaluate $Q$, which is merely a join query, on the populated database to obtain all answers.
 
 %TC:ignore
 \begin{algorithm}
 \caption{Answering Datalog query using Naive Evaluation}
-\label{naive-evaluation-algorithm}
+\label{algorithm:naive-evaluation-algorithm}
 \begin{algorithmic}[1]
 \Procedure{DatalogSaturate}{Datalog program $P$, input database $\mathcal{D}$}
   \State $\mathcal{D}_\mathrm{current} \gets \mathcal{D}$
@@ -248,7 +247,7 @@ A recent work \cite{benedikt_buron_germano_kappelmann_motik_2022} implemented an
 Our ultimate goal is to answer the following problem.
 
 \begin{problem}[GTGDs-CQ Answering]
-\label{GTGDs-CQ-Answering}
+\label{problem:GTGDs-CQ-Answering}
   Given a finite set $\Sigma$ of GTGDs, a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a base instance $\mathcal{D}$, what are the \emph{answers} to $Q$ under $\Sigma$ and $\mathcal{D}$, i.e. substitutions $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$ such that $\mathcal{D} \cup \Sigma \models \alpha(Q)$?
 \end{problem}
 
@@ -260,13 +259,13 @@ It is known that a conjunctive query under GTGDs admits \emph{Datalog rewritings
   \qed
 \end{definition}
 
-In order to answer \Cref{GTGDs-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
+In order to answer \Cref{problem:GTGDs-CQ-Answering}, it is desirable to run a Datalog rewriting of the pair $(\Sigma, Q)$ on $\mathcal{D}$ instead of directly verifying $\mathcal{D} \cup \Sigma \models \alpha(Q)$ for every possible substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$, since running a fixed Datalog program on $\mathcal{D}$ only takes time polynomial in the size of $\mathcal{D}$ \cite{dantsin_eiter_gottlob_voronkov_2001}.
 
 This project aims to derive an algorithm that produces Datalog rewritings for arbitrary GTGDs-CQ pairs. We achieve this using the atomic rewriting produced by the Guarded-saturation algorithm.
 
 \newpage
 \chapter{Characterising Query Entailment under GTGDs}
-\label{characterising-query-entailment-under-gtgds}
+\label{chapter:characterising-query-entailment-under-gtgds}
 
 \section{Tree-Like Chase Proofs}
 
@@ -289,7 +288,7 @@ To deal with this issue, \cite{benedikt_buron_germano_kappelmann_motik_2022} int
 In this section, we focus on finite chase trees. The following definition incorporates ideas from \cite{benedikt_buron_germano_kappelmann_motik_2022} and \cite{kappelmann_2019}.
 
 \begin{definition}
-\label{tree-like-chase-proof}
+\label{definition:tree-like-chase-proof}
   Given a set $\Sigma$ of single-headed GTGDs and a base instance $\mathcal{D}$, a \emph{tree-like chase proof over $\Sigma$ from $\mathcal{D}$} is a finite sequence of chase trees $C_1, \ldots, C_n$ such that
   \begin{itemize}
     \item $C_1 = (T, \mu)$ is a chase tree with a single vertex $v$ together with $\mu(v) = \mathcal{D}$.
@@ -309,22 +308,22 @@ In this section, we focus on finite chase trees. The following definition incorp
 A tree-like chase proof over $\Sigma$ from $\mathcal{D}$ represents a process of supplementing $\mathcal{D}$ according to $\Sigma$. We can derive new tuples using a chase step, stepping off to a child node when firing an existential rule. With a propagation step, we can retrieve a fact derived at a descendant node to its ancestor.
 
 \begin{example}
-\label{tree-like-chase-proof-example}
+\label{example:tree-like-chase-proof-example}
   Suppose that $\Sigma$ contains the following single-headed GTGDs, where $c_1$ is a constant.
   \[\begin{array}{rcrcl}
     \tau_1 &=& \forall x_1,x_2.\ A(x_1, x_2) &\rightarrow& \exists y.\ B(x_1, y) \\
     \tau_2 &=& \forall x_1,x_2.\ B(x_1, x_2) &\rightarrow& C(x_1, c_1) \wedge A(x_2, c_1) \\
     \tau_3 &=& \forall x_1,x_2.\ A(x_1, x_2) \wedge C(x_1, x_2) &\rightarrow& \exists y.\ D(x_2, y)
   \end{array}\]
-  If we start with an instance $\mathcal{D} = \{A(c_4, c_1)\}$, we can perform a chase step with $\tau_1$, then chase with $\tau_2$, propagate a fact $C(c_4, c_1)$ to the root and finally fire $\tau_3$. We illustrate the process in \Cref{tree-like-chase-proof-example-diagram}.
+  If we start with an instance $\mathcal{D} = \{A(c_4, c_1)\}$, we can perform a chase step with $\tau_1$, then chase with $\tau_2$, propagate a fact $C(c_4, c_1)$ to the root and finally fire $\tau_3$. We illustrate the process in \Cref{figure:tree-like-chase-proof-example}.
   \qed
 \end{example}
 
 \begin{figure}[t]
   \centering
   \includesvg{./diagrams/tree-like-chase-proof-example.drawio.svg}
-  \caption{A tree-like chase proof with rules in \Cref{tree-like-chase-proof-example}. At each stage, elements newly added to the chase tree are highlighted in red.}
-  \label{tree-like-chase-proof-example-diagram}
+  \caption{A tree-like chase proof with rules in \Cref{example:tree-like-chase-proof-example}. At each stage, elements newly added to the chase tree are highlighted in red.}
+  \label{figure:tree-like-chase-proof-example}
 \end{figure}
 
 Note that we only propagate or inherit facts whose terms appear in the target node. Intuitively, such a restriction can be justified because the guardedness of rules in $\Sigma$ prohibits us from \emph{combining} unrelated terms into new tuples. We cannot hope to fire an existential rule from a node $a \in T$ in a meaningfully novel manner even if we transfer to $a$ a fact with terms not already present in $a$. That is, if we propagated a fact $F$ from $v$ to $a$ and could fire a rule $(\tau, \sigma)$ on $a$ \emph{using} $F$, we could have fired $(\tau, \sigma)$ on $v$ in the first place, provided that $v$ inherited enough facts related to $F$ from $a$\footnote{In fact, $a$ might have more facts with terms in $F$ than $v$ does due to propagation from cousin nodes of $v$. In that case, we could "re-derive" a cousin node $v'$ from $a$ in the same way as how we had derived $v$, and $v'$ should have as many facts related to an isomorphic copy of $F$ as $a$ does.}.
@@ -336,7 +335,7 @@ The restriction mentioned above makes the local structure of tree-like chase pro
 \end{definition}
 
 \begin{proposition}[Tree-width of chase proofs]
-\label{chase-proofs-tree-width}
+\label{proposition:chase-proofs-tree-width}
   Let $\Sigma$ be a set of \emph{single-headed} GTGDs, $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then for every $1 \leq i \leq n$ and every non-root vertex $v$ of $T_i$, $\mu_i(v)$ is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $(T_i, \mu_i)$ are $(K, \Sigma)$-small.
   \begin{proof}
     By induction on $i$. The base case $i = 1$ is vacuous. We look at the rule used to derive $(T_{i+1}, \mu_{i+1})$ from $(T_{i}, \mu_{i})$ and examine the bag at the modified node.
@@ -358,12 +357,12 @@ The restriction mentioned above makes the local structure of tree-like chase pro
 At the same time, as long as conjunctive queries are concerned, tree-like chase proofs prove everything we can reason about the input database $\mathcal{D}$.
 
 \begin{proposition}
-\label{chase-proof-completeness}
+\label{proposition:chase-proof-completeness}
   For any set $\Sigma$ of single-headed GTGDs, an instance $\mathcal{D}$ and a Boolean conjunctive query $Q$, there exists a tree-like chase proof $\ C_1, \ldots, C_n$ over $\Sigma$ from $\mathcal{D}$ such that $C_n \models Q$ if and only if $\mathcal{D} \cup \Sigma \models Q$.
   \begin{proof}[Proof (sketch)] $ $\par
     ($\Longrightarrow$, "soundness" of chase proofs): Suppose that $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ is a tree-like chase proof over $\Sigma$ from $\mathcal{D}$. For each $1 \leq i \leq n$, let $I_i = \bigcup_{v \in T_n} \mu_n(v)$ be the instance containing all facts in $(T_i, \mu_i)$. The sequence $I_1, \ldots, I_n$ is known as a \emph{chase sequence}, and \cite{fagin_kolaitis_miller_popa_2005} showed that $Q$ follows from $\mathcal{D}$ if there is a chase sequence ending with $I_n \models Q$.
 
-    ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. The proof therein decomposes an ordinary chase sequence into a tree-like structure, and the decomposition is performed exactly as in \Cref{tree-like-chase-proof}.
+    ($\Longleftarrow$, "completeness" of chase proofs): This direction is proven in \cite[Proposition 2.6.9]{kappelmann_2019}. The proof therein decomposes an ordinary chase sequence into a tree-like structure, and the decomposition is performed exactly as in \Cref{definition:tree-like-chase-proof}.
   \end{proof}
 \end{proposition}
 
@@ -396,72 +395,71 @@ We can immediately achieve the former objective by computing the Datalog saturat
 \end{definition}
 
 \begin{example}
-\label{sctree-simple-example}
-  Consider the rules in \Cref{tree-like-chase-proof-example}. According to an implementation in \cite{Benedikt_Rewriting_the_Infinite}, the set $\Sigma'$ of the following two rules is an atomic rewriting of $\Sigma$.
+  Consider the rules in \Cref{example:tree-like-chase-proof-example}. According to an implementation in \cite{Benedikt_Rewriting_the_Infinite}, the set $\Sigma'$ of the following two rules is an atomic rewriting of $\Sigma$.
   \[\begin{array}{ccrcl}
     \tau'_1 & = & \forall x_1, x_2.\ B(x_1, x_2) & \rightarrow & C(x_1, c_1) \wedge A(x_2, c_1) \\
     \tau'_2 & = & \forall x_1, x_2.\ A(x_1, x_2) & \rightarrow & C(x_1, c_1)
   \end{array}\]
 
-  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{sctree-simple-example-diagram}. The chase tree is continued indefinitely by chasing with existential rules and Datalog-saturating each layer with $\Sigma'$.
+  A first few layers of $\SCTree{\{ A(c_4, c_1) \}}{\Sigma}$ is illustrated in \Cref{figure:sctree-simple-example}. The chase tree is continued indefinitely by chasing with existential rules and Datalog-saturating each layer with $\Sigma'$.
   \qed
 \end{example}
 
 \begin{figure}[t]
   \centering
   \includesvg{./diagrams/sctree-simple-example.drawio.svg}
-  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{tree-like-chase-proof-example}. The facts highlighted in red are obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{corecursiveness-of-sctree}.}
-  \label{sctree-simple-example-diagram}
+  \caption{A shortcutting chase tree over an instance $\{ A(c_4, c_1) \}$ with rules in \Cref{example:tree-like-chase-proof-example}. The facts highlighted in red are obtained by Datalog-saturating the inherited bag with an atomic rewriting, and dotted boxes indicate substituted bodies used to fire an existential rule. Notice how the subtree rooted at $v_1$ can be obtained as a shortcutting chase of the bag at $v_1$, as remarked in \Cref{remark:corecursiveness-of-sctree}.}
+  \label{figure:sctree-simple-example}
 \end{figure}
 
 The structure of a shortcutting chase tree is very similar to that of a chase proof.
 
 \begin{proposition}
-\label{each-bag-in-sctree-is-k-sigma-small}
+\label{proposition:each-bag-in-sctree-is-k-sigma-small}
   Let $\Sigma$ be a set of single-headed GTGDs and $\mathcal{D}$ an instance. Let $K$ be the maximum arity of predicates that appear in $\mathcal{D} \cup \Sigma$. Then every bag of facts at a non-root node of \emph{$\SCTree{\mathcal{D}}{\Sigma}$} is $(K, \Sigma)$-small. In particular, if $\mathcal{D}$ is $(K, \Sigma)$-small, all bags in $\SCTree{\mathcal{D}}{\Sigma}$ are $(K, \Sigma)$-small.
   \begin{proof}
-    By the same analysis as in the proof of \Cref{chase-proofs-tree-width}.
+    By the same analysis as in the proof of \Cref{proposition:chase-proofs-tree-width}.
   \end{proof}
 \end{proposition}
 
 Expectedly, $\SCTree{\mathcal{D}}{\Sigma}$ is a universal model for $\mathcal{D} \cup \Sigma$, since any finite subtree of $\SCTree{\mathcal{D}}{\Sigma}$ homomorphically embeds into some chase proof.
 
 \begin{lemma}
-\label{sctree-subtree-embeds-into-a-chase-proof}
+\label{lemma:sctree-subtree-embeds-into-a-chase-proof}
   Let $\mathcal{D}$ be an instance and $\Sigma$ a finite set of single-headed GTGDs. Then for any finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$, there exists a tree-like chase proof $C_1, \ldots, C_n$ that admits an instance homomorphism $\sigma: (T, \mu) \rightarrow C_n$.
   \begin{proof}
     By induction on the structure of $(T, \mu)$.
 
-    The base case is $T = \{r\}$, where $r$ is the root of $\SCTree{\mathcal{D}}{\Sigma}$. By \Cref{chase-proof-completeness}, we can construct a chase-proof $C_1, \ldots, C_n$ that aggregates all provable base facts to the root bag.
+    The base case is $T = \{r\}$, where $r$ is the root of $\SCTree{\mathcal{D}}{\Sigma}$. By \Cref{proposition:chase-proof-completeness}, we can construct a chase-proof $C_1, \ldots, C_n$ that aggregates all provable base facts to the root bag.
 
     For the inductive part, take a finite rooted subtree $(T, \mu)$ and a leaf $l$ of $T$, and suppose that $T \setminus \{l\}$ can be homomorphically mapped into the last chase tree in a proof $C_1, \ldots, C_n$. Let $(\tau, \sigma)$ be a pair of a rule and a substitution used to derive $l$.
     
-    We extend the proof $C_1, \ldots, C_n$ by applying a chase step with $(\tau, \sigma)$ to create a child node $c \in C_{n+1}$. By \Cref{chase-proof-completeness}, we can derive all facts whose terms appear in the bag $c$. We have now obtained a chase proof $C_1, \ldots, C_{n+m}$ with $c$ saturated, so $(T, \mu)$ can be homomorphically mapped into $C_{n+m}$.
+    We extend the proof $C_1, \ldots, C_n$ by applying a chase step with $(\tau, \sigma)$ to create a child node $c \in C_{n+1}$. By \Cref{proposition:chase-proof-completeness}, we can derive all facts whose terms appear in the bag $c$. We have now obtained a chase proof $C_1, \ldots, C_{n+m}$ with $c$ saturated, so $(T, \mu)$ can be homomorphically mapped into $C_{n+m}$.
   \end{proof}
 \end{lemma}
 
 \begin{theorem}
-\label{sctree-soundness-completeness}
+\label{theorem:sctree-soundness-completeness}
   For a set $\Sigma$ of single-headed GTGDs, an instance $\mathcal{D}$ and a Boolean conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$, $\mathcal{D} \cup \Sigma \models Q$ if and only if $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
   \begin{proof}[Proof] $ $\par
-    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ of $Q$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. By \Cref{proposition:chase-proof-completeness}, there exists a tree-like chase proof $(T_1, \mu_1), \ldots, (T_n, \mu_n)$ of $Q$ from $\mathcal{D}$ over $\Sigma$. By induction on $1 \leq i \leq n$ and by the construction of $\SCTree{\mathcal{D}}{\Sigma}$, we can embed each $(T_i, \mu_i)$ into $\SCTree{\mathcal{D}}{\Sigma}$. Since $(T_n, \mu_n) \models Q$ and $(T_n, \mu_n)$ embeds into $\SCTree{\mathcal{D}}{\Sigma}$, $\SCTree{\mathcal{D}}{\Sigma} \models Q$.
 
     ($\Longleftarrow$): Suppose $\SCTree{\mathcal{D}}{\Sigma} \models Q$. Then there exists a homomorphism $\sigma:\nobreak Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$.
     
     We may pick a finite rooted subtree $(T, \mu)$ of $\SCTree{\mathcal{D}}{\Sigma}$ such that $\sigma$ restricts to $\sigma: Q \rightarrow (T, \mu)$. To do so, for each $j \in J$, let $V_j \in \SCTree{\mathcal{D}}{\Sigma}$ be a set of vertices whose bags contain the fact $\sigma(A_j)$. Choose $v_j \in V_j$ for each $j \in J$, and let $T_j$ be the set of all ancestors of $v_j$. Finally, let $T = \bigcup_{j \in J} T_j$.
 
-    By applying \Cref{sctree-subtree-embeds-into-a-chase-proof} to $(T, \mu)$, there is a chase proof of $Q$ from $\mathcal{D}$ under $\Sigma$. By soundness of chase proofs (\Cref{chase-proof-completeness}, $\Longrightarrow$) we are done.
+    By applying \Cref{lemma:sctree-subtree-embeds-into-a-chase-proof} to $(T, \mu)$, there is a chase proof of $Q$ from $\mathcal{D}$ under $\Sigma$. By soundness of chase proofs (\Cref{proposition:chase-proof-completeness}, $\Longrightarrow$) we are done.
   \end{proof}
 \end{theorem}
 
 \begin{remark}
-\label{corecursiveness-of-sctree}
+\label{remark:corecursiveness-of-sctree}
   A shortcutting tree chase has a \emph{corecursive} structure: If we write $\mu$ for the bag assignment function of $\SCTree{\mathcal{D}}{\Sigma}$, then for any vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$, the subtree $T_v$ of all descendants (including $v$ itself) of $v$ can be written as $T_v = \SCTree{\mu(v)}{\Sigma}$.
 \end{remark}
 
 \section{Query Satisfaction in Shortcutting Chase Trees}
 
-We now discuss how the structure of the query constrains the structure of query homomorphisms into the shortcutting chase tree. By the end of this chapter, we will have derived a recursive query answering procedure, whose recursive structure will be exploited in \Cref{deriving-a-rewriting} to compute a Datalog rewriting.
+We now discuss how the structure of the query constrains the structure of query homomorphisms into the shortcutting chase tree. By the end of this chapter, we will have derived a recursive query answering procedure, whose recursive structure will be exploited in \Cref{chapter:deriving-a-rewriting} to compute a Datalog rewriting.
 
 A key observation is that, under a certain condition, a \emph{connected} set of variables produces a connected homomorphic image in $\SCTree{\mathcal{D}}{\Sigma}$. To make this intuition precise, we introduce the following terminology.
 
@@ -487,11 +485,11 @@ A set $Z$ of bound variables is $Q$-connected if $Z$ is connected in the hypergr
 \begin{figure}[ht]
   \centering
   \includesvg{./diagrams/query-connectedness-example.drawio.svg}
-  \caption{The hypergraph corresponding to $Q$ in \Cref{query-connectedness-example}.}
+  \caption{The hypergraph corresponding to $Q$ in \Cref{example:query-connectedness}.}
 \end{figure}
 
 \begin{example}
-\label{query-connectedness-example}
+\label{example:query-connectedness}
   Consider a conjunctive query
   \begin{align*}
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
@@ -504,7 +502,7 @@ A set $Z$ of bound variables is $Q$-connected if $Z$ is connected in the hypergr
 We are ready to state the observation.
 
 \begin{proposition}
-\label{term-subtree-is-connected-for-non-rule-constants}
+\label{proposition:term-subtree-is-connected-for-non-rule-constants}
   Let $\SCTree{\mathcal{D}}{\Sigma}$ be a shortcutting chase tree over an instance $\mathcal{D}$. Then for any $t \in \Terms(\SCTree{\mathcal{D}}{\Sigma}) \setminus \Consts(\Sigma)$, the set $V_t$ of vertices in $\SCTree{\mathcal{D}}{\Sigma}$ that contain $t$ forms a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
     Since $t \not\in \Consts(\Sigma)$, $t$ appears in a node only if it is
@@ -522,7 +520,7 @@ We are ready to state the observation.
 \end{definition}
 
 \begin{lemma}[\emph{Homomorphic image of connected variables is connected}]
-\label{image-of-connected-variables-is-connected}
+\label{lemma:image-of-connected-variables-is-connected}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ a $\Consts(\Sigma)$-free query homomorphism, and $Z$ a nonempty, $Q$-connected subset of $\vec{z}$. If we write $T_Z$ for the set of nodes in $\SCTree{\mathcal{D}}{\Sigma}$ whose bags contain a term in $\sigma(Z)$, then $T_Z$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
     For each term $t \in \sigma(Z)$, let $V_t \subseteq \SCTree{\mathcal{D}}{\Sigma}$ be the set of nodes in which $t$ appears. We wish to see that $T_Z = \bigcup_{t \in \sigma(Z)} V_t$ is a rooted subtree of $\SCTree{\mathcal{D}}{\Sigma}$. Since $T_Z$ is nonempty, it suffices to show the connectedness of $T_Z$.
@@ -531,11 +529,11 @@ We are ready to state the observation.
 
     For each $i$, there exists an atom $A$ containing both $x_i$ and $x_{i+1}$. As \newline $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a query homomorphism, there exists a node $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ that contains $\sigma(A)$. In particular, $v$ contains both $\sigma(x_i)$ and $\sigma(x_{i+1})$, so $V_\sigma(x_i) \cap V_\sigma(x_{i+1}) \neq \emptyset$.
 
-    By \Cref{term-subtree-is-connected-for-non-rule-constants}, each $V_\sigma(x_i)$ is connected, so there is a path in $\SCTree{\mathcal{D}}{\Sigma}$ that joins $v_1$ and $v_2$ through intersections $V_\sigma(x_i) \cap V_\sigma(x_{i+1})$.
+    By \Cref{proposition:term-subtree-is-connected-for-non-rule-constants}, each $V_\sigma(x_i)$ is connected, so there is a path in $\SCTree{\mathcal{D}}{\Sigma}$ that joins $v_1$ and $v_2$ through intersections $V_\sigma(x_i) \cap V_\sigma(x_{i+1})$.
   \end{proof}
 \end{lemma}
 
-We will use \Cref{image-of-connected-variables-is-connected} to develop a query-answering procedure. To begin with, we define a way to split the query entailment checking problem into smaller problems by a partial guess of the query homomorphism.
+We will use \Cref{lemma:image-of-connected-variables-is-connected} to develop a query-answering procedure. To begin with, we define a way to split the query entailment checking problem into smaller problems by a partial guess of the query homomorphism.
 
 \begin{definition}
 \label{definition:query-splitting}
@@ -553,18 +551,18 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
 \begin{figure}[ht]
   \centering
   \includesvg{./diagrams/query-decomposition-example.drawio.svg}
-  \caption{Decomposition of the query from \Cref{query-connectedness-example} with partial map as in \Cref{bcq-decomposition-example}.}
-  \label{bcq-decomposition-example-figure}
+  \caption{Decomposition of the query from \Cref{example:query-connectedness} with partial map as in \Cref{example:bcq-decomposition}.}
+  \label{figure:bcq-decomposition-example}
 \end{figure}
 
 \begin{example}
-\label{bcq-decomposition-example}
+\label{example:bcq-decomposition}
   Let
   \begin{align*}
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
     &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5)
   \end{align*}
-  as in \Cref{query-connectedness-example}. Suppose that $\sigma_{\mathrm{commit}}$ is given by \[\begin{array}{cccc}
+  as in \Cref{example:query-connectedness}. Suppose that $\sigma_{\mathrm{commit}}$ is given by \[\begin{array}{cccc}
     \sigma_{\mathrm{commit}}: &\Vars(Q) &\rightharpoonup &\{c_1, c_2, c_3\} \\
     &z_2 &\mapsto &c_1 \\
     &z_3 &\mapsto &c_3
@@ -575,7 +573,7 @@ We will use \Cref{image-of-connected-variables-is-connected} to develop a query-
     \Subq{Q}{\sigma_{\mathrm{commit}}}{C_2} &= \exists z_4.\ R(c_3, z_4) \\
     \Subq{Q}{\sigma_{\mathrm{commit}}}{C_3} &= \exists z_5, z_6.\ R(c_3, z_5) \wedge T(c_1, z_6, z_5)
   \end{align*}
-  The decomposition after applying $\sigma_{\mathrm{commit}}$ is illustrated in \Cref{bcq-decomposition-example-figure}.
+  The decomposition after applying $\sigma_{\mathrm{commit}}$ is illustrated in \Cref{figure:bcq-decomposition-example}.
   \qed
 \end{example}
 
@@ -584,34 +582,34 @@ Intuitively, the partial map $\sigma_{\mathrm{commit}}$ represents a partial com
 As the following lemma states, the original query is satisfied precisely when all split queries are.
 
 \begin{lemma}[Base-connected query decomposition]
-\label{bcq-base-connected-query-decomposition}
+\label{lemma:bcq-base-connected-query-decomposition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then $\mathcal{D} \cup \Sigma \models Q$ if and only if there exists a partial map $\sigma_{\mathrm{partial}}: \vec{z} \rightharpoonup \Terms(\mathcal{D}) \cup \Consts(\Sigma)$ such that
   \begin{itemize}
     \item $\mathcal{D} \cup \Sigma \models \Commq{Q}{\sigma_{\mathrm{partial}}}$
     \item $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ for each $Q$-connected component $C$ of \newline $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_{\mathrm{partial}}}})$.
   \end{itemize}
   \begin{proof}
-    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. Then by \Cref{sctree-soundness-completeness}, there exists a query homomorphism $\sigma: Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \vec{z} \mid \sigma(v) \in \Terms(\mathcal{D}) \cup \Consts(\Sigma) \},$$ then $(\sigma \upharpoonright B)$ is a partial map satisfying conditions in the lemma.
+    ($\Longrightarrow$): Suppose $\mathcal{D} \cup \Sigma \models Q$. Then by \Cref{theorem:sctree-soundness-completeness}, there exists a query homomorphism $\sigma: Q \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$. Let $$B = \{ v \in \vec{z} \mid \sigma(v) \in \Terms(\mathcal{D}) \cup \Consts(\Sigma) \},$$ then $(\sigma \upharpoonright B)$ is a partial map satisfying conditions in the lemma.
 
-    ($\Longleftarrow$): Suppose that $\sigma_{\mathrm{partial}}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_{\mathrm{partial}}}})$. For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_{\mathrm{partial}}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{sctree-soundness-completeness}. Since all of $\sigma_{\mathrm{partial}}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_{\mathrm{partial}} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
+    ($\Longleftarrow$): Suppose that $\sigma_{\mathrm{partial}}$ satisfies the two conditions, and let $C_1, \ldots, C_n$ be $Q$-connected components of $(\vec{z} \setminus\nobreak \mathrm{\dom{\sigma_{\mathrm{partial}}}})$. For each $1 \leq i \leq n$, we can take a query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_{\mathrm{partial}}}{C_i} \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ by \Cref{theorem:sctree-soundness-completeness}. Since all of $\sigma_{\mathrm{partial}}, \sigma_{C_1}, \ldots, \sigma_{C_n}$ have disjoint domains, $\sigma = \sigma_{\mathrm{partial}} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$ is a function $\sigma: \vec{z} \rightarrow \Terms(\SCTree{\mathcal{D}}{\Sigma})$.
     
     Since every atom $A_j$ in $Q$ appears either in $\Commq{Q}{\sigma_{\mathrm{partial}}}$ or in precisely one $\Subq{Q}{\sigma_{\mathrm{partial}}}{C_i}$, $\sigma$ is a query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$, and therefore $\mathcal{D} \cup \Sigma \models Q$.
   \end{proof}
 \end{lemma}
 
-We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolean conjunctive queries.
+We can easily extend \Cref{lemma:bcq-base-connected-query-decomposition} to non-Boolean conjunctive queries.
 
 \begin{corollary}
-\label{base-connected-query-decomposition}
+\label{corollary:base-connected-query-decomposition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs.
   
-  Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_{\mathrm{partial}}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
+  Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_{\mathrm{partial}}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{lemma:bcq-base-connected-query-decomposition}.
 \end{corollary}
 
-In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ and the corecursive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{corecursiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{bcq-base-connected-query-decomposition}.
+In order to produce answers to the query using \Cref{corollary:base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ and the corecursive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{remark:corecursiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{lemma:bcq-base-connected-query-decomposition}.
 
 \begin{definition}
-\label{successful-commit-point-definition}
+\label{definition:successful-commit-point}
   Let $Q$ be a connected Boolean conjunctive query and $\SCTree{\mathcal{D}}{\Sigma}$ a shortcutting chase tree. We say that a vertex $v \in \SCTree{\mathcal{D}}{\Sigma}$ with the associated bag $\mu(v)$ of facts is a \emph{successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$} if there exists a $\Consts(\Sigma)$-free partial map $\sigma_{\mathrm{commit}}: \Vars(Q) \rightharpoonup \Terms(\mu(v)) \setminus \Consts(\Sigma)$, which we call a \emph{commit map at $v$}, such that
   \begin{itemize}
     \item $\dom{\sigma_{\mathrm{commit}}}$ is nonempty,
@@ -624,19 +622,19 @@ In order to produce answers to the query using \Cref{base-connected-query-decomp
 To witness the entailment of a connected Boolean conjunctive query (with all query variables that get mapped to $\Consts(\Sigma)$ already substituted), finding a \emph{single} successful commit point in the shortcutting chase tree suffices.
 
 \begin{theorem}(Recursive BCQ Entailment)
-\label{recursive-connected-bcq-entailment}
+\label{theorem:recursive-connected-bcq-entailment}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a Boolean conjunctive query, $\mathcal{D}$ an instance and $\Sigma$ a finite set of single-headed GTGDs. Then there exists a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ if and only if there exists a successful commit point for $Q$ in $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
-    ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism. By \Cref{image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful commit point for $Q$.
+    ($\Longrightarrow$): Suppose that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism. By \Cref{lemma:image-of-connected-variables-is-connected}, the set $T_{\Vars(Q)}$ of nodes in which terms in $\sigma(\Vars(Q))$ appear is a rooted tree in $\SCTree{\mathcal{D}}{\Sigma}$. Let $r$ be the root of $T_{\Vars(Q)}$ and $\mu(r)$ the bag of facts at $r$ in $\SCTree{\mathcal{D}}{\Sigma}$. We aim to show that $r$ is a successful commit point for $Q$.
 
-    By \Cref{corecursiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_{\mathrm{commit}} = \sigma \upharpoonright B$, then $\sigma_{\mathrm{commit}}$ is a commit map at $r$.
+    By \Cref{remark:corecursiveness-of-sctree}, $T_{\Vars(Q)} = \SCTree{\mu(r)}{\Sigma}$. Since terms in $\sigma(\Vars(Q))$ only appear in $T_{\Vars(Q)}$, $\sigma$ is a $\Consts(\Sigma)$-free query homomorphism $\sigma: Q \rightarrow \SCTree{\mu(r)}{\Sigma}$. Let $B = \{ v \in \Vars(Q) \mid \sigma(v) \in \Terms(\mu(r)) \}$ be a nonempty set of variables mapped to terms in $r$ and define $\sigma_{\mathrm{commit}} = \sigma \upharpoonright B$, then $\sigma_{\mathrm{commit}}$ is a commit map at $r$.
 
-    ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_{\mathrm{commit}}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_{\mathrm{commit}}})$. Then for each $1 \leq i \leq n$, there is a $\Consts(\Sigma)$-free query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_{\mathrm{commit}}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$. If we let $\sigma = \sigma_{\mathrm{commit}} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism as in the proof of \Cref{bcq-base-connected-query-decomposition}.
+    ($\Longleftarrow$): Suppose that $v$ is a successful commit point with a commit map $\sigma_{\mathrm{commit}}$. Let $C_1, \ldots, C_n$ be $Q$-connected components of $(\Vars(Q) \setminus \dom{\sigma_{\mathrm{commit}}})$. Then for each $1 \leq i \leq n$, there is a $\Consts(\Sigma)$-free query homomorphism $\sigma_{C_i}: \Subq{Q}{\sigma_{\mathrm{commit}}}{C_i} \rightarrow \SCTree{\mu(v)}{\Sigma}$. If we let $\sigma = \sigma_{\mathrm{commit}} \cup \sigma_{C_1} \cup \ldots \cup \sigma_{C_n}$, then we can check that $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ is a $\Consts(\Sigma)$-free query homomorphism as in the proof of \Cref{lemma:bcq-base-connected-query-decomposition}.
   \end{proof}
 \end{theorem}
 
 \begin{remark}
-\label{remark-towards-query-answering-procedure}
+\label{remark:towards-query-answering-procedure}
   Notice that, to decide whether a vertex $v$ in $\SCTree{\mathcal{D}}{\Sigma}$ is a successful commit point for $Q$ with a commit map $\sigma_{\mathrm{commit}}$, we also need to decide if subqueries $\Subq{Q}{\sigma_{\mathrm{commit}}}{C_i}$ are satisfied in the subtree $\SCTree{\mu(v)}{\Sigma}$. As we require the commit map $\sigma_{\mathrm{commit}}$ to be a nonempty map, the number of bound variables in each subquery $\Subq{Q}{\sigma_{\mathrm{commit}}}{C_i}$ is strictly less than that of $Q$.
 
   Moreover, for Boolean conjunctive queries, the query entailment is unaffected by a certain renaming of constants in the root instance. Therefore, we only need to search for successful commit points up to renaming equivalence.
@@ -650,7 +648,7 @@ We capture the latter intuition with the following.
 \end{definition}
 
 \begin{proposition}
-\label{bcq-invariant-under-sigma-preserving-renaming}
+\label{proposition:bcq-invariant-under-sigma-preserving-renaming}
   If $Q$ is a Boolean conjunctive query and $\sigma$ is $\Sigma$-preserving renaming on an instance $\mathcal{D}$, then $\mathcal{D} \cup \Sigma \models Q$ if and only if $\sigma(\mathcal{D}) \cup \Sigma \models Q$.
   \begin{proof}
     If we extend $\sigma$ to all of $\Terms(\SCTree{\mathcal{D}}{\Sigma})$ by defining $$\sigma'(t) =
@@ -658,12 +656,12 @@ We capture the latter intuition with the following.
       \sigma(t) & \text{if } t \in \Consts(\mathcal{D}) \setminus \Consts(\Sigma) \\
       t & \text{otherwise}
     \end{cases}$$
-    Then $\SCTree{\sigma'(\mathcal{D})}{\Sigma}$ is an isomorphic image of $\SCTree{\mathcal{D}}{\Sigma}$ under $\sigma'$. Now apply \Cref{sctree-soundness-completeness}.
+    Then $\SCTree{\sigma'(\mathcal{D})}{\Sigma}$ is an isomorphic image of $\SCTree{\mathcal{D}}{\Sigma}$ under $\sigma'$. Now apply \Cref{theorem:sctree-soundness-completeness}.
   \end{proof}
 \end{proposition}
 
 \begin{remark}
-  In \Cref{bcq-invariant-under-sigma-preserving-renaming}, we require that the renaming $\sigma$ \emph{preserves} all constants in $\Sigma$. This is because \begin{itemize}
+  In \Cref{proposition:bcq-invariant-under-sigma-preserving-renaming}, we require that the renaming $\sigma$ \emph{preserves} all constants in $\Sigma$. This is because \begin{itemize}
     \item if $c \in \Consts(\Sigma)$ is renamed to some other constant by $\sigma$, then a rule in $\Sigma$ that fired in $\SCTree{\mathcal{D}}{\Sigma}$ may no longer fire in $\SCTree{\sigma(\mathcal{D})}{\Sigma}$ thereby invalidating the $(\Longrightarrow)$ implication, and
     \item if $t \in \Terms(\mathcal{D})$ is renamed to a constant in $\Sigma$, then a rule that did not fire in $\SCTree{\mathcal{D}}{\Sigma}$ may fire in $\SCTree{\sigma(\mathcal{D})}{\Sigma}$, invalidating $(\Longleftarrow)$ direction.
   \end{itemize}
@@ -674,16 +672,16 @@ We capture the latter intuition with the following.
 \end{definition}
 
 \begin{proposition}
-\label{renaming-equivalence-class-bound}
+\label{proposition:renaming-equivalence-class-bound}
   For any shortcutting chase tree $\SCTree{\mathcal{D}}{\Sigma}$, there are only finitely many $\cong_\Sigma$-equivalence classes of bags in $\SCTree{\mathcal{D}}{\Sigma}$.
   \begin{proof}
-    For any non-root node $v$ of $\SCTree{\mathcal{D}}{\Sigma}$, by \Cref{each-bag-in-sctree-is-k-sigma-small} there are at most $K + |\Consts(\Sigma)|$ terms present in the bag $\mu(v)$. Hence there are at most $|P| \cdot 2^{(K + |\Consts(\Sigma)|)}$ facts in $\mu(v)$, where $P$ is the set of predicates in $\mathcal{D} \cup \Sigma$. In particular, the number of $\cong_\Sigma$-equivalence classes in $\SCTree{\mathcal{D}}{\Sigma}$ is at most $2^{|P| \cdot 2^{(K + |\Consts(\Sigma)|)}} + 1$, where the bag at the root node accounts for $(+1)$.
+    For any non-root node $v$ of $\SCTree{\mathcal{D}}{\Sigma}$, by \Cref{proposition:each-bag-in-sctree-is-k-sigma-small} there are at most $K + |\Consts(\Sigma)|$ terms present in the bag $\mu(v)$. Hence there are at most $|P| \cdot 2^{(K + |\Consts(\Sigma)|)}$ facts in $\mu(v)$, where $P$ is the set of predicates in $\mathcal{D} \cup \Sigma$. In particular, the number of $\cong_\Sigma$-equivalence classes in $\SCTree{\mathcal{D}}{\Sigma}$ is at most $2^{|P| \cdot 2^{(K + |\Consts(\Sigma)|)}} + 1$, where the bag at the root node accounts for $(+1)$.
   \end{proof}
 \end{proposition}
 
-We are ready to present a query-answering procedure \Cref{basic-query-answering-procedure} based on the intuition of \Cref{remark-towards-query-answering-procedure}. Note that, in $\textsc{EntailsConnectedBCQ}$, we can scan through all equivalence classes $[\mathcal{D}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$ by a depth-first search, since
+We are ready to present a query-answering procedure \Cref{algorithm:basic-query-answering} based on the intuition of \Cref{remark:towards-query-answering-procedure}. Note that, in $\textsc{EntailsConnectedBCQ}$, we can scan through all equivalence classes $[\mathcal{D}]_{\cong_\Sigma}$ of bags in $\SCTree{\mathcal{D}}{\Sigma}$ by a depth-first search, since
 \begin{itemize}
-  \item there are only finitely many such classes by \Cref{renaming-equivalence-class-bound}, and
+  \item there are only finitely many such classes by \Cref{proposition:renaming-equivalence-class-bound}, and
   \item for each such $\cong_\Sigma$-equivalence class $\mathcal{E}$, there exists a path $v_1, \ldots, v_n$ from the root node of $\SCTree{\mathcal{D}}{\Sigma}$ such that
   \begin{enumerate}
     \item none of $\mu(v_1), \ldots, \mu(v_n)$ are $\cong_\Sigma$-equivalent
@@ -692,25 +690,25 @@ We are ready to present a query-answering procedure \Cref{basic-query-answering-
   because we can always shorten a path not satisfying (1) by replacing a segment $v_i, \ldots, v_{i+m}$ such that $\mu(v_i) \cong_\Sigma \mu(v_{i+m})$ with just $v_i$, and then replacing all of $v_{i+m+1}, \ldots, v_n$ by their $\cong_\Sigma$-equivalent copies in the subtree rooted at $v_i$.
 \end{itemize}
 
-We will only use \Cref{basic-query-answering-procedure} as an intermediate step towards producing a rewriting. We will not go through the algorithm line by line, but we shall sketch the proof of its correctness and termination.
+We will only use \Cref{algorithm:basic-query-answering} as an intermediate step towards producing a rewriting. We will not go through the algorithm line by line, but we shall sketch the proof of its correctness and termination.
 
 \begin{theorem}
-  The procedure \textsc{AnswerConjunctiveQuery} in \Cref{basic-query-answering-procedure} produces all valid answers to \hyperref[GTGDs-CQ-Answering]{GTGDs-CQ Answering} in finite time.
+  The procedure \textsc{AnswerConjunctiveQuery} in \Cref{algorithm:basic-query-answering} produces all valid answers to \hyperref[GTGDs-CQ-Answering]{GTGDs-CQ Answering} in finite time.
   \begin{proof}[Proof (sketch)]
     Termination is clear since
     \begin{itemize}
       \item all \textbf{for}-loops iterate over a finite set, and
-      \item size of connected BCQ decreases on every recursive call (\Cref{remark-towards-query-answering-procedure}).
+      \item size of connected BCQ decreases on every recursive call (\Cref{remark:towards-query-answering-procedure}).
     \end{itemize}
 
-    We can first prove the correctness of \textsc{SatisfiedWith} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{recursive-connected-bcq-entailment}. It is then straightforward to see, by applying \Cref{base-connected-query-decomposition}, that \textsc{AnswerConjunctiveQuery} produces all valid answers.
+    We can first prove the correctness of \textsc{SatisfiedWith} for all connected BCQs by induction on the number of bound variables and recursively applying \Cref{theorem:recursive-connected-bcq-entailment}. It is then straightforward to see, by applying \Cref{corollary:base-connected-query-decomposition}, that \textsc{AnswerConjunctiveQuery} produces all valid answers.
   \end{proof}
 \end{theorem}
 
 %TC:ignore
 \begin{algorithm}
 \caption{Basic query answering procedure}
-\label{basic-query-answering-procedure}
+\label{algorithm:basic-query-answering}
 \begin{algorithmic}[1]
 \State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
 \State // $\sigma: Q \rightarrow \SCTree{\mathcal{D}}{\Sigma}$ for connected BCQ $Q$
@@ -758,11 +756,12 @@ We will only use \Cref{basic-query-answering-procedure} as an intermediate step 
 %TC:endignore
 
 \newpage
-\chapter{Deriving a Rewriting}\label{deriving-a-rewriting}
+\chapter{Deriving a Rewriting}
+\label{chapter:deriving-a-rewriting}
 
-In \Cref{characterising-query-entailment-under-gtgds}, we developed \Cref{basic-query-answering-procedure} for producing all answers to a conjunctive query over single-headed GTGDs.
+In \Cref{chapter:characterising-query-entailment-under-gtgds}, we developed \Cref{algorithm:basic-query-answering} for producing all answers to a conjunctive query over single-headed GTGDs.
 
-However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
+However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{algorithm:basic-query-answering} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
 
 The first important observation is that the entailment of a subquery in a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$ only depends on a fraction of $\mathcal{D}$.
 
@@ -773,26 +772,26 @@ More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is satisfied 
 \end{itemize}
 then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As $c'$ inherits the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, $h$ restricts to $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $$K = \max_{P \in \Predicates(\Sigma \cup \{Q\})} \Arity{P},$$we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
-Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation rule, we can deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
+Moreover, by \Cref{proposition:bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation rule, we can deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
 
 With these observations in mind, we adopt the following strategy for building a rewriting.
 
 \begin{itemize}
   \item Start with an atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
   \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution on $Q$.
-  \item For each \emph{local instance} $I$ (to be defined in \Cref{subquery-entailment-problem-section}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery induced by $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
-  \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
+  \item For each \emph{local instance} $I$ (to be defined in \Cref{section:subquery-entailment-problem}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery induced by $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
+  \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{corollary:base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
-In \Cref{subquery-entailment-problem-section}, we define the precise structure of \emph{local instances} and what it means for one to entail a subquery. We then briefly describe how to enumerate instances that entail a subquery in \Cref{section:naive-subquery-entailment-enumeration}, putting pieces together in \Cref{a-rewriting-algorithm} to present a rewriting algorithm. Finally, we discuss in \Cref{secomputation-optimisations} some optimisations on the naive algorithm presented in \Cref{section:naive-subquery-entailment-enumeration}.
+In \Cref{section:subquery-entailment-problem}, we define the precise structure of \emph{local instances} and what it means for one to entail a subquery. We then briefly describe how to enumerate instances that entail a subquery in \Cref{section:naive-subquery-entailment-enumeration}, putting pieces together in \Cref{section:a-rewriting-algorithm} to present a rewriting algorithm. Finally, we discuss in \Cref{section:secomputation-optimisations} some optimisations on the naive algorithm presented in \Cref{section:naive-subquery-entailment-enumeration}.
 
 \section{The Subquery Entailment Problem}
-\label{subquery-entailment-problem-section}
+\label{section:subquery-entailment-problem}
 
 To proceed with the strategy, we need to define a data structure that can be input to the following problem.
 
 \begin{problem}[Informal]
-\label{informal-subquery-entailment-problem}
+\label{problem:informal-subquery-entailment}
   Suppose $I$ is a certain $(K, \Sigma)$-small structure, $C$ a $Q$-connected set of bound variables and $Q_{\mathrm{sub}, C}$ a subquery of $Q$ with existentials $C$. Does $I$ contain enough facts to entail $Q_{\mathrm{sub}, C}$?
 \end{problem}
 
@@ -801,22 +800,22 @@ To proceed with the strategy, we need to define a data structure that can be inp
 
 First, we formalise the ``$(K, \Sigma)$-small structure''.
 
-Since there are at most $K$ (maximum arity of predicates in $\mathcal{D} \cup \Sigma$) non-$\Consts(\Sigma)$-terms in a $(K, \Sigma)$-small bag of facts, we might consider relabelling them with numbers $\{ 1, 2, \ldots, K \}$. However, if we completely identify bags with $\cong_\Sigma$-equivalence, we will no longer be able to recover the structure of $\SCTree{\mathcal{D}}{\Sigma}$. \Cref{sctree-simple-example-equivalence-classes} illustrates the issue.
+Since there are at most $K$ (maximum arity of predicates in $\mathcal{D} \cup \Sigma$) non-$\Consts(\Sigma)$-terms in a $(K, \Sigma)$-small bag of facts, we might consider relabelling them with numbers $\{ 1, 2, \ldots, K \}$. However, if we completely identify bags with $\cong_\Sigma$-equivalence, we will no longer be able to recover the structure of $\SCTree{\mathcal{D}}{\Sigma}$. \Cref{figure:sctree-simple-example-equivalence-classes} illustrates the issue.
 
 \begin{figure}[ht]
   \centering
   \includesvg{./diagrams/sctree-simple-example-bag-structures.drawio.svg}
-  \caption{(Left) The shortcutting chase from \Cref{sctree-simple-example-diagram}. (Top right) If we identify bags with $\cong_\Sigma$ by relabelling terms with numbers, we get three bags representing $\cong_\Sigma$-equivalence classes. (Bottom right) We can no longer assemble these equivalence classes back to a chase structure since there is no way to distinguish between the inheritance and the introduction of terms in a chased node.}
-  \label{sctree-simple-example-equivalence-classes}
+  \caption{(Left) The shortcutting chase from \Cref{figure:sctree-simple-example}. (Top right) If we identify bags with $\cong_\Sigma$ by relabelling terms with numbers, we get three bags representing $\cong_\Sigma$-equivalence classes. (Bottom right) We can no longer assemble these equivalence classes back to a chase structure since there is no way to distinguish between the inheritance and the introduction of terms in a chased node.}
+  \label{figure:sctree-simple-example-equivalence-classes}
 \end{figure}
 
-A trick to solve this issue is to use $2K$ labels, which we call \emph{local names}, with the convention that the same label in adjacent bags represents a term shared between them, as illustrated in \Cref{sctree-simple-example-local-names}. Formally, we work with the following structure.
+A trick to solve this issue is to use $2K$ labels, which we call \emph{local names}, with the convention that the same label in adjacent bags represents a term shared between them, as illustrated in \Cref{figure:sctree-simple-example-local-names}. Formally, we work with the following structure.
 
 \begin{figure}[ht]
   \centering
   \includesvg{./diagrams/sctree-simple-example-local-names.drawio.svg}
-  \caption{(Left) The shortcutting chase from \Cref{sctree-simple-example-diagram}. (Right) relabelling of the shortcutting chase tree with local names. Two equal local names in sibling nodes (e.g. $2$ in $v'_2$ and $v'_3$) may represent different terms, while they represent the same term in parent-child nodes (e.g. $2$ in $v'_2$ and $v'_4$).}
-  \label{sctree-simple-example-local-names}
+  \caption{(Left) The shortcutting chase from \Cref{figure:sctree-simple-example}. (Right) relabelling of the shortcutting chase tree with local names. Two equal local names in sibling nodes (e.g. $2$ in $v'_2$ and $v'_3$) may represent different terms, while they represent the same term in parent-child nodes (e.g. $2$ in $v'_2$ and $v'_4$).}
+  \label{figure:sctree-simple-example-local-names}
 \end{figure}
 
 \begin{definition}
@@ -834,9 +833,9 @@ A trick to solve this issue is to use $2K$ labels, which we call \emph{local nam
   \qed
 \end{definition}
 
-Notice that, as shown in \Cref{sctree-simple-example-local-names}, we can translate a $\SCTree{\mathcal{D}}{\Sigma}$ into a tree-like structure that uses local names. By abuse of notation, we write $\SCTree{I}{\Sigma}$ for the tree-like structure obtained this way.
+Notice that, as shown in \Cref{figure:sctree-simple-example-local-names}, we can translate a $\SCTree{\mathcal{D}}{\Sigma}$ into a tree-like structure that uses local names. By abuse of notation, we write $\SCTree{I}{\Sigma}$ for the tree-like structure obtained this way.
 
-The structure $\SCTree{I}{\Sigma}$ can be constructed in a way similar to how we construct an ordinary shortcutting chase tree, except that when firing an existential rule, we \emph{reuse} a local name that was inactive at the parent node instead of introducing fresh nulls. For example, at $v'_4$ in \Cref{sctree-simple-example-local-names}, we are using a local name $3$, which is inactive at the parent node $v'_2$, in place of the null $n_4$. We no longer include the local name $1$ in $v'_4$ because $v'_4$ inherits no fact containing $1$. We say that such local names are \emph{dropped} by the chase step. If a local name $n$ dropped at $v$ becomes active again in a descendant $v'$ of $v$, then $n$ at $v$ and $v'$ represent different terms.
+The structure $\SCTree{I}{\Sigma}$ can be constructed in a way similar to how we construct an ordinary shortcutting chase tree, except that when firing an existential rule, we \emph{reuse} a local name that was inactive at the parent node instead of introducing fresh nulls. For example, at $v'_4$ in \Cref{figure:sctree-simple-example-local-names}, we are using a local name $3$, which is inactive at the parent node $v'_2$, in place of the null $n_4$. We no longer include the local name $1$ in $v'_4$ because $v'_4$ inherits no fact containing $1$. We say that such local names are \emph{dropped} by the chase step. If a local name $n$ dropped at $v$ becomes active again in a descendant $v'$ of $v$, then $n$ at $v$ and $v'$ represent different terms.
 
 \subsection{Partially Substituted Subqueries}
 \label{subsection:partially-substituted-subqueries}
@@ -868,15 +867,15 @@ It is convenient to introduce the following notion to describe the latter condit
     Q = \exists z_1,z_2,z_3,z_4,z_5,z_6.&\ S(z_1, z_2) \wedge S(z_1,z_3) \wedge R(z_2, z_3) \\
     &\wedge R(z_3, z_4) \wedge R(z_3, z_5) \wedge T(z_2, z_6, z_5)
   \end{align*}
-  as in \Cref{query-connectedness-example}. Then $\partial_Q \{z_4\} = \{z_3\}$, $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$. We illustrate the first example in \Cref{query-boundary-example}.
+  as in \Cref{example:query-connectedness}. Then $\partial_Q \{z_4\} = \{z_3\}$, $\partial_Q \{z_2\} = \{z_1, z_3, z_5, z_6\}$ and $\partial_Q \{z_5, z_6\} = \{z_2, z_3\}$. We illustrate the first example in \Cref{figure:query-boundary}.
   \qed
 \end{example}
 
 \begin{figure}[h]
   \centering
   \includesvg{./diagrams/query-boundary-example.drawio.svg}
-  \caption{For the query from \Cref{query-connectedness-example}, the $Q$-boundary $\partial_Q \{z_4\}$ of $\{z_4\}$ (red) is $\{z_3\}$ (blue).}
-  \label{query-boundary-example}
+  \caption{For the query from \Cref{example:query-connectedness}, the $Q$-boundary $\partial_Q \{z_4\}$ of $\{z_4\}$ (red) is $\{z_3\}$ (blue).}
+  \label{figure:query-boundary}
 \end{figure}
 
 During a search for a successful commit point in $\SCTree{I}{\Sigma}$, a variable in $\partial_Q C$ is mapped either
@@ -928,7 +927,7 @@ Putting these concepts together, we obtain the following notion of a subquery.
 \end{definition}
 
 \begin{example}
-\label{local-realisation-of-subquery-representation}
+\label{example:local-realisation-of-subquery-representation}
   Let
   $$
     Q = \exists z_1,z_2,z_3,z_4.\ S(c_1, z_1, z_4, z_2) \wedge T(z_1, c_2, z_3) \wedge T(z_3, c_1, z_4),
@@ -948,7 +947,7 @@ Putting these concepts together, we obtain the following notion of a subquery.
 
 \subsection{Formalising the Subquery Entailment Problem}
 
-Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsection:partially-substituted-subqueries}, we can formally re-define the \Cref{informal-subquery-entailment-problem}.
+Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsection:partially-substituted-subqueries}, we can formally re-define the \Cref{problem:informal-subquery-entailment}.
 
 \begin{definition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$(\Sigma, Q)$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ where
@@ -960,25 +959,25 @@ Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsect
   \qed
 \end{definition}
 
-\begin{problem}[Subquery Entailment Problem, formalisation of \Cref{informal-subquery-entailment-problem}]
-\label{subquery-entailment-problem}
+\begin{problem}[Subquery Entailment Problem, formalisation of \Cref{problem:informal-subquery-entailment}]
+\label{problem:subquery-entailment}
   Given a $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$, does $I \cup \Sigma \models \LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}$ hold?
   \qed
 \end{problem}
 
-We call an instance $\mathcal{I}$ a \emph{subquery entailment} if it is an \textsc{yes} instance of \Cref{subquery-entailment-problem}
+We call an instance $\mathcal{I}$ a \emph{subquery entailment} if it is an \textsc{yes} instance of \Cref{problem:subquery-entailment}
 
 \section{The Naive Subquery Entailment Enumeration}
 \label{section:naive-subquery-entailment-enumeration}
 
-We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names that appear in the substituted query $Q_\mathrm{subst}$, since otherwise $Q_\mathrm{subst}$ becomes immediately unsatisfiable in the chased subtree. The first version of our algorithm (\Cref{naive-subquery-entailment-enumeration}) is, therefore, a verbatim translation of \Cref{basic-query-answering-procedure} into the context of local instances.
+We can solve \Cref{problem:subquery-entailment} with only a minor modification to \Cref{algorithm:basic-query-answering}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names that appear in the substituted query $Q_\mathrm{subst}$, since otherwise $Q_\mathrm{subst}$ becomes immediately unsatisfiable in the chased subtree. The first version of our algorithm (\Cref{algorithm:naive-subquery-entailment-enumeration}) is, therefore, a verbatim translation of \Cref{algorithm:basic-query-answering} into the context of local instances.
 
-Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{naive-subquery-entailment-enumeration}. Nevertheless, for now, we move on to the other components of the rewriting algorithm to see how outputs from \Cref{naive-subquery-entailment-enumeration} can be assembled into a Datalog rewriting.
+Later in \Cref{section:secomputation-optimisations}, we discuss optimisations of \Cref{algorithm:naive-subquery-entailment-enumeration}. Nevertheless, for now, we move on to the other components of the rewriting algorithm to see how outputs from \Cref{algorithm:naive-subquery-entailment-enumeration} can be assembled into a Datalog rewriting.
 
 %TC:ignore
 \begin{algorithm}
 \caption{Naive Subquery Entailment Enumeration}
-\label{naive-subquery-entailment-enumeration}
+\label{algorithm:naive-subquery-entailment-enumeration}
 \begin{algorithmic}[1]
 \State // decide if there exists a $\Consts(\Sigma)$-free query homomorphism
 \State // $\sigma: Q \rightarrow \SCTree{I}{\Sigma}$ for a BCQ $Q$ with only
@@ -1027,17 +1026,17 @@ Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{n
 %TC:endignore
 
 \section{A Rewriting Algorithm}
-\label{a-rewriting-algorithm}
+\label{section:a-rewriting-algorithm}
 
 \subsection{From a Subquery Entailment to a Datalog Rule}
-\label{subquery-entailment-to-datalog-rule}
+\label{subsection:subquery-entailment-to-datalog-rule}
 
 Now that we can enumerate subquery entailments, we show how to turn them into Datalog rules that derive subgoals.
 
 Suppose that $C$ is a $Q$-connected set of bound variables in $Q$, and let $Q_\mathrm{sub}$ be the (unsubstituted) subquery induced by $C$. The way in which $Q_\mathrm{sub}$ is satisfied can be fully described by how variables in $\partial_Q C$ are mapped to terms. Therefore, to represent a subquery satisfaction, we introduce the \emph{subgoal predicate} as an intensional predicate $\mathrm{Subgoal}_{Q, C}$ having the arity $|\partial_Q C|$.
 
 For each subquery entailment $\mathcal{I}$, we wish to add a Datalog rule (which we will write $\mathrm{SubgoalRule}(\mathcal{I})$) that has the local instance in the body and the subgoal atom as the head.
-For example, suppose that the subquery in \Cref{local-realisation-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
+For example, suppose that the subquery in \Cref{example:local-realisation-of-subquery-representation} is entailed by the local instance $I$ given in the example. We would then like to add a rule $$
   \forall x_2, x_4.\ S(c_1, x_2, c_2, x_4) \wedge T(x_4, x_2, c_1) \wedge R(x_2, c_2) \rightarrow \mathrm{Subgoal}_{Q, \{z_1, z_2\}}(r_1, x_2)
 $$
 where $x_2$ is the variable replacing $z_4$ in the original query.
@@ -1066,7 +1065,7 @@ Formally, we define $\mathrm{SubgoalRule}(\mathcal{I})$ as follows.
 Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ with the subquery $\Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C}$ of $Q$, the rule $\mathrm{SubgoalRule}(\mathcal{I})$ is ``sound" if and only if $\mathcal{I}$ is a subquery entailment. To be formal, we claim the following.
 
 \begin{proposition}
-\label{subgoal-captures-subquery-fulfilment}
+\label{proposition:subgoal-captures-subquery-fulfilment}
   Let $Q$ be a conjunctive query and $\mathcal{I} = (C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ a $(\Sigma, Q)$-subquery entailment problem instance. Let $\Phi_{Q, C}$ be the formula stating the identification of subgoal facts with subquery satisfactions, given by $$
     \Phi_{Q, C} = \forall \vec{t}. \left( \mathrm{Subgoal}_{Q,C}(\vec{t}) \leftrightarrow \Subq{Q}{\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}}{C} \right).
   $$
@@ -1098,14 +1097,13 @@ Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ 
 \end{proposition}
 
 \subsection{Glueing Subgoals}
-\label{glueing-subgoals}
+\label{subsection:glueing-subgoals}
 
 As a final step in the Datalog rewriting algorithm, we need to generate rules that combine subgoals to derive the final goal. To this end, we introduce the \emph{goal atom} $\mathrm{Goal}_Q\left( \overrightarrow{\FV(Q)} \right)$ having $\FV(Q)$ as arguments.
 
 Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the set $C$ of bound variables are witnessed existentially with a partial substitution $\left\{ \overrightarrow{\partial_Q C} \mapsto \vec{t} \right\}$ to the boundary of $C$. For a set $\mathrm{BVars} \supseteq \FV(Q)$ of variables, which we expect to be substituted by constants either in the base or in $\Sigma$, we define the following rule.
 
 \begin{definition}
-\label{subgoal-glueing-rule}
   For a conjunctive query $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ and a set $\mathrm{BVars} \supseteq \FV(Q)$, define the \emph{subgoal glueing rule} $\mathrm{SglGlueingRule}_\mathrm{BVars}$ given by
   $$
     \forall \overrightarrow{\mathrm{BVars}}. \left(
@@ -1126,7 +1124,7 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
     Q = \exists z_1,z_4,z_5,z_6.&\ S(z_1, w_2) \wedge S(z_1,w_3) \wedge R(w_2, w_3) \\
     &\wedge R(w_3, z_4) \wedge R(w_3, z_5) \wedge T(w_2, z_6, z_5).
   \end{align*}
-  $Q$ is similar to the query in \Cref{query-connectedness-example}, except except that we replaced $z_2$ and $z_3$ with free variables $w_2$ and $w_3$. If we let $\mathrm{BVars} = \{w_2, w_3, z_5\}$, then \begin{align*}
+  $Q$ is similar to the query in \Cref{example:query-connectedness}, except except that we replaced $z_2$ and $z_3$ with free variables $w_2$ and $w_3$. If we let $\mathrm{BVars} = \{w_2, w_3, z_5\}$, then \begin{align*}
     \mathrm{SglGlueingRule}_{\mathrm{BVars}}
       &= \mathrm{Subgoal}_{Q, \{z_1\}}(w_2, w_3) \wedge \mathrm{Subgoal}_{Q, \{z_4\}}(w_3) \\
       &\wedge \mathrm{Subgoal}_{Q, \{z_6\}}(w_2, w_3, z_5) \\
@@ -1136,18 +1134,18 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
 \end{example}
 
 \begin{remark}
-\label{glueing-rule-soundness-and-completeness}
-  Each $\mathrm{SglGlueingRule}_\mathrm{BVars}$ is ``sound" (in a sense as in \Cref{subgoal-captures-subquery-fulfilment}, by identifying subgoals with subquery fulfilments and the goal atom with query fulfilment), and also collectively complete (i.e. we can derive all answers to $Q$ as goal facts if we can use all glueing rules) by \Cref{base-connected-query-decomposition}.
+\label{remark:glueing-rule-soundness-and-completeness}
+  Each $\mathrm{SglGlueingRule}_\mathrm{BVars}$ is ``sound" (in a sense as in \Cref{proposition:subgoal-captures-subquery-fulfilment}, by identifying subgoals with subquery fulfilments and the goal atom with query fulfilment), and also collectively complete (i.e. we can derive all answers to $Q$ as goal facts if we can use all glueing rules) by \Cref{corollary:base-connected-query-decomposition}.
 \end{remark}
 
 \subsection{Putting Pieces Together}
 
-Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subquery-entailment-to-datalog-rule} and \Cref{glueing-subgoals}.
+Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subsection:subquery-entailment-to-datalog-rule} and \Cref{subsection:glueing-subgoals}.
 
 %TC:ignore
 \begin{algorithm}
 \caption{A rewriting procedure for GTGDs-CQ pairs}
-\label{gtgds-cq-rewriting-procedure}
+\label{algorithm:gtgds-cq-rewriting-procedure}
 \begin{algorithmic}[1]
 \Procedure{Rewrite}{Single-headed GTGDs $\Sigma$, Conjunctive query $Q$}
   \State $result \gets \emptyset$
@@ -1165,24 +1163,24 @@ Finally, we combine components from \Cref{section:naive-subquery-entailment-enum
 %TC:endignore
 
 \begin{theorem}
-  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{gtgds-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
+  Let $\Sigma$ be a finite set of single-headed GTGDs and $Q$ a conjunctive query. Then \textsc{Rewrite}$(\Sigma, Q)$ in \Cref{algorithm:gtgds-cq-rewriting-procedure} computes a Datalog rewriting of $(\Sigma, Q)$.
   \begin{proof}
-    By correctness of \Cref{naive-subquery-entailment-enumeration}, \Cref{subgoal-captures-subquery-fulfilment} and \Cref{glueing-rule-soundness-and-completeness}.
+    By correctness of \Cref{algorithm:naive-subquery-entailment-enumeration}, \Cref{proposition:subgoal-captures-subquery-fulfilment} and \Cref{remark:glueing-rule-soundness-and-completeness}.
   \end{proof}
 \end{theorem}
 
 \section{Optimising the Subquery Entailment Enumeration}
-\label{secomputation-optimisations}
+\label{section:secomputation-optimisations}
 
-When rewriting a GTGDs-CQ pair ($\Sigma, Q$) with \Cref{gtgds-cq-rewriting-procedure}, the apparent bottleneck is the call \textsc{EnumerateSubqueryEntailments}($\Sigma, Q$) because we need to
+When rewriting a GTGDs-CQ pair ($\Sigma, Q$) with \Cref{algorithm:gtgds-cq-rewriting-procedure}, the apparent bottleneck is the call \textsc{EnumerateSubqueryEntailments}($\Sigma, Q$) because we need to
 \begin{itemize}
-  \item visit every $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I}$ and test if $\mathcal{I}$ satisfies \Cref{subquery-entailment-problem}, and
+  \item visit every $(\Sigma, Q)$-subquery entailment problem instance $\mathcal{I}$ and test if $\mathcal{I}$ satisfies \Cref{problem:subquery-entailment}, and
   \item descend a part of $\SCTree{I}{\Sigma}$ (where $I$ is the local instance in $\mathcal{I}$) and recursively search for a successful commit point.
 \end{itemize}
 
 \begin{remark}
-\label{naive-seenumeration-inefficiencies}
-  As an illustrating example, consider the query $$Q = \exists z_1,z_2,z_3.\ S(z_1, z_2) \wedge R(z_1, z_3).$$ We remark on the following inefficiencies with the naive implementation \Cref{naive-subquery-entailment-enumeration} of \textsc{EnumerateSubqueryEntailments}:
+\label{remark:naive-seenumeration-inefficiencies}
+  As an illustrating example, consider the query $$Q = \exists z_1,z_2,z_3.\ S(z_1, z_2) \wedge R(z_1, z_3).$$ We remark on the following inefficiencies with the naive implementation \Cref{algorithm:naive-subquery-entailment-enumeration} of \textsc{EnumerateSubqueryEntailments}:
 
   \begin{enumerate}
     \item \textit{We are testing entailment relation for multiple isomorphic instances}. For example, consider the instance $$
@@ -1207,7 +1205,7 @@ In the remainder of this chapter, we describe three optimisation techniques: two
 \subsection{Dynamic Programming}
 \label{subsection:dp-optimisation}
 
-As observed in \Cref{naive-seenumeration-inefficiencies}, the issue is that
+As observed in \Cref{remark:naive-seenumeration-inefficiencies}, the issue is that
 \begin{itemize}
   \item even though we are working with locally realised subqueries, we are essentially deciding split subquery entailment instances, yet
   \item we are not making use of the result of past invocations.
@@ -1285,12 +1283,12 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
 \end{algorithm}
 %TC:endignore
 
-\Cref{algorithm:recursive-subquery-entailment-enumeration} is another implementation of \nobreak\textsc{EnumerateSubqueryEntailments} based on \Cref{definition:subquery-entailment-problem-splitting}. The algorithm is equivalent to \Cref{naive-subquery-entailment-enumeration}, but since \textsc{IsSubqueryEntailment} is a Boolean function over $(\Sigma, Q)$-subquery entailment problem instances, we can memoise answers of \textsc{IsSubqueryEntailment} and avoid recomputations.
+\Cref{algorithm:recursive-subquery-entailment-enumeration} is another implementation of \nobreak\textsc{EnumerateSubqueryEntailments} based on \Cref{definition:subquery-entailment-problem-splitting}. The algorithm is equivalent to \Cref{algorithm:naive-subquery-entailment-enumeration}, but since \textsc{IsSubqueryEntailment} is a Boolean function over $(\Sigma, Q)$-subquery entailment problem instances, we can memoise answers of \textsc{IsSubqueryEntailment} and avoid recomputations.
 
 \subsection{DFS Optimisation}
 \label{subsection:dfs-optimisation}
 
-As discussed briefly at the end of \Cref{characterising-query-entailment-under-gtgds}, instead of computing the set of all local instances $I'$ satisfying the condition at line 4 of \Cref{algorithm:recursive-subquery-entailment-enumeration}, we can use a depth-first search (DFS) to explore the space of all such local instances.
+As discussed briefly at the end of \Cref{chapter:characterising-query-entailment-under-gtgds}, instead of computing the set of all local instances $I'$ satisfying the condition at line 4 of \Cref{algorithm:recursive-subquery-entailment-enumeration}, we can use a depth-first search (DFS) to explore the space of all such local instances.
 
 During this process of deciding whether $\mathcal{I} = (C, I, \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$ is a subquery entailment, each instance $I'$ we encounter in the DFS corresponds to a problem instance $\mathcal{I'} = (C, I', \sigma_{\mathrm{\Consts(\Sigma)}}, \sigma_I, \iota)$. If we use the DP optimisation, we can check if we have already seen $\mathcal{I'}$, and if so, immediately stop exploring the chase tree. We illustrate this process in \Cref{figure:sctree-dfs-process}.
 
@@ -1315,9 +1313,9 @@ We call this efficient traversal of the chase tree the \emph{DFS optimisation}. 
 \subsection{Instance Normalisation}
 \label{subsection:instance-normalisation}
 
-Finally, we address the first point of \Cref{naive-seenumeration-inefficiencies} concerning isomorphic instances.
+Finally, we address the first point of \Cref{remark:naive-seenumeration-inefficiencies} concerning isomorphic instances.
 
-Recall that we use $2K$ local names as the set of $K$ names is insufficient to maintain a tree-like structure of local instances (\Cref{sctree-simple-example-equivalence-classes}).
+Recall that we use $2K$ local names as the set of $K$ names is insufficient to maintain a tree-like structure of local instances (\Cref{figure:sctree-simple-example-equivalence-classes}).
 
 However, in \Cref{algorithm:recursive-subquery-entailment-enumeration}, even with DP and DFS optimisations in place, we only partially use the structure between local instances when we descend the chase tree. All we require is that the local names in $\range{\sigma_I} \cup \range{\iota}$ be preserved. In particular, we do not care if a local name (not in $\range{\sigma_I} \cup \range{\iota}$) at a node $v$ is introduced at $v$ or is inherited from the parent of $v$.
 
@@ -1347,13 +1345,13 @@ This observation implies that, during the DFS, we are free to ``normalise'' loca
 \newpage
 \chapter{Implementation and Testing}
 
-We built an \href{https://github.com/kory33/guarded-queries}{open-sourced} prototypical rewriting library in Java, combining all ideas from \Cref{characterising-query-entailment-under-gtgds} and \Cref{deriving-a-rewriting}. On top of the core library, the system has a command-line interface where an end-user can interact with the rewriter.
+We built an \href{https://github.com/kory33/guarded-queries}{open-sourced} prototypical rewriting library in Java, combining all ideas from \Cref{chapter:characterising-query-entailment-under-gtgds} and \Cref{chapter:deriving-a-rewriting}. On top of the core library, the system has a command-line interface where an end-user can interact with the rewriter.
 
 \section{Architecture}
 
 Our implementation sits on top of two libraries: \emph{Guarded-saturation} \cite{Benedikt_Rewriting_the_Infinite}, which provides implementations for computing atomic rewritings, and its dependency \href{https://github.com/ProofDrivenQuerying/pdq/releases/tag/v2.0.0}{\texttt{pdq-common-2.0.0}}, which provides a foundation for expressing first-order formulae.
 
-The implementation of the rewriter closely follows \Cref{gtgds-cq-rewriting-procedure}. For \\ \textsc{EnumerateSubqueryEntailments}, we provide three implementations based on \Cref{algorithm:recursive-subquery-entailment-enumeration}, which respectively have (\emph{DP}), (\emph{DP + normalisation}) and (\emph{DP + normalisation + DFS}) optimisations applied.
+The implementation of the rewriter closely follows \Cref{algorithm:gtgds-cq-rewriting-procedure}. For \\ \textsc{EnumerateSubqueryEntailments}, we provide three implementations based on \Cref{algorithm:recursive-subquery-entailment-enumeration}, which respectively have (\emph{DP}), (\emph{DP + normalisation}) and (\emph{DP + normalisation + DFS}) optimisations applied.
 
 Further, to minimise the evaluation time of the output Datalog program, we apply \emph{rule subsumptions} at the end: If we obtained two rules $\tau_1 = \beta_1 \rightarrow \eta_1$ and $\tau_2 = \beta_2 \rightarrow \eta_2$, and there exists a homomorphism $\sigma: \beta_1 \rightarrow \beta_2$ such that $\sigma(\eta_1) \supseteq \sigma(\eta_2)$, then we discard $\tau_2$ in favour of $\tau_1$.
 
@@ -1434,7 +1432,7 @@ Rewritten query:
 \label{figure:example-command-line-interaction}
 \end{figure}
 
-For comparison, with only (DP) and (DP + normalisation) optimisations applied, rewriting the same input as in \Cref{figure:example-command-line-interaction} takes about 7.3 seconds and 160 seconds respectively, demonstrating the effectiveness of optimisations in \Cref{secomputation-optimisations}.
+For comparison, with only (DP) and (DP + normalisation) optimisations applied, rewriting the same input as in \Cref{figure:example-command-line-interaction} takes about 7.3 seconds and 160 seconds respectively, demonstrating the effectiveness of optimisations in \Cref{section:secomputation-optimisations}.
 
 \newpage
 \chapter{Conclusions and Further Discussion}
@@ -1450,7 +1448,7 @@ We discussed issues encountered by a naive algorithm for enumerating subquery en
 
 The current implementation lacks optimisations for trimming down the space of subquery entailment problem instances. Instead, it always explores the whole space, whose size is doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}), making it impractical to rewrite large inputs such as real-world ontologies. We may be able to overcome this issue by analysing the structure of input rules. For instance, if a rule constant $c$ only appears in heads and not in the query, it is redundant to consider local instances containing facts with $c$ since no rule requires such facts.
 
-Another crucial optimisation concerns instance subsumption, as discussed in \Cref{naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing a fact with $R$ no longer need to be tested for entailment, reducing the search space by a factor of $16 = 2^4$. We leave for future work the method for efficiently controlling the search space.
+Another crucial optimisation concerns instance subsumption, as discussed in \Cref{remark:naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing a fact with $R$ no longer need to be tested for entailment, reducing the search space by a factor of $16 = 2^4$. We leave for future work the method for efficiently controlling the search space.
 
 Moreover, as remarked in \Cref{section:correctness-tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. However, our system does not perform such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even when induced subqueries are acyclic. Investigating the effectiveness of such input transformation is left for future work.
 
