@@ -83,10 +83,13 @@
 \maketitle
 
 \newpage
+\section*{Abstract}
+
+The class of Guarded Tuple-Generating Dependencies (GTGDs) is an expressive class of first-order formulae for which conjunctive query answering is decidable. Even though the problem is \textsc{2Exptime}-complete in general, it has been shown that, by essentially performing enough pre-computation, one can \emph{rewrite} GTGD conjunctive query answering problem to a Datalog query, which can be run in time polynomial to the size of the input database. Nevertheless, no work has implemented the rewriting algorithm for general conjunctive queries under GTGDs. By utilising the recent implementation for rewriting GTGDs over atomic queries, we revisit the theory of \emph{chases}, derive a rewriting algorithm for general queries and discuss its implementation and further optimisations.
+
+\newpage
 \tableofcontents
 \newpage
-
-\section*{Abstract}
 
 \newpage
 \chapter{Introduction}
@@ -105,8 +108,6 @@ Data integration rules in OMQA problem instances are often written as Tuple-Gene
 
 Unfortunately, however, OMQA problems with general TGDs turned out to be undecidable \cite{beeri_vardi_1981}. In response to this, \cite{cali_gottlob_kifer_2013} identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves OMQA problems decidable, yet expressive enough to contain several classes of description logics.
 
-\section{Previous Works}
-
 Despite OMQA problems over GTGDs being known to be decidable for several years, only a small number of work have been done to develop computationally tractable algorithms for these problems. A recent work \cite{kappelmann_2019} suggested that we can efficiently rewrite a set of GTGD rules into a so-called \emph{Datalog saturation} of it, which is a set of existential-free TGDs that is "equivalent" to the original rule set for existential-free queries. The rewriting algorithm has been improved, implemented and evaluated in \cite{benedikt_buron_germano_kappelmann_motik_2022}. 
 
 (TODO: include a diagram indicating the scheme of how Datalog saturation is incorporated into OMQA)
@@ -119,34 +120,27 @@ It has been known that the entailment $\mathcal{D} \cup \Sigma \models \sigma(Q)
 
 Moreover, it has also been known that there exists a \emph{Datalog rewriting} of a finite set of GTGD rules and an arbitrary CQ \cite{barany_benedikt_cate_2013}. We will refer the problem of finding a Datalog rewriting of a GTGD rule set and a CQ by \emph{GTGD-Datalog Rewriting}. Note that Datalog-saturating a GTGD rule set is a special case of GTGD-Datalog Rewriting problem where the query is always atomic.
 
-\emph{To the best of my knowledge, however, no work has implemented a query answering procedure for general CQs under GTGDs}. Given that many real-world database queries are cyclic (TODO: evidence?), limiting ourselves to acyclic existential queries may pose issues on smooth adoptation of OMQA systems.
+\emph{To the best of my knowledge, however, no work has implemented a query-answering procedure for general CQs under GTGDs}. This project aims to bring the theory closer to implementations using atomic rewritings produced by \cite{benedikt_buron_germano_kappelmann_motik_2022}. Ultimately, we provide a working prototype of a query-answering system that works with GTGDs.
 
 \section{Contribution of This Work}
 
-The contribution of this work is threefold:
+The primary theoretical contribution of this work is the development of a concrete Datalog rewriting algorithm. On our way, we introduce a variant of chase which we call \emph{shortcutting chase tree} and develop some theory concerning query satisfaction within the chase structure. We then apply the theory to derive a Datalog rewriting, demonstrating room for further optimisations.
 
-\begin{itemize}
-  \item By examining the structure of chases, I derived a novel reduction of GTGD-Datalog Rewriting problem into exponentially many small instances of GTGD query answering problems with \emph{Boolean} CQs (BCQs), which no longer have free variables.
-  \item By making use of properties of chases, I demonstrate how BCQ answering over GTGD rules can be decided using a simple product of two \emph{tree automata}. By eliminating redundant nondeterminism in these automata, I derived a novel recursive procedure for deciding BCQ entailment problems, which can be memoized to further speed up subsequent BCQ answerings.
-  \item Last but not least, I provide a Java implementation of the former two algorithms which, when combined, can be assembled into an OMQA system.
-\end{itemize}
+In addition to the theoretical work, we provide the first implementation of the GTGD rewriting algorithm in Java, incorporating some optimisations which we discuss.
 
 \section{Outline of This Report}
 
-(TODO: use in-doc links)
+In \Cref{chapter:preliminaries}, we review basic terminologies and results that we use throughout the report.
 
-In Chapter 2, I introduce basic terminologies and results that will be used throughout the report.
+In \Cref{chapter:characterising-query-entailment-under-gtgds}, we revisit \emph{tree-like chase proofs} and introduce the notion of \emph{shortcutting chase trees}. We then analyse how answers to a conjunctive query are embedded into the shortcutting chase tree, emphasising its relationship to the connectedness of the query. At the end of the chapter, we apply our observations to derive a query-answering procedure that operates over shortcutting chase trees.
 
-In Chapter 3, I revisit the notion of "tree-like chase proof" and introduce the notion of "shortcut chases" (TODO: I'm pretty sure this have been defined elsewhere; find a literature if possible and cite here?) with a few diagrams. I then provide a simple analysis of how answers of the input query must be embedded into the chase tree, and argue that for rewriting purpose it is sufficient to decide whether a given rule plus a guarded set is "large enough" to entail a Boolean conjunctive subquery of a particular form.
+In \Cref{chapter:deriving-a-rewriting}, we use the observations from \Cref{chapter:characterising-query-entailment-under-gtgds} to plan towards a Datalog rewriting procedure. We will see that the query answering procedure from \Cref{chapter:characterising-query-entailment-under-gtgds} can be used to derive a rewriting, although it is inefficient as is. We close the chapter with optimisations of the algorithm so obtained.
 
-In Chapter 4, I begin with introducing nondeterministic finitely-commit-tree automata. We then discuss the most natural way to decide BCQ entailment using a formal product of "wildly nondeterministic commit query automaton" and "naive chase automaton". I show that, by carefully balancing the role of these two automata, we can make the chase automaton deterministic, and argue that we can translate the so-obtained automaton into a recursive decision algorithm.
-
-In Chapter 5, we discuss the details of implementation and its verification. I provide some benchmarks to observe how the algorithm runtime increases as the input becomes larger.
-
-We conclude the report with an overview, and discuss some weakness of the algorithm which may be improved in future studies.
+We briefly review our implementation in \Cref{chapter:implementation-and-testing}. Finally, we conclude the report with an overview and discuss some weaknesses of the algorithm to be improved in future studies.
 
 \newpage
 \chapter{Preliminaries}
+\label{chapter:preliminaries}
 
 This chapter introduces terminologies and notations, which we will use throughout the report.
 
@@ -1344,6 +1338,7 @@ This observation implies that, during the DFS, we are free to ``normalise'' loca
 
 \newpage
 \chapter{Implementation and Testing}
+\label{chapter:implementation-and-testing}
 
 We built an \href{https://github.com/kory33/guarded-queries}{open-sourced} prototypical rewriting library in Java, combining all ideas from \Cref{chapter:characterising-query-entailment-under-gtgds} and \Cref{chapter:deriving-a-rewriting}. On top of the core library, the system has a command-line interface where an end-user can interact with the rewriter.
 
