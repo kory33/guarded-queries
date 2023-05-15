@@ -4,6 +4,8 @@
 \usepackage[maxnames=10]{biblatex}
 \usepackage{setspace}
 \usepackage[labelfont=bf]{caption}
+\usepackage{fancyvrb}
+\usepackage{anyfontsize}
 
 \usepackage{amsfonts}
 \usepackage{amsmath}
@@ -72,6 +74,8 @@
 \newcommand{\LNames}[1]{\ensuremath{\normalfont{\textrm{LNames}} \left( #1 \right)}}
 \newcommand{\LRealz}[2]{\ensuremath{\normalfont{\textrm{LRealz}}_{ #1 } \left( #2 \right)}}
 \newcommand{\SubgoalRule}[1]{\ensuremath{\normalfont{\textrm{SubgoalRule}} \left( #1 \right)}}
+
+% TODO: we do not want spaces after operator names
 
 \title{Rewriting Conjunctive Queries \\ Under Guarded TGDs}
 \author{Ryosuke Kondo}
@@ -606,8 +610,6 @@ We can easily extend \Cref{bcq-base-connected-query-decomposition} to non-Boolea
   Then for a substitution $\alpha: \FV(Q) \rightarrow \Terms(\mathcal{D})$, $\mathcal{D} \cup \Sigma \models \alpha(Q)$ if and only if there exists an extension $\sigma_{\mathrm{partial}}: \Vars(Q) \rightharpoonup \Terms(\mathcal{D})$ of $\alpha$ satisfying conditions as in \Cref{bcq-base-connected-query-decomposition}.
 \end{corollary}
 
-% TODO: put a helpful diagram
-
 In order to produce answers to the query using \Cref{base-connected-query-decomposition}, we need to decide whether or not $\mathcal{D} \cup \Sigma \models \Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ holds. It turns out that we can exploit the connectedness of $\Subq{Q}{\sigma_{\mathrm{partial}}}{C}$ and the corecursive structure of $\SCTree{\mathcal{D}}{\Sigma}$ (\Cref{corecursiveness-of-sctree}) to check the query entailment recursively. To make this precise, we define the notion of a \emph{successful commit point}, a point at which a connected Boolean conjunctive query can be split in a way similar to \Cref{bcq-base-connected-query-decomposition}.
 
 \begin{definition}
@@ -764,23 +766,23 @@ In \Cref{characterising-query-entailment-under-gtgds}, we developed \Cref{basic-
 
 However, because of high data complexity, the algorithm is impractical for query-answering purposes: We have to explore a part of $\SCTree{\mathcal{D}}{\Sigma}$ for every single substitution $\alpha: \FV(Q) \rightarrow \Consts(\mathcal{D})$. So instead, we aim to use \Cref{basic-query-answering-procedure} as a stepping stone to devising a Datalog rewriting that works for arbitrary input $\mathcal{D}$.
 
-The first important observation is that the entailment of a subquery in a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$ only depends on a tiny fraction of $\mathcal{D}$.
+The first important observation is that the entailment of a subquery in a proper subtree of $\SCTree{\mathcal{D}}{\Sigma}$ only depends on a fraction of $\mathcal{D}$.
 
-More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is satisfied in a subtree $T_c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a non-root node $c$, and that $c$ is obtained by firing an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ together with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$. Then there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_c$ mapping all variables in $Q_\mathrm{sub}$ to nulls in $T_c$. If we let $\mathcal{D'}$ be a subset of $\mathcal{D}$ formed by extracting facts in $\mathcal{D}$ that are either
+More precisely, suppose that a connected subquery $Q_\mathrm{sub}$ is satisfied in a subtree $T_c$ of $\SCTree{\mathcal{D}}{\Sigma}$ rooted at a node $c$ of the root node $r$ so that there is a query homomorphism $h: Q_\mathrm{sub} \rightarrow T_c$. Suppose that $c$ is obtained from $r$ by firing an existential rule $\tau = \forall \vec{x}.\ \beta \rightarrow \exists \vec{y}.\ H$ together with a substitution $\sigma: \vec{x} \rightarrow \Terms(\mathcal{D})$. If we let $\mathcal{D'}$ be a subset of $\mathcal{D}$ formed by extracting facts in $\mathcal{D}$ that are either
 \begin{itemize}
   \item used in the substituted body $\sigma(\beta)$, or
   \item inherited by $c$, i.e. facts whose arguments are all in $\sigma(H)$,
 \end{itemize}
-then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As $c'$ inherits the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, there is a query homomorphism $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $K$ for the maximum arity of predicates in $\Sigma \cup \{Q\}$, we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
+then we can still fire $\tau$ with $\sigma$ in $\SCTree{\mathcal{D'}}{\Sigma}$ to obtain a node $c'$. As $c'$ inherits the same set of facts, the tree $T_c$ and the subtree $T_{c'}$ rooted at $c'$ are isomorphic, and in particular, $h$ restricts to $Q_\mathrm{sub} \rightarrow T_{c'}$. As $\mathcal{D'}$ is guarded by $\sigma(\beta)$, $\mathcal{D'}$ is $(K, \Sigma)$-small. Ultimately, if we write $$K = \max_{P \in \Predicates(\Sigma \cup \{Q\})} \Arity{P},$$we only need a $(K, \Sigma)$-small set of facts to entail a subquery in a proper subtree.
 
-Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation, it is possible to deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
+Moreover, by \Cref{bcq-invariant-under-sigma-preserving-renaming}, we are only interested in the \emph{structure} of the $(K, \Sigma)$-small instance that is needed to satisfy a subquery. For example, suppose that we have found out that an instance $\{R(c_1, c_2), R(c_2, r_1)\}$ is sufficient to entail a subquery $\exists z.\ T(c_2, r_2, z)$, where only $r_1$ and $r_2$ are constants in $\Sigma$. We can replace $c_1$ and $c_2$ with any other constants and still obtain a valid implication such as $R(c_4, c_6) \wedge R(c_6, r_1) \rightarrow \exists z.\ T(c_6, r_2, z)$. By a generalisation rule, we can deduce that $\forall x_1, x_2.\ R(x_1, x_2) \wedge R(x_2, r_1) \rightarrow \exists z.\ T(x_2, r_2, z)$ under $\Sigma$.
 
 With these observations in mind, we adopt the following strategy for building a rewriting.
 
 \begin{itemize}
   \item Start with an atomic rewriting $\ARew{\Sigma}$ of $\Sigma$.
-  \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution.
-  \item For each \emph{local instance} $I$ (to be defined in \Cref{subquery-entailment-problem-section}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
+  \item For each (\emph{not} necessarily maximal) $Q$-connected nonempty set $C$ of bound variables, introduce an intensional predicate $\mathrm{Subgoal}_C$, which asserts that a subquery induced by $C$ is satisfied by some partial substitution on $Q$.
+  \item For each \emph{local instance} $I$ (to be defined in \Cref{subquery-entailment-problem-section}), which represents a $(K, \Sigma)$-small structure in the base instance, decide if $I$ contains enough facts to entail a subquery induced by $C$. If so, add a rule roughly of the form $I \rightarrow \mathrm{Subgoal}_C$.
   \item Finally, add all rules that \emph{integrate} subgoals into the goal atom. These rules essentially perform the inverse of \Cref{base-connected-query-decomposition} by gathering base facts and subgoal atoms together to infer the existence of a query homomorphism.
 \end{itemize}
 
@@ -799,9 +801,9 @@ To proceed with the strategy, we need to define a data structure that can be inp
 \subsection{Local Instances}
 \label{subsection:local-instances}
 
-First, we formalise the $(K, \Sigma)$-small structure.
+First, we formalise the ``$(K, \Sigma)$-small structure''.
 
-Since there are at most $K$ (maximum arity of predicates in $\mathcal{D} \cup \Sigma$) non-$\Consts(\Sigma)$-terms in a $(K, \Sigma)$-small bag of facts, we might consider relabelling them with numbers $\{ 1, 2, \ldots, K \}$. However, if we completely identify bags with $\cong_\Sigma$-equivalence, we will no longer be able to recover the structure of $\SCTree{\mathcal{D}}{\Sigma}$. \Cref{sctree-simple-example-equivalence-classes} illustrates the issue with $\SCTree{\mathcal{D}}{\Sigma}$ from \Cref{sctree-simple-example}.
+Since there are at most $K$ (maximum arity of predicates in $\mathcal{D} \cup \Sigma$) non-$\Consts(\Sigma)$-terms in a $(K, \Sigma)$-small bag of facts, we might consider relabelling them with numbers $\{ 1, 2, \ldots, K \}$. However, if we completely identify bags with $\cong_\Sigma$-equivalence, we will no longer be able to recover the structure of $\SCTree{\mathcal{D}}{\Sigma}$. \Cref{sctree-simple-example-equivalence-classes} illustrates the issue.
 
 \begin{figure}[ht]
   \centering
@@ -825,25 +827,25 @@ A trick to solve this issue is to use $2K$ labels, which we call \emph{local nam
     \item for every fact $F \in I$, every term in $F$ is either
     \begin{itemize}
       \item a constant in $\Sigma$, or
-      \item a \emph{local name} from the set $\{ 1, \ldots, 2K \}$ of constants not intersecting with $\Consts(\Sigma)$
+      \item a \emph{local name} from the set $\{ 1, \ldots, 2K \}$ of fresh constants
     \end{itemize}
-    \item there are at most $K$ local names active in $I$.
+    \item there are at most $K$ local names that \emph{are active} (i.e. appear) in $I$.
   \end{itemize}
 
   We write $\LNames{I}$ for the set of active local names in $I$.
   \qed
 \end{definition}
 
-Notice that, as shown in \Cref{sctree-simple-example-local-names}, we can translate a $\SCTree{\mathcal{D}}{\Sigma}$ into a chase-like structure that uses local names. By abuse of notation, we write $\SCTree{I}{\Sigma}$ for the chase-like structure obtained this way.
+Notice that, as shown in \Cref{sctree-simple-example-local-names}, we can translate a $\SCTree{\mathcal{D}}{\Sigma}$ into a tree-like structure that uses local names. By abuse of notation, we write $\SCTree{I}{\Sigma}$ for the tree-like structure obtained this way.
 
 The structure $\SCTree{I}{\Sigma}$ can be constructed in a way similar to how we construct an ordinary shortcutting chase tree, except that when firing an existential rule, we \emph{reuse} a local name that was inactive at the parent node instead of introducing fresh nulls. For example, at $v'_4$ in \Cref{sctree-simple-example-local-names}, we are using a local name $3$, which is inactive at the parent node $v'_2$, in place of the null $n_4$. We no longer include the local name $1$ in $v'_4$ because $v'_4$ inherits no fact containing $1$. We say that such local names are \emph{dropped} by the chase step. If a local name $n$ dropped at $v$ becomes active again in a descendant $v'$ of $v$, then $n$ at $v$ and $v'$ represent different terms.
 
 \subsection{Partially Substituted Subqueries}
 \label{subsection:partially-substituted-subqueries}
 
-Our next task is to represent a partially substituted subquery. Notice that, for a $Q$-connected set $C$ of variables, the subquery induced by $Q$ should
+Our next task is to represent a partially substituted subquery. For a $Q$-connected set $C$ of variables, the subquery induced by $Q$ should
 \begin{itemize}
-  \item contain only atoms in $Q$ that mention a variable from $C$, and at the same time,
+  \item only contain atoms in $Q$ that mention a variable from $C$, and
   \item have all variables not in $C$ substituted with a term.
 \end{itemize}
 It is convenient to introduce the following notion to describe the latter condition.
@@ -893,7 +895,7 @@ This remark motivates the following definition.
 
 \begin{definition}
 \label{definition:embedding-of-constants-adjacent-to-c}
-  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $C$ be a $Q$-connected subset of variables bound in $Q$ and $I$ a $(K, \Sigma)$-local instance. An \emph{embedding of constants adjacent to $C$ into $I$} is an injective map $\iota: S_{Q, C} \hookrightarrow \LNames{I}$, where $S_{Q, C}$ is the set of constants in the subquery defined by $$
+  Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query, $C$ be a $Q$-connected subset of variables bound in $Q$ and $I$ a $(K, \Sigma)$-local instance. An \emph{embedding of constants adjacent to $C$ into $I$} is an injective map $\iota: S_{Q, C} \hookrightarrow \LNames{I}$, where $S_{Q, C}$ is the set of constants in the subquery, defined by $$
   S_{Q, C} = \left\{
       c \in \Consts(Q) \setminus \Consts(\Sigma)
         \;\middle|\;
@@ -953,10 +955,11 @@ Combining notions defined in \Cref{subsection:local-instances} and \Cref{subsect
 \begin{definition}
   Let $Q = \exists \vec{z}. \bigwedge_{j \in J} A_j$ be a conjunctive query. A \emph{$(\Sigma, Q)$-subquery entailment problem instance} is a 5-tuple $(C, I, \sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ where
   \begin{itemize}
-    \item $C$ is a $Q$-connected set of variables bound in $Q$
-    \item $I$ is a $(K, \Sigma)$-local instance, where $$K = \max_{P \in \Predicates(\Sigma \cup \{Q\})} \Arity{P}$$
-    \item $(\sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ is a representation of a subquery of $Q$ induced by $C$ and local to $I$
+    \item $C$ is a $Q$-connected set of variables bound in $Q$,
+    \item $I$ is a $(K, \Sigma)$-local instance, where $$K = \max_{P \in \Predicates(\Sigma \cup \{Q\})} \Arity{P}$$, and
+    \item $(\sigma_{\Consts(\Sigma)}, \sigma_I, \iota)$ is a representation of a subquery of $Q$ induced by $C$ and local to $I$.
   \end{itemize}
+  \qed
 \end{definition}
 
 \begin{problem}[Subquery Entailment Problem, formalisation of \Cref{informal-subquery-entailment-problem}]
@@ -972,7 +975,7 @@ We call an instance $\mathcal{I}$ a \emph{subquery entailment} if it is an \text
 
 We can solve \Cref{subquery-entailment-problem} with only a minor modification to \Cref{basic-query-answering-procedure}, with the basic idea being that we descend the $\SCTree{I}{\Sigma}$ to search for a successful commit point. The only difference is that when we fire an existential rule, we must not drop local names that appear in the substituted query $Q_\mathrm{subst}$, since otherwise $Q_\mathrm{subst}$ becomes immediately unsatisfiable in the chased subtree. The first version of our algorithm (\Cref{naive-subquery-entailment-enumeration}) is, therefore, a verbatim translation of \Cref{basic-query-answering-procedure} into the context of local instances.
 
-Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{naive-subquery-entailment-enumeration}. Nevertheless, for now, we proceed to the other components of the rewriting algorithm to see how outputs from \Cref{naive-subquery-entailment-enumeration} can be assembled into a Datalog rewriting.
+Later in \Cref{secomputation-optimisations}, we discuss optimisations of \Cref{naive-subquery-entailment-enumeration}. Nevertheless, for now, we move on to the other components of the rewriting algorithm to see how outputs from \Cref{naive-subquery-entailment-enumeration} can be assembled into a Datalog rewriting.
 
 %TC:ignore
 \begin{algorithm}
@@ -1082,7 +1085,7 @@ Under the identification of the subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ 
       $$
       \Sigma \cup \{ \Phi_{Q, C} \} \models \iota^{-1}(I) \rightarrow \Subq{Q}{\sigma_{\Consts(\Sigma)} \cup \sigma_I}{C}.
       $$
-      Since none of $\range{\iota^{-1}}$ appears in $\Sigma \cup \{\Phi_{Q, C}\}$, we can generalise query constants on the right-hand side to variables and immediately instantiate them back with original local names. Therefore
+      Since none of $\range{\iota^{-1}}$ appears in $\Sigma \cup \{\Phi_{Q, C}\}$, we can generalise query constants on the right-hand side to universally quantified variables and immediately instantiate them back with original local names. Therefore
       $$
       \Sigma \cup \{ \Phi_{Q, C} \} \models I \rightarrow \iota\left(\Subq{Q}{\sigma_{\Consts(\Sigma)} \cup \sigma_I}{C}\right),
       $$
@@ -1201,7 +1204,7 @@ When rewriting a GTGDs-CQ pair ($\Sigma, Q$) with \Cref{gtgds-cq-rewriting-proce
   \qed
 \end{remark}
 
-In the remainder of this chapter, we describe three optimisation techniques: two that address the issue (3) in \Cref{subsection:dp-optimisation} and in \Cref{subsection:dfs-optimisation}, and the other that partially resolves (1) in \Cref{subsection:instance-normalisation}. However, as we shall briefly discuss in \Cref{section:limitations-and-future-work}, we leave (2) as a problem for future work.
+In the remainder of this chapter, we describe three optimisation techniques: two that address the issue (3) in \Cref{subsection:dp-optimisation} and in \Cref{subsection:dfs-optimisation}, and the other that partially resolves (1) in \Cref{subsection:instance-normalisation}. However, we leave (2) as a problem for future work.
 
 \subsection{Dynamic Programming}
 \label{subsection:dp-optimisation}
@@ -1212,9 +1215,9 @@ As observed in \Cref{naive-seenumeration-inefficiencies}, the issue is that
   \item we are not making use of the result of past invocations.
 \end{itemize}
 
-The obvious solution is to work directly with subquery entailment instances instead, memoise all past results in a hash map, fill in the hash map (which we call the \emph{DP table}) from smaller (i.e. instances with smaller $C$) instances and finally output all results at the end of \textsc{EnumerateSubqueryEntailments}. We call this optimisation the \emph{dynamic programming optimisation}.
+The obvious solution is to work directly with subquery entailment instances instead, memoise all past results in a hash map (which we call the \emph{DP table}), fill in the hash map from smaller (i.e. instances with smaller $C$) instances and finally output all results at the end of \textsc{EnumerateSubqueryEntailments}. We call this optimisation the \emph{dynamic programming optimisation}.
 
-To proceed, we need to define the process of ``splitting" a subquery entailment problem instance, a process which is necessarily similar to \Cref{definition:query-splitting}.
+To proceed, we need to define the process of ``splitting" a subquery entailment problem instance, a process which is unsurprisingly similar to \Cref{definition:query-splitting}.
 
 \begin{definition}
 \label{definition:subquery-entailment-problem-splitting}
@@ -1223,7 +1226,7 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
   The \emph{committed part $\Commq{\mathcal{I}}{\sigma_{\mathrm{commit}}}$ of $\mathcal{I}$ according to $\sigma_{\mathrm{commit}}$} is the variable-free query $\Commq{\LRealz{Q}{\sigma_{\Consts(\Sigma)}, \sigma_I, \iota}}{\sigma_{\mathrm{commit}}}$.
 
   For each $Q$-connected component $C'$ of $(C \setminus \dom{\sigma_{\mathrm{commit}}})$, the \emph{subinstance $\Subi{\mathcal{I}}{\sigma_{\mathrm{commit}}}{C'}$ of $\mathcal{I}$ induced by $\sigma_{\mathrm{commit}}$ and $C'$} is the $(\Sigma, Q)$-subquery entailment problem instance defined by
-  $$\Subi{\mathcal{I}}{\sigma_{\mathrm{commit}}}{C} = (C', I, \sigma'_{\Consts(\Sigma)}, \sigma'_I, \iota'),$$
+  $$\Subi{\mathcal{I}}{\sigma_{\mathrm{commit}}}{C'} = (C', I, \sigma'_{\Consts(\Sigma)}, \sigma'_I, \iota'),$$
   where \begin{align*}
     \sigma'_{\Consts(\Sigma)} &= \sigma_{\Consts(\Sigma)} \upharpoonright \partial_Q C', \\
     \sigma'_I &= (\sigma_I \cup \sigma_{\mathrm{commit}}) \upharpoonright \partial_Q C', \\
@@ -1284,7 +1287,7 @@ To proceed, we need to define the process of ``splitting" a subquery entailment 
 \end{algorithm}
 %TC:endignore
 
-\Cref{algorithm:recursive-subquery-entailment-enumeration} is another implementation of \nobreak\textsc{EnumerateSubqueryEntailments} based on \Cref{definition:subquery-entailment-problem-splitting}. The algorithm is equivalent to \Cref{naive-subquery-entailment-enumeration}, but since \textsc{IsSubqueryEntailment} is a boolean function of $(\Sigma, Q)$-subquery entailment problem instances, we can memoise answers of \textsc{IsSubqueryEntailment} and avoid recomputations.
+\Cref{algorithm:recursive-subquery-entailment-enumeration} is another implementation of \nobreak\textsc{EnumerateSubqueryEntailments} based on \Cref{definition:subquery-entailment-problem-splitting}. The algorithm is equivalent to \Cref{naive-subquery-entailment-enumeration}, but since \textsc{IsSubqueryEntailment} is a Boolean function over $(\Sigma, Q)$-subquery entailment problem instances, we can memoise answers of \textsc{IsSubqueryEntailment} and avoid recomputations.
 
 \subsection{DFS Optimisation}
 \label{subsection:dfs-optimisation}
@@ -1309,18 +1312,18 @@ If we find a node $v$ that admits a splitting into subquery entailments, we mark
   \label{figure:sctree-dfs-marking}
 \end{figure}
 
-We call this efficient traversal of the chase tree the \emph{DFS optimisation}. Combined with DP optimisation from \Cref{subsection:dp-optimisation}, we never need to compute \textsc{splits} twice for the same instance.
+We call this efficient traversal of the chase tree the \emph{DFS optimisation}. Combined with the DP optimisation, we never need to compute \textsc{splits} twice for the same instance.
 
 \subsection{Instance Normalisation}
 \label{subsection:instance-normalisation}
 
 Finally, we address the first point of \Cref{naive-seenumeration-inefficiencies} concerning isomorphic instances.
 
-Recall that we use $2K$ local names since the set of $K$ names is insufficient to maintain a tree-like structure of local instances (\Cref{sctree-simple-example-equivalence-classes}).
+Recall that we use $2K$ local names as the set of $K$ names is insufficient to maintain a tree-like structure of local instances (\Cref{sctree-simple-example-equivalence-classes}).
 
 However, in \Cref{algorithm:recursive-subquery-entailment-enumeration}, even with DP and DFS optimisations in place, we only partially use the structure between local instances when we descend the chase tree. All we require is that the local names in $\range{\sigma_I} \cup \range{\iota}$ be preserved. In particular, we do not care if a local name (not in $\range{\sigma_I} \cup \range{\iota}$) at a node $v$ is introduced at $v$ or is inherited from the parent of $v$.
 
-This observation implies that, during the DFS, we are free to ``re-normalise'' local instances as long as we fix the names in $\range{\sigma_I} \cup \range{\iota}$. Since at most $K$ local names are active in a local instance, we can always work with local instances whose active names are from the set $\{ 1, \ldots, K \}$. We call the following strategy the \emph{instance normalisation}:
+This observation implies that, during the DFS, we are free to ``normalise'' local instances as long as we fix the names in $\range{\sigma_I} \cup \range{\iota}$. Since at most $K$ local names are active in a local instance, we can always restrict ourselves to local names from $\{ 1, \ldots, K \}$. We call the following strategy the \emph{instance normalisation}:
 
 \begin{itemize}
   \item In the top-level function \textsc{EnumerateSubqueryEntailments}, we only enumerate local instances over local names from $\{ 1, \ldots, K \}$. 
@@ -1332,22 +1335,21 @@ This observation implies that, during the DFS, we are free to ``re-normalise'' l
 \label{remark:rewriting-complexity}
   Combining all optimisations so far, we obtain the following performance characteristic.
   
-  Suppose for simplicity that $Q$ only contains constants from $\Sigma$. Let $\mathrm{sig} = \Predicates(\Sigma \cup \{Q\})$, $K = \max_{P \in \mathrm{sig}} \Arity{P}$. Then there are $K + |\Consts(\Sigma)|$ terms we use in a local instance.
-
-  Suppose further that all $P \in \mathrm{sig}$ have arity $K$. Then there are $|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K$ facts that we can form. Therefore there are $2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K\right)}$ local instances for which we need to decide subquery entailments. Since there are at most $2^{|\Vars(Q)|}$ connected variable sets, each of which has at most $(K + |\Consts(\Sigma)|)^{|\Vars(Q)|}$ different realisations, we estimate to test about \begin{multline}
+  Suppose for simplicity that $Q$ only contains constants from $\Sigma$. Let $\mathrm{sig} = \Predicates(\Sigma \cup \{Q\})$, $K = \max_{P \in \mathrm{sig}} \Arity{P}$. Then there are $K + |\Consts(\Sigma)|$ terms we use in a local instance. Suppose further that all $P \in \mathrm{sig}$ have arity $K$. Then there are $|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K$ facts that we can form. Therefore there are $2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K\right)}$ local instances for which we need to decide subquery entailments. Since there are at most $2^{|\Vars(Q)|}$ connected variable sets, each of which has at most $(K + |\Consts(\Sigma)|)^{|\Vars(Q)|}$ different realisations, we estimate to test at most \begin{multline}
   \label{equation:subquery-entailment-instances-number-estimation}
     2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K\right)} \times 2^{|\Vars(Q)|} \times (K + |\Consts(\Sigma)|)^{|\Vars(Q)|} \\
     = 2^{\left(|\mathrm{sig}| (K + |\Consts(\Sigma)|)^K + |\Vars(Q)|\right)} \times (K + |\Consts(\Sigma)|)^{|\Vars(Q)|}
   \end{multline}
   instances for subquery entailment. Each instance is tested only once (by DP and DFS optimisations), and each test takes time exponential to $|\ARew{\Sigma}|$ due to Datalog-saturating local instances.
 
-  Overall, the algorithm produces a rewriting in time doubly exponential to the input.
+  Overall, the algorithm produces a rewriting in time \emph{always} doubly exponential to the maximum arity.
+  \qed
 \end{remark}
 
 \newpage
-\chapter{Implementation, Testing and Evaluation}
+\chapter{Implementation and Testing}
 
-We built an \href{https://github.com/kory33/guarded-queries}{open-sourced} prototypical rewriting system in Java by combining all ideas from \Cref{characterising-query-entailment-under-gtgds} and \Cref{deriving-a-rewriting}. The system has a command-line interface where an end-user can interact with the rewriter.
+We built an \href{https://github.com/kory33/guarded-queries}{open-sourced} prototypical rewriting library in Java, combining all ideas from \Cref{characterising-query-entailment-under-gtgds} and \Cref{deriving-a-rewriting}. On top of the core library, the system has a command-line interface where an end-user can interact with the rewriter.
 
 \section{Architecture}
 
@@ -1355,7 +1357,7 @@ Our implementation sits on top of two libraries: \emph{Guarded-saturation} \cite
 
 The implementation of the rewriter closely follows \Cref{gtgds-cq-rewriting-procedure}. For \\ \textsc{EnumerateSubqueryEntailments}, we provide three implementations based on \Cref{algorithm:recursive-subquery-entailment-enumeration}, which respectively have (\emph{DP}), (\emph{DP + normalisation}) and (\emph{DP + normalisation + DFS}) optimisations applied.
 
-Further, to minimise the evaluation time of the output Datalog program, we apply \emph{rule subsumption} at the end: If we obtained two rules $\tau_1 = \beta_1 \rightarrow \eta_1$ and $\tau_2 = \beta_2 \rightarrow \eta_2$, and there exists a homomorphism $\sigma: \beta_1 \rightarrow \beta_2$ such that $\sigma(\eta_1) \supseteq \sigma(\eta_2)$, then we discard $\tau_2$ in favour of $\tau_1$.
+Further, to minimise the evaluation time of the output Datalog program, we apply \emph{rule subsumptions} at the end: If we obtained two rules $\tau_1 = \beta_1 \rightarrow \eta_1$ and $\tau_2 = \beta_2 \rightarrow \eta_2$, and there exists a homomorphism $\sigma: \beta_1 \rightarrow \beta_2$ such that $\sigma(\eta_1) \supseteq \sigma(\eta_2)$, then we discard $\tau_2$ in favour of $\tau_1$.
 
 We illustrate the overall architecture in \Cref{figure:implementation-architecture}.
 
@@ -1369,11 +1371,9 @@ We illustrate the overall architecture in \Cref{figure:implementation-architectu
 \section{Correctness Tests}
 \label{section:correctness-tests}
 
-The codebase contains a naive Datalog engine, a (nested-loop) join algorithm, output rule subsumption and many utility methods, all of which are extensively property-based-tested with ScalaCheck \cite{scalacheck}. In addition, the overall rewriting system is integration-tested with JUnit 5 \cite{junit}.
+The codebase contains a naive Datalog engine, a (nested-loop) join algorithm, output rule subsumption and many other utility components, all of which are extensively property-based-tested with ScalaCheck \cite{scalacheck}. In addition, the overall rewriting system is integration-tested with JUnit 5 \cite{junit}.
 
-Since there are no other implementations for GTGDs-CQ rewriting, we could not compare our algorithm to existing implementations on general queries.
-
-However, we can translate an ``acyclic" existential query into an atomic query by adding a few guarded rules. For instance, the query $Q = \exists x, y. R(w, x) \wedge S(y, x)$ is existential, but if we add rules \begin{align*}
+Since there are no other implementations for GTGDs-CQ rewriting, we could not compare our algorithm to existing implementations on general queries. However, we can translate an ``acyclic" existential query into an atomic query by adding a few guarded rules. For instance, the query $Q = \exists x, y. R(w, x) \wedge S(y, x)$ is existential, but if we add rules \begin{align*}
   \forall x, y.\ S(y, x) &\rightarrow \mathrm{Goal}_1(x) \\
   \forall w, x.\ R(w, x) \wedge \mathrm{Goal}_1(x) &\rightarrow \mathrm{Goal}(w)
 \end{align*}
@@ -1384,7 +1384,59 @@ With this observation, we manually translated a few acyclic queries, rewritten b
 \section{Example Runs}
 \label{section:example-runs}
 
-(TODO: include something here)
+\Cref{figure:example-command-line-interaction} is an example of an interaction between a user and the application where the user attempts to rewrite
+$$
+Q = \exists y. R(c_1, y) \wedge R(y, w) \wedge R(w, c_3)
+$$
+under rules
+\begin{align*}
+  \forall x_1.\ R(x_1, c_1) \wedge P(x_1) &\rightarrow \exists y_1.\ R(c_1, y_1) \wedge R(y_1, x_1) \wedge P(y_1), \\
+  \forall x_1.\ R(c_1, x_1) &\rightarrow R(x_1, c_1) \wedge P(x_1).
+\end{align*}
+
+The experiment is performed on a Windows 11 computer with an Intel Core i9-9900 CPU @ 3.10 GHz and 64 GB of RAM.
+
+\begin{figure}
+%TC:ignore
+\begin{Verbatim}[frame=single, fontsize=\fontsize{9}{10}]
+> add-rule R(x_1, c_1), P(x_1) -> EE y_1. R(c_1, y_1), R(y_1, x_1), P(y_1) 
+Registered rule: R(x_1,c_1) & P(x_1) -> EE y_1. R(y_1,x_1) & P(y_1) & R(c_1,y_1)
+> add-rule R(c_1, x_1) -> R(x_1, c_1), P(x_1)
+Registered rule: R(c_1,x_1) -> R(x_1,c_1) & P(x_1)
+> rewrite dfs-normalizing EE y. R(c_1, y), R(y, w), R(w, c_3)
+Rewriting query:(exists[y]R(c_1,y) & R(y,w) & R(w,c_3))
+  using GuardedRuleAndQueryRewriter{...}, with registered rules:
+  R(x_1,c_1) & P(x_1) -> EE y_1. R(y_1,x_1) & P(y_1) & R(c_1,y_1)
+  R(c_1,x_1) -> R(x_1,c_1) & P(x_1)
+
+(GSat logs)
+
+Done rewriting query in 3008940600 nanoseconds.
+Minimizing the result...
+# of subgoal derivation rules in original output: 1895
+# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: 22
+# of subgoal derivation rules in minimizedRewriting: 7
+Done minimizing the result in 94796800 nanoseconds.
+Rewritten query:
+  Goal atom: IP0_GOAL(w)
+  Atomic rewriting part:
+    R(GSat_u1,GSat_u2), R(c_1,GSat_u1), P(GSat_u1) :- IP0_NI_0(GSat_u2,GSat_u1)
+    R(GSat_u1,c_1), P(GSat_u1) :- R(c_1,GSat_u1)
+  Subgoal derivation part:
+    IP0_SQ0_SGL_0(x_1) :- R(x_2,x_1), R(c_1,x_2), R(x_2,c_1), P(x_2)
+    IP0_SQ0_SGL_0(x_0) :- R(c_1,x_0)
+    IP0_SQ0_GOAL(w) :- IP0_SQ0_SGL_0(w)
+    IP0_SQ0_SGL_0(c_1) :- R(x_1,c_1), P(x_1)
+    IP0_SQ0_GOAL(w) :- R(c_1,y), R(y,w)
+    IP0_SQ0_SGL_0(x_0) :- R(x_0,c_1), P(x_0)
+    IP0_GOAL(w) :- R(w,c_3), IP0_SQ0_GOAL(w)
+\end{Verbatim}
+%TC:endignore
+\caption{An interaction with the command-line interface.}
+\label{figure:example-command-line-interaction}
+\end{figure}
+
+For comparison, with only (DP) and (DP + normalisation) optimisations applied, rewriting the same input as in \Cref{figure:example-command-line-interaction} takes about 7.3 seconds and 160 seconds respectively, demonstrating the effectiveness of optimisations in \Cref{secomputation-optimisations}.
 
 \newpage
 \chapter{Conclusions and Further Discussion}
@@ -1398,13 +1450,13 @@ We discussed issues encountered by a naive algorithm for enumerating subquery en
 
 % extension to wider class of TGDs?
 
-The current implementation lacks optimisations for trimming down the space of subquery entailment problem instances. Instead, it always explores the whole space, whose size is doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}), making it impractical to rewrite large inputs such as real-world ontologies. For instance, if a rule constant $c$ only appears in heads, it is redundant to consider a local instance containing facts with $c$ since there is no rule we can fire only by having such facts.
+The current implementation lacks optimisations for trimming down the space of subquery entailment problem instances. Instead, it always explores the whole space, whose size is doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}), making it impractical to rewrite large inputs such as real-world ontologies. We may be able to overcome this issue by analysing the structure of input rules. For instance, if a rule constant $c$ only appears in heads and not in the query, it is redundant to consider local instances containing facts with $c$ since no rule requires such facts.
 
 Another crucial optimisation concerns instance subsumption, as discussed in \Cref{naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing a fact with $R$ no longer need to be tested for entailment, reducing the search space by a factor of $16 = 2^4$. We leave for future work the method for efficiently controlling the search space.
 
-Moreover, as remarked in \Cref{section:correctness-tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. Our system does not perform any such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even when induced subqueries are acyclic. Investigating the effectiveness of such input transformation is left for future work.
+Moreover, as remarked in \Cref{section:correctness-tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. However, our system does not perform such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even when induced subqueries are acyclic. Investigating the effectiveness of such input transformation is left for future work.
 
-Finally, our prototypical system spends most CPU time in Datalog-saturating and chasing the local instances. For simplicity, we use an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
+Finally, our prototypical system spends most CPU time in Datalog-saturating and chasing the local instances. We use an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances for simplicity. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
 
 \printbibliography
 
