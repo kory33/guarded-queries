@@ -75,18 +75,30 @@
 \newcommand{\LRealz}[2]{\ensuremath{\normalfont{\textrm{LRealz}}_{ #1 }\!\left( #2 \right)}}
 \newcommand{\SubgoalRule}[1]{\ensuremath{\normalfont{\textrm{SubgoalRule}} \left( #1 \right)}}
 
-\title{Rewriting Conjunctive Queries \\ Under Guarded TGDs}
-\author{Ryosuke Kondo}
-\date{May 2023}
-
 \begin{document}
-\maketitle
+\begin{titlepage}
+	\centering
+  \par\vspace{1cm}
+	{\textsc{University of Oxford} \par}
+	\vspace{1cm}
+	{\Large \textsc{Part C Project Report}\par}
+	\vspace{1.5cm}
+	{\huge\bfseries Rewriting Conjunctive Queries \\ Under Guarded TGDs\par}
+	\vspace{2cm}
+	{\Large\itshape Ryosuke Kondo \par}
+	\vfill
+	Supervised by\par
+	Prof. Michael Benedikt
+
+	\vfill
+
+	{\large Trinity Term 2023\par}
+\end{titlepage}
 
 \newpage
 \thispagestyle{empty}
 \
 \newpage
-\pagenumbering{roman}
 
 \chapter*{\centering Abstract}
 
@@ -99,7 +111,6 @@ The class of Guarded Tuple-Generating Dependencies (GTGDs) is an expressive clas
 \newpage
 
 \newpage
-\pagenumbering{arabic}
 \chapter{Introduction}
 
 \section{Background}
@@ -122,7 +133,7 @@ This type of problem typically arises when data sources are distributed, such as
 
 A class of logical formulas known as Tuple Generating Dependencies (TGDs), which are of the form $\forall \vec{x}. \beta \rightarrow \exists \vec{y}.\ \eta$, could describe data integrity rules. In the example above, the two rules would be written as $\forall X.\ U(X) \rightarrow \exists Z.\ R(X, Z)$ and $\forall X, Y.\ R(X, Y) \rightarrow S(X, X)$.
 
-Unfortunately, query answering under general TGDs is undecidable \cite{beeri_vardi_1981}. A line of work, including \cite{cali_gottlob_kifer_2013}, identified \emph{Guarded TGDs} (GTGDs) as a subclass of TGDs that leaves query-answering decidable yet much more expressive than description logics used for ontological reasoning.
+Unfortunately, query answering under general TGDs is undecidable \cite{beeri_vardi_1981}. A line of work, including \cite{cali_gottlob_kifer_2013}, identified \emph{Guarded TGDs} (GTGDs) as a syntactically restricted subclass of TGDs that leaves query-answering decidable yet much more expressive than description logics used for ontological reasoning.
 
 The first result that opened up the possibility towards practical query answering is shown in \cite{barany_benedikt_cate_2013}, which states that we can compute a \emph{Datalog rewriting} of (frontier) guarded TGDs and a conjunctive query. Roughly speaking, a Datalog rewriting is a set of existential-free TGDs that gives the same answer as the original query. It is well-known that a fixed Datalog program can be run in a polynomial time on a database.
 
@@ -134,7 +145,7 @@ To our knowledge, however, no work has yet implemented a query-answering procedu
 
 The primary theoretical contribution of this work is the development of a concrete Datalog rewriting algorithm. On our way, we introduce a variant of chase which we call \emph{shortcutting chase tree} and develop some theory concerning query satisfaction within the chase structure. We then apply the theory to derive a Datalog rewriting, demonstrating room for further optimisations.
 
-In addition to the theoretical work, we provide the first implementation of the GTGD rewriting algorithm in Java, incorporating some optimisations we will have discussed.
+In addition to the theoretical work, we provide the first \href{https://github.com/kory33/guarded-queries}{implementation} of the GTGD rewriting algorithm in Java, incorporating some optimisations we will have discussed.
 
 \section{Outline of This Report}
 
@@ -1140,7 +1151,7 @@ Recall that a subgoal atom $\mathrm{Subgoal}_{Q, C}(\vec{t})$ indicates that the
   Each $\mathrm{SglGlueingRule}_\mathrm{BVars}$ is ``sound" (in a sense as in \Cref{proposition:subgoal-captures-subquery-fulfilment}, by identifying subgoals with subquery fulfilments and the goal atom with query fulfilment), and also collectively complete (i.e. we can derive all answers to $Q$ as goal facts if we can use all glueing rules) by \Cref{corollary:base-connected-query-decomposition}.
 \end{remark}
 
-\subsection{Putting Pieces Together}
+\subsection{Putting The Pieces Together}
 
 Finally, we combine components from \Cref{section:naive-subquery-entailment-enumeration}, \Cref{subsection:subquery-entailment-to-datalog-rule} and \Cref{subsection:glueing-subgoals}.
 
@@ -1446,15 +1457,15 @@ We discussed issues encountered by a naive algorithm for enumerating subquery en
 \section{Limitations and Future Work}
 \label{section:limitations-and-future-work}
 
-% extension to wider class of TGDs?
+The current implementation lacks optimisations for trimming down the space of subquery entailment problem instances. Instead, it always explores the whole space, whose size is doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}), making it impractical to rewrite large inputs such as real-world ontologies. Even though this matches with the theoretical lower bound of query answering procedure (which is \textsc{2exptime} for arbitrary arity and \textsc{exptime} for bounded arity \cite{cali_gottlob_kifer_2013}), we may be able to overcome this issue in some cases by analysing the structure of input rules. For instance, if a rule constant $c$ only appears in heads and not in the query, it is redundant to consider local instances containing facts with $c$ since no rule requires such facts.
 
-The current implementation lacks optimisations for trimming down the space of subquery entailment problem instances. Instead, it always explores the whole space, whose size is doubly exponential in the maximum arity of the input signature and exponential in the number of constants and predicates (\Cref{remark:rewriting-complexity}), making it impractical to rewrite large inputs such as real-world ontologies. We may be able to overcome this issue by analysing the structure of input rules. For instance, if a rule constant $c$ only appears in heads and not in the query, it is redundant to consider local instances containing facts with $c$ since no rule requires such facts.
+Arguably, the most crucial optimisation is handling instance subsumption, as discussed in \Cref{remark:naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing a fact with $R$ no longer need to be tested for entailment, reducing the search space by a factor of $16 = 2^4$. We leave for future work the method for efficiently controlling the search space.
 
-Another crucial optimisation concerns instance subsumption, as discussed in \Cref{remark:naive-seenumeration-inefficiencies}: If a single atom $R(1, 2)$ suffices to entail a subquery, \emph{all} local instances containing a fact with $R$ no longer need to be tested for entailment, reducing the search space by a factor of $16 = 2^4$. We leave for future work the method for efficiently controlling the search space.
+Another performance consideration is, as remarked in \Cref{section:correctness-tests}, that we can rewrite some queries into atomic queries by adding a few guarded rules. Our system does not perform such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even when induced subqueries are acyclic. Investigating the effectiveness of such input transformation is left for future work.
 
-Moreover, as remarked in \Cref{section:correctness-tests}, we can rewrite some queries into atomic queries by adding a few guarded rules. However, our system does not perform such preprocessing, nor does it reduce subquery entailment problems to atomic queries, even when induced subqueries are acyclic. Investigating the effectiveness of such input transformation is left for future work.
+Moreover, our prototypical system spends most of its CPU time in Datalog-saturating and chasing the local instances. We use an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances for simplicity. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
 
-Finally, our prototypical system spends most CPU time in Datalog-saturating and chasing the local instances. We use an inefficient join algorithm without indexes and the Naive Evaluation to saturate instances for simplicity. One might want to incorporate more sophisticated join and saturation algorithms and compare their performances.
+Finally, as mentioned in the cited paper, the result in \cite{barany_benedikt_cate_2013} concerning rewritability extends to a slightly wider class of TGDs known as frontier-guarded TGDs, where only frontier-variables have to be guarded in the body. Therefore, it is of theoretical interest if we could extend our approach to this class of TGDs.
 
 \printbibliography
 
