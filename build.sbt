@@ -2,14 +2,10 @@ import sbt._
 import Process._
 import scala.sys.process._
 
-resolvers += "Maven Central" at "https://repo1.maven.org/maven2/"
+ThisBuild / scalaVersion := "3.3.0"
+ThisBuild / javacOptions ++= Seq("-encoding", "UTF-8")
 
-javacOptions ++= Seq("-encoding", "UTF-8")
-
-libraryDependencies ++= Seq(
-  "com.github.sbt" % "junit-interface" % "0.13.2" % Test,
-  "org.junit.jupiter" % "junit-jupiter" % "5.9.3" % Test
-)
+ThisBuild / resolvers += "Maven Central" at "https://repo1.maven.org/maven2/"
 
 val findMavenCommand = taskKey[String]("Determine the available Maven command")
 val installPdqJar = taskKey[Unit]("Download and install pdq-common to local Maven repository")
@@ -17,7 +13,7 @@ val installKaon2 = taskKey[Unit]("Install kaon2 jar to local Maven repository")
 val mavenPackage = taskKey[File]("Package submodule using Maven")
 
 lazy val root = (project in file("."))
-  .aggregate(guardedSaturationWrapper, lib, utilParser, app)
+  .aggregate(guardedSaturationWrapper, lib, utilParser, libIntegrationTests, app)
 
 lazy val guardedSaturationWrapper = project
   .in(file("guarded-saturation-wrapper"))
@@ -125,7 +121,11 @@ lazy val guardedSaturationWrapper = project
 lazy val lib = project
   .in(file("lib"))
   .settings(
-    Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value
+    Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value,
+    libraryDependencies ++= Seq(
+      "org.scalatestplus" %% "scalacheck-1-17" % "3.2.15.0" % Test,
+      "org.scalatest" %% "scalatest-flatspec" % "3.2.15" % Test
+    ),
   )
 
 lazy val utilParser = project
@@ -135,6 +135,18 @@ lazy val utilParser = project
     libraryDependencies ++= Seq(
       "org.javafp" % "parsecj" % "0.6"
     ),
+  )
+
+lazy val libIntegrationTests = project
+  .in(file("lib-integration-tests"))
+  .dependsOn(lib, utilParser)
+  .settings(
+    libraryDependencies ++= Seq(
+      "net.aichler" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test,
+      "org.junit.jupiter" % "junit-jupiter" % "5.9.3" % Test
+    ),
+    Test / logBuffered := true,
+    Test / baseDirectory := (ThisBuild / baseDirectory).value
   )
 
 lazy val app = project
