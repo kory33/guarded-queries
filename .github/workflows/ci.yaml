@@ -15,4 +15,4 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'maven'
-      - run: ./sbt test
+      - run: sbt test
