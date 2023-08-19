@@ -1,0 +1,146 @@
+import sbt._
+import Process._
+import scala.sys.process._
+
+resolvers += "Maven Central" at "https://repo1.maven.org/maven2/"
+
+javacOptions ++= Seq("-encoding", "UTF-8")
+
+libraryDependencies ++= Seq(
+  "com.github.sbt" % "junit-interface" % "0.13.2" % Test,
+  "org.junit.jupiter" % "junit-jupiter" % "5.9.3" % Test
+)
+
+val findMavenCommand = taskKey[String]("Determine the available Maven command")
+val installPdqJar = taskKey[Unit]("Download and install pdq-common to local Maven repository")
+val installKaon2 = taskKey[Unit]("Install kaon2 jar to local Maven repository")
+val mavenPackage = taskKey[File]("Package submodule using Maven")
+
+lazy val root = (project in file("."))
+  .aggregate(guardedSaturationWrapper, lib, utilParser, app)
+
+lazy val guardedSaturationWrapper = project
+  .in(file("guarded-saturation-wrapper"))
+  .settings(
+    findMavenCommand := {
+      def testMvnCommand(mvnExecutableName: String): Boolean = {
+        try {
+          Process(mvnExecutableName, Seq("-version")).!!
+          true
+        } catch {
+          case e: Exception => false
+        }
+      }
+
+      List("mvn", "mvn.cmd").find(testMvnCommand) match {
+        case Some(mvnExecutableName) => mvnExecutableName
+        case None => throw new Exception("Could not find Maven executable")
+      }
+    },
+    installPdqJar := {
+      val pdqCommonVersion = "2.0.0"
+      val localTemporaryJarPath =
+        s"guarded-saturation-wrapper/external_maven_dependencies/pdq-common-${pdqCommonVersion}.jar"
+      val pdqCommonJarUrl =
+        s"https://github.com/ProofDrivenQuerying/pdq/releases/download/v${pdqCommonVersion}/pdq-common-${pdqCommonVersion}.jar"
+
+      // download the jar if it's not already present
+      val outputFile = file(localTemporaryJarPath)
+      if (!outputFile.exists()) {
+        outputFile.getParentFile().mkdirs()
+        new java.net.URL(pdqCommonJarUrl) #> outputFile !!
+      }
+
+      // install the jar to the local Maven repository unless we previously saw the JAR file
+      val foundMavenCommand = findMavenCommand.value
+      FileFunction.cached(
+        streams.value.cacheDirectory / "install-pdq-jar",
+        inStyle = FilesInfo.lastModified
+      ) { _ =>
+        Process(
+          Seq(
+            foundMavenCommand,
+            "org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file",
+            // relative to the Guarded-saturation directory
+            s"-Dfile=../../${localTemporaryJarPath}"
+          ),
+          file("guarded-saturation-wrapper/Guarded-saturation")
+        ).!
+
+        Set.empty
+      } (Set(file(localTemporaryJarPath)))
+    },
+    installKaon2 := {
+      val foundMavenCommand = findMavenCommand.value
+
+      FileFunction.cached(
+        streams.value.cacheDirectory / "install-kaon2",
+        inStyle = FilesInfo.lastModified
+      ) { _ =>
+        Process(
+          Seq(
+            foundMavenCommand,
+            "install:install-file",
+            // relative to the Guarded-saturation directory
+            "-Dfile=src/main/resources/kaon2.jar",
+            "-DgroupId=org.semanticweb.kaon2",
+            "-DartifactId=kaon2",
+            "-Dversion=2008-06-29",
+            "-Dpackaging=jar",
+            "-DgeneratePom=true"
+          ),
+          file("guarded-saturation-wrapper/Guarded-saturation")
+        ).!
+
+        Set.empty
+      } (Set(file("guarded-saturation-wrapper/Guarded-saturation/src/main/resources/kaon2.jar")))
+    },
+    mavenPackage := {
+      // task dependencies
+      installPdqJar.value
+      installKaon2.value
+
+      val foundMavenCommand = findMavenCommand.value
+      val cachedMvnPackage =
+        FileFunction.cached(
+          streams.value.cacheDirectory / "maven-package",
+          inStyle = FilesInfo.lastModified, outStyle = FilesInfo.exists
+        ) { _ =>
+          Process(
+            // some tests in GSat just fail right now, so ignore tests
+            Seq(foundMavenCommand, "package", "-DskipTests"),
+            file("guarded-saturation-wrapper/Guarded-saturation")
+          ).!
+
+          Set(file("guarded-saturation-wrapper/Guarded-saturation/target/guarded-saturation-1.0.0-jar-with-dependencies.jar"))
+        }
+
+      val inputFiles =
+        (file("guarded-saturation-wrapper/Guarded-saturation") ** "*") ---
+        (file("guarded-saturation-wrapper/Guarded-saturation/target") ** "*")
+      cachedMvnPackage(inputFiles.get.toSet).head
+    },
+  )
+
+lazy val lib = project
+  .in(file("lib"))
+  .settings(
+    Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value
+  )
+
+lazy val utilParser = project
+  .in(file("util-parser"))
+  .dependsOn(lib)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.javafp" % "parsecj" % "0.6"
+    ),
+  )
+
+lazy val app = project
+  .in(file("app"))
+  .dependsOn(lib, utilParser)
+  .settings(
+    Compile / mainClass := Some("io.github.kory33.guardedqueries.app.App"),
+    assembly / assemblyJarName := "guarded-saturation-0.1.0.jar",
+  )

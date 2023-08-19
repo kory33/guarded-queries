@@ -11,6 +11,9 @@ lib/bin
 # Ignore Gradle build output directory
 build
 
+# Ignore sbt build output directories
+target
+.bsp
 .bloop
 
 report/out
