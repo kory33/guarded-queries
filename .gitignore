@@ -1,20 +1,12 @@
-app/bin
-lib/bin
-
 .metals
-
 .idea
-
-# Ignore Gradle project-specific cache directory
-.gradle
-
-# Ignore Gradle build output directory
-build
 
 # Ignore sbt build output directories
 target
+
 .bsp
 .bloop
 
+# Ignore pdf outputs
 report/out
 report/svg-inkscape
