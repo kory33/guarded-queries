@@ -126,7 +126,7 @@ lazy val lib = project
     Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value,
     libraryDependencies ++= Seq(
       "org.scalatestplus" %% "scalacheck-1-17" % "3.2.15.0" % Test,
-      "org.scalatest" %% "scalatest-flatspec" % "3.2.15" % Test
+      "org.scalatest" %% "scalatest-flatspec" % "3.2.16" % Test
     ),
   )
 
