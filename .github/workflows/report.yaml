@@ -27,7 +27,7 @@ jobs:
       - run: |
           mkdir -p ./_site
           cp ./report/report.pdf ./_site/report.pdf
-      - uses: actions/upload-pages-artifact@v1
+      - uses: actions/upload-pages-artifact@v2
         with:
           path: ./_site
           retention-days: 30
