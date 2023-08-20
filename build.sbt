@@ -145,7 +145,7 @@ lazy val libIntegrationTests = project
   .settings(
     libraryDependencies ++= Seq(
       "net.aichler" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test,
-      "org.junit.jupiter" % "junit-jupiter" % "5.9.3" % Test
+      "org.junit.jupiter" % "junit-jupiter" % "5.10.0" % Test
     ),
     Test / logBuffered := true,
     Test / baseDirectory := (ThisBuild / baseDirectory).value
