@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters._
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
 class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  val genSmallAtom = GenFormula.genAtom(
+  val genSmallAtom: Gen[Atom] = GenFormula.genAtom(
     4,
     Gen.oneOf(GenFormula.genNumberedVariable(30), GenFormula.genConstant(4))
   )
@@ -21,7 +21,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSignatureAndFormalInstance: Gen[(Set[Predicate], FormalInstance[Constant])] = for {
     predicateCount <- Gen.chooseNum(1, 10)
     predicates <- (1 to predicateCount).toList.traverse { index =>
-      Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_${index}", arity) }
+      Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_$index", arity) }
     }
     predicateSet = predicates.toSet
 
@@ -39,7 +39,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         for {
           predicate <- Gen.oneOf(predicateSet)
           terms <- Gen.listOfN(
-            predicate.getArity(),
+            predicate.getArity,
             Gen.oneOf(GenFormula.genNumberedVariable(4), GenFormula.genConstant(4))
           )
         } yield (instance, Atom.create(predicate, terms*))
@@ -52,7 +52,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
           .allMatches(query, instance, c => c)
           .materializeFunctionFreeAtom(query, c => c)
           .asScala
-          .foreach { fact => assert(fact.predicate().equals(query.getPredicate())) }
+          .foreach { fact => assert(fact.predicate().equals(query.getPredicate)) }
     }
   }
 
@@ -84,7 +84,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   def genAtomAndHomomorphism: Gen[(Atom, HomomorphicMapping[Constant])] = for {
     atom <- genSmallAtom
-    variablesInAtom = atom.getVariables().toSet.toList
+    variablesInAtom = atom.getVariables.toSet.toList
     homomorphism <- Gen.listOfN(variablesInAtom.size, GenFormula.genConstant(10))
   } yield (atom, new HomomorphicMapping[Constant](ImmutableList.copyOf(variablesInAtom.asJava), ImmutableList.copyOf(homomorphism.asJava)))
 

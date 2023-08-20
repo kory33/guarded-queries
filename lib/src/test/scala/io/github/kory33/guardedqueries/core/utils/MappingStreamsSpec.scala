@@ -12,14 +12,15 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  val smallSetSize = Gen.chooseNum(0, 5)
-  def javaSetOfSize(size: Int) = ImmutableSet.copyOf((1 to size).map(Integer.valueOf).asJava)
+  val smallSetSize: Gen[Int] = Gen.chooseNum(0, 5)
+  def javaSetOfSize(size: Int): ImmutableSet[Integer] =
+    ImmutableSet.copyOf((1 to size).map(Integer.valueOf).asJava)
 
   def respectsDomainAndCodomain(
     javaMap: java.util.Map[Integer, Integer],
     domain: java.util.Set[Integer],
     codomain: java.util.Set[Integer]
-  ) =
+  ): Boolean =
     javaMap.keySet().asScala.forall(domain.contains) &&
       javaMap.values().asScala.forall(codomain.contains)
 

@@ -17,7 +17,7 @@ object GenFormalInstance {
                             constantsToUse: Set[Constant]
   ): Gen[FormalInstance[Constant]] = {
     def buildTuples(currentTuple: List[Constant] = Nil): List[List[Constant]] = {
-      if (currentTuple.size == predicate.getArity()) {
+      if (currentTuple.size == predicate.getArity) {
         List(currentTuple)
       } else {
         constantsToUse.toList.flatMap { constant => buildTuples(constant :: currentTuple) }

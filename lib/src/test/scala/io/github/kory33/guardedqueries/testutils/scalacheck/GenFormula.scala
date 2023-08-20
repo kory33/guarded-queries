@@ -30,21 +30,22 @@ object GenFormula {
 
   def genAtom(maxArity: Int, genTerm: Gen[Term]): Gen[Atom] = for {
     predicate <- genPredicate(maxArity, 30)
-    terms <- Gen.listOfN(predicate.getArity(), genTerm)
+    terms <- Gen.listOfN(predicate.getArity, genTerm)
   } yield Atom.create(predicate, terms: _*)
 
-  def genConjunctiveQuery(maxAtoms: Int, maxArity: Int) = for {
+  def genConjunctiveQuery(maxAtoms: Int, maxArity: Int): Gen[ConjunctiveQuery] = for {
     numberOfAtoms <- Gen.choose(1, maxAtoms)
     atoms <- Gen.listOfN(numberOfAtoms, genAtom(maxArity, genPrefixedVariableOrConstant))
     variablesInAtoms = atoms.flatMap(_.getVariables()).toSet
     freeVariables <- GenSet.chooseSubset(variablesInAtoms)
   } yield ConjunctiveQuery.create(freeVariables.toArray, atoms.toArray)
 
-  def genExistentialFreeConjunctiveQuery(maxAtoms: Int, maxArity: Int) = for {
-    numberOfAtoms <- Gen.choose(1, maxAtoms)
-    atoms <- Gen.listOfN(numberOfAtoms, genAtom(maxArity, genPrefixedVariableOrConstant))
-    variablesInAtoms = atoms.flatMap(_.getVariables()).toSet
-  } yield ConjunctiveQuery.create(variablesInAtoms.toArray, atoms.toArray)
+  def genExistentialFreeConjunctiveQuery(maxAtoms: Int, maxArity: Int): Gen[ConjunctiveQuery] =
+    for {
+      numberOfAtoms <- Gen.choose(1, maxAtoms)
+      atoms <- Gen.listOfN(numberOfAtoms, genAtom(maxArity, genPrefixedVariableOrConstant))
+      variablesInAtoms = atoms.flatMap(_.getVariables()).toSet
+    } yield ConjunctiveQuery.create(variablesInAtoms.toArray, atoms.toArray)
 }
 
 object ShrinkFormula {
@@ -59,12 +60,12 @@ object ShrinkFormula {
     }
 
   given Shrink[Variable] = Shrink.withLazyList { variable =>
-    shrinkNumberInString("x_", variable.getSymbol())
+    shrinkNumberInString("x_", variable.getSymbol)
       .map(shrunkSymbol => Variable.create(shrunkSymbol))
   }
 
   given Shrink[Constant] = Shrink.withLazyList {
-    case constant: TypedConstant if constant.getType() == classOf[String] =>
+    case constant: TypedConstant if constant.getType == classOf[String] =>
       shrinkNumberInString("c_", constant.value.asInstanceOf[String])
         .map(shrunkSymbol => TypedConstant.create(shrunkSymbol))
     case _ => LazyList.empty
@@ -78,25 +79,25 @@ object ShrinkFormula {
 
   given Shrink[Predicate] = Shrink.withLazyList { predicate =>
     for {
-      shrunkArity <- LazyList.from(Shrink.shrink(predicate.getArity())).filter(_ >= 0)
-    } yield Predicate.create(predicate.getName(), shrunkArity)
+      shrunkArity <- LazyList.from(Shrink.shrink(predicate.getArity)).filter(_ >= 0)
+    } yield Predicate.create(predicate.getName, shrunkArity)
   }
 
   given Shrink[Atom] = Shrink.withLazyList { atom =>
     for {
-      shrunkPredicate <- LazyList.from(Shrink.shrink(atom.getPredicate()))
-      prefixTerms = atom.getTerms().take(shrunkPredicate.getArity())
+      shrunkPredicate <- LazyList.from(Shrink.shrink(atom.getPredicate))
+      prefixTerms = atom.getTerms().take(shrunkPredicate.getArity)
       shrunkTerms <- ShrinkList.shrinkEachIn(prefixTerms.toList)
     } yield Atom.create(shrunkPredicate, shrunkTerms: _*)
   }
 
   given Shrink[ConjunctiveQuery] = Shrink.withLazyList { cq =>
     for {
-      shrunkConjunctionSize <- LazyList.from(Shrink.shrink(cq.getAtoms().length)).filter(_ > 0)
-      shrunkConjunction = cq.getAtoms().take(shrunkConjunctionSize)
+      shrunkConjunctionSize <- LazyList.from(Shrink.shrink(cq.getAtoms.length)).filter(_ > 0)
+      shrunkConjunction = cq.getAtoms.take(shrunkConjunctionSize)
       shrunkAtoms <- ShrinkList.shrinkEachIn(shrunkConjunction.toList)
       freeVariables = shrunkAtoms.flatMap(_.getVariables()).toSet
       shrunkFreeVariables <- Shrink.shrinkContainer[Set, Variable].shrink(freeVariables)
-    } yield ConjunctiveQuery.create(cq.getFreeVariables(), shrunkAtoms.toArray)
+    } yield ConjunctiveQuery.create(cq.getFreeVariables, shrunkAtoms.toArray)
   }
 }

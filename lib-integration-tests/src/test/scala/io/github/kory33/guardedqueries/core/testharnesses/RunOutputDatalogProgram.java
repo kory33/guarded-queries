@@ -41,7 +41,7 @@ public class RunOutputDatalogProgram {
         // This should be much more efficient than saturating with
         // all output rules at once, since we can rather quickly saturate the base data with
         // input rules (output of GSat being relatively small, and after having done that
-        // we only need to go through subgoal derivation rules once.
+        // we only need to go through subgoal derivation rules once).
         final var inputRuleSaturatedInstance = saturationEngine
                 .saturateInstance(rewriteResult.inputRuleSaturationRules(), testInstance, includeConstantIntoAlphabet);
         final var saturatedInstance = saturationEngine.saturateInstance(

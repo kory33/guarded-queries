@@ -14,7 +14,7 @@ class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       assert {
         IteratorExtensions
           .zip(xs.asJava.iterator(), ys.asJava.iterator())
-          .asScala.map(p => (p.getKey(), p.getValue()))
+          .asScala.map(p => (p.getKey, p.getValue))
           .toList == xs.zip(ys)
       }
     }
@@ -25,7 +25,7 @@ class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       assert {
         IteratorExtensions
           .zipWithIndex(xs.asJava.iterator())
-          .asScala.map(p => (p.getKey(), p.getValue()))
+          .asScala.map(p => (p.getKey, p.getValue))
           .toList == xs.zipWithIndex
       }
     }

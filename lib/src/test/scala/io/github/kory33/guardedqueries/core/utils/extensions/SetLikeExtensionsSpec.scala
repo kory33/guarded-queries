@@ -41,7 +41,7 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  val smallSet = Gen.chooseNum(0, 12).map(n => (1 to n).toSet)
+  val smallSet: Gen[Set[Int]] = Gen.chooseNum(0, 12).map(n => (1 to n).toSet)
 
   ".powerset" should "contain 2^|input| sets" in {
     forAll(smallSet) { (xs: Set[Int]) =>
@@ -86,9 +86,9 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         xs.asJava,
         simpleGeneratorFunction
       ).asScala.toSet
-      assert(generatedSet == (generatedSet union (generatedSet.flatMap(
+      assert(generatedSet == (generatedSet union generatedSet.flatMap(
         simpleGeneratorFunction.apply(_).asScala
-      ))))
+      )))
     }
   }
 

@@ -7,7 +7,7 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
 object AppFormulaParsers {
-  val context = new FormulaParsingContext(
+  private val context = new FormulaParsingContext(
     // we regard all symbols of the form "c_{number}" as constants
     (s: String) =>
       s.startsWith("c_") && s.length > 2 && s.substring(2).chars.allMatch(Character.isDigit),
