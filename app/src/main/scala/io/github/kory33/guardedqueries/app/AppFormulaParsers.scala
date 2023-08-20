@@ -9,7 +9,8 @@ import uk.ac.ox.cs.pdq.fol.TypedConstant
 object AppFormulaParsers {
   val context = new FormulaParsingContext(
     // we regard all symbols of the form "c_{number}" as constants
-    (s: String) => s.startsWith("c_") && s.length > 2 && s.substring(2).chars.allMatch(Character.isDigit),
+    (s: String) =>
+      s.startsWith("c_") && s.length > 2 && s.substring(2).chars.allMatch(Character.isDigit),
     TypedConstant.create
   )
 
@@ -17,5 +18,6 @@ object AppFormulaParsers {
     FormulaParsers.conjunctiveQueryParser(context)
   )
 
-  val gtgd = new FormulaParsers.WhitespaceIgnoringParser[GTGD](FormulaParsers.gtgdParser(context))
+  val gtgd =
+    new FormulaParsers.WhitespaceIgnoringParser[GTGD](FormulaParsers.gtgdParser(context))
 }

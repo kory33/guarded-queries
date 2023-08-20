@@ -27,19 +27,20 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   "every n'th element in the every reversed output of .productMappedCollectionsToStacks" should
     "be in the collection obtained by applying n'th element in the input list to the input function" in {
-    forAll(smallListOfSmallInts, minSuccessful(1000)) { xs =>
-      val result = ListExtensions.productMappedCollectionsToStacks(
-        xs.indices.asJava,
-        index => (1 to xs(index)).asJava
-      )
+      forAll(smallListOfSmallInts, minSuccessful(1000)) { xs =>
+        val result = ListExtensions.productMappedCollectionsToStacks(
+          xs.indices.asJava,
+          index => (1 to xs(index)).asJava
+        )
 
-      assert {
-        result.asScala.forall { stack =>
-          stack.asScala.toList.reverse.zipWithIndex.forall { case (element, index) =>
-            (1 to xs(index)).contains(element)
+        assert {
+          result.asScala.forall { stack =>
+            stack.asScala.toList.reverse.zipWithIndex.forall {
+              case (element, index) =>
+                (1 to xs(index)).contains(element)
+            }
           }
         }
       }
     }
-  }
 }

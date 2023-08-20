@@ -11,7 +11,9 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class StringSetExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".isPrefixOfSome" should "be equivalent to .exists(_.startsWith(prefix))" in {
     forAll(minSuccessful(1000)) { (xs: List[String], prefix: String) =>
-      assert(StringSetExtensions.isPrefixOfSome(xs.asJava, prefix) == xs.exists(_.startsWith(prefix)))
+      assert(
+        StringSetExtensions.isPrefixOfSome(xs.asJava, prefix) == xs.exists(_.startsWith(prefix))
+      )
     }
   }
 

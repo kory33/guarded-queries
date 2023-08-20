@@ -25,7 +25,8 @@ object GenFormula {
     number <- Gen.choose(0, indexUpperLimit)
   } yield Predicate.create(s"P_$number", arity)
 
-  def genPrefixedVariableOrConstant: Gen[Term] = Gen.oneOf(genNumberedVariable(30), genConstant(30))
+  def genPrefixedVariableOrConstant: Gen[Term] =
+    Gen.oneOf(genNumberedVariable(30), genConstant(30))
 
   def genAtom(maxArity: Int, genTerm: Gen[Term]): Gen[Atom] = for {
     predicate <- genPredicate(maxArity, 30)
@@ -56,7 +57,7 @@ object ShrinkFormula {
       // otherwise shrink string
       case _: NumberFormatException => LazyList.from(Shrink.shrink(string))
     }
-  
+
   given Shrink[Variable] = Shrink.withLazyList { variable =>
     shrinkNumberInString("x_", variable.getSymbol())
       .map(shrunkSymbol => Variable.create(shrunkSymbol))
@@ -72,7 +73,7 @@ object ShrinkFormula {
   given Shrink[Term] = Shrink.withLazyList {
     case variable: Variable => LazyList.from(Shrink.shrink(variable))
     case constant: Constant => LazyList.from(Shrink.shrink(constant))
-    case _ => LazyList.empty
+    case _                  => LazyList.empty
   }
 
   given Shrink[Predicate] = Shrink.withLazyList { predicate =>

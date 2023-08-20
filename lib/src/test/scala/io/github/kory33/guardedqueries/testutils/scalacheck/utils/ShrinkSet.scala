@@ -5,7 +5,7 @@ import org.scalacheck.Shrink
 object ShrinkSet {
   private def oneElementRemovedFrom[T](v: Vector[T]): LazyList[Vector[T]] =
     LazyList.from(v.indices).map(i => v.take(i) ++ v.drop(i + 1))
-  
+
   private def strictSubVectors[T](v: Vector[T]): LazyList[Vector[T]] =
     if (v.isEmpty) {
       LazyList.empty

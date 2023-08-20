@@ -24,54 +24,61 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_${index}", arity) }
     }
     predicateSet = predicates.toSet
-    
+
     constantsCount = predicates.map(_.getArity()).maxOption.getOrElse(2) * 3
-    constantsToUse = (1 to constantsCount).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
-    
-    instance <- GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet, constantsToUse)
+    constantsToUse =
+      (1 to constantsCount).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
+
+    instance <-
+      GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet, constantsToUse)
   } yield (predicateSet, instance)
 
   val genInstanceAndQuery: Gen[(FormalInstance[Constant], Atom)] =
-    genSignatureAndFormalInstance.flatMap { case (predicateSet, instance) =>
-      for {
-        predicate <- Gen.oneOf(predicateSet)
-        terms <- Gen.listOfN(predicate.getArity(), Gen.oneOf(GenFormula.genNumberedVariable(4), GenFormula.genConstant(4)))
-      } yield (instance, Atom.create(predicate, terms *))
+    genSignatureAndFormalInstance.flatMap {
+      case (predicateSet, instance) =>
+        for {
+          predicate <- Gen.oneOf(predicateSet)
+          terms <- Gen.listOfN(
+            predicate.getArity(),
+            Gen.oneOf(GenFormula.genNumberedVariable(4), GenFormula.genConstant(4))
+          )
+        } yield (instance, Atom.create(predicate, terms*))
     }
 
   "SingleAtomMatching.allMatches.materializeFunctionFreeAtom" should "only include formal facts having the same atom as query atom" in {
-    forAll(genInstanceAndQuery, minSuccessful(100)) { case (instance, query) =>
-      SingleAtomMatching
-        .allMatches(query, instance, c => c)
-        .materializeFunctionFreeAtom(query, c => c)
-        .asScala
-        .foreach { fact =>
-          assert(fact.predicate().equals(query.getPredicate()))
-        }
+    forAll(genInstanceAndQuery, minSuccessful(100)) {
+      case (instance, query) =>
+        SingleAtomMatching
+          .allMatches(query, instance, c => c)
+          .materializeFunctionFreeAtom(query, c => c)
+          .asScala
+          .foreach { fact => assert(fact.predicate().equals(query.getPredicate())) }
     }
   }
 
   it should "be a subset of input instance" in {
-    forAll(genInstanceAndQuery, minSuccessful(100)) { case (instance, query) =>
-      SingleAtomMatching
-        .allMatches(query, instance, c => c)
-        .materializeFunctionFreeAtom(query, c => c)
-        .asScala
-        .foreach { fact => assert(instance.facts.contains(fact)) }
+    forAll(genInstanceAndQuery, minSuccessful(100)) {
+      case (instance, query) =>
+        SingleAtomMatching
+          .allMatches(query, instance, c => c)
+          .materializeFunctionFreeAtom(query, c => c)
+          .asScala
+          .foreach { fact => assert(instance.facts.contains(fact)) }
     }
   }
 
   it should "be idempotent" in {
-    forAll(genInstanceAndQuery, minSuccessful(100)) { case (instance, query) =>
-      val firstMatch = SingleAtomMatching
-        .allMatches(query, instance, c => c)
-        .materializeFunctionFreeAtom(query, c => c)
+    forAll(genInstanceAndQuery, minSuccessful(100)) {
+      case (instance, query) =>
+        val firstMatch = SingleAtomMatching
+          .allMatches(query, instance, c => c)
+          .materializeFunctionFreeAtom(query, c => c)
 
-      val secondMatch = SingleAtomMatching
-        .allMatches(query, new FormalInstance(firstMatch), c => c)
-        .materializeFunctionFreeAtom(query, c => c)
+        val secondMatch = SingleAtomMatching
+          .allMatches(query, new FormalInstance(firstMatch), c => c)
+          .materializeFunctionFreeAtom(query, c => c)
 
-      assert(firstMatch.asScala.toSet == secondMatch.asScala.toSet)
+        assert(firstMatch.asScala.toSet == secondMatch.asScala.toSet)
     }
   }
 
@@ -90,19 +97,21 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     // materializing the atom according to the homomorphism, we expect the algorithm to
     // return {x -> d} as the only answer, and that the instance materialized from the answer
     // is equal to {A(d,c)}.
-    // 
+    //
     // Assuming that the algorithm is monotonic and affine in the input instance (i.e. the
     // presence of a homomorphism in the answer only depends on the existence of the corresponding
     // tuple in the input instance), this test should be sufficient to show the correctness of
     // the algorithm.
-    forAll(genAtomAndHomomorphism, minSuccessful(1000)) { case (atom, homomorphism) =>
-      val instanceContainingJustTheMaterializedAtom = FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom, c => c))
-      val matches = SingleAtomMatching
-        .allMatches(atom, instanceContainingJustTheMaterializedAtom, c => c)
-        .materializeFunctionFreeAtom(atom, c => c)
-      val matchInstance = new FormalInstance(matches)
+    forAll(genAtomAndHomomorphism, minSuccessful(1000)) {
+      case (atom, homomorphism) =>
+        val instanceContainingJustTheMaterializedAtom =
+          FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom, c => c))
+        val matches = SingleAtomMatching
+          .allMatches(atom, instanceContainingJustTheMaterializedAtom, c => c)
+          .materializeFunctionFreeAtom(atom, c => c)
+        val matchInstance = new FormalInstance(matches)
 
-      assert(matchInstance == instanceContainingJustTheMaterializedAtom)
+        assert(matchInstance == instanceContainingJustTheMaterializedAtom)
     }
   }
 }

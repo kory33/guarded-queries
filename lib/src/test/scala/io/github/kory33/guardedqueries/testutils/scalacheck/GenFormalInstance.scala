@@ -13,14 +13,14 @@ import org.scalacheck.Shrink
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkSet
 
 object GenFormalInstance {
-  def genFormalInstanceOver(predicate: Predicate, constantsToUse: Set[Constant]): Gen[FormalInstance[Constant]] = {
+  def genFormalInstanceOver(predicate: Predicate,
+                            constantsToUse: Set[Constant]
+  ): Gen[FormalInstance[Constant]] = {
     def buildTuples(currentTuple: List[Constant] = Nil): List[List[Constant]] = {
       if (currentTuple.size == predicate.getArity()) {
         List(currentTuple)
       } else {
-        constantsToUse.toList.flatMap { constant =>
-          buildTuples(constant :: currentTuple)
-        }
+        constantsToUse.toList.flatMap { constant => buildTuples(constant :: currentTuple) }
       }
     }
 
@@ -32,11 +32,15 @@ object GenFormalInstance {
     } yield new FormalInstance[Constant](factSet.asJava)
   }
 
-  def genFormalInstanceContainingPredicates(predicates: Set[Predicate], constantsToUse: Set[Constant]): Gen[FormalInstance[Constant]] = {
+  def genFormalInstanceContainingPredicates(predicates: Set[Predicate],
+                                            constantsToUse: Set[Constant]
+  ): Gen[FormalInstance[Constant]] = {
     import TraverseListGen.traverse
     predicates.toList
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
-      .map { instanceList => new FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava) }
+      .map { instanceList =>
+        new FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava)
+      }
   }
 }
 
