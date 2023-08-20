@@ -1,8 +1,10 @@
-import sbt._
-import Process._
-import scala.sys.process._
+import sbt.*
+import scala.sys.process.*
 
 ThisBuild / scalaVersion := "3.3.0"
+ThisBuild / version := "0.1.0"
+ThisBuild / organization := "io.github.kory33"
+
 ThisBuild / javacOptions ++= Seq("-encoding", "UTF-8")
 
 ThisBuild / resolvers += "Maven Central" at "https://repo1.maven.org/maven2/"
@@ -36,15 +38,15 @@ lazy val guardedSaturationWrapper = project
     installPdqJar := {
       val pdqCommonVersion = "2.0.0"
       val localTemporaryJarPath =
-        s"guarded-saturation-wrapper/external_maven_dependencies/pdq-common-${pdqCommonVersion}.jar"
+        s"guarded-saturation-wrapper/external_maven_dependencies/pdq-common-$pdqCommonVersion.jar"
       val pdqCommonJarUrl =
-        s"https://github.com/ProofDrivenQuerying/pdq/releases/download/v${pdqCommonVersion}/pdq-common-${pdqCommonVersion}.jar"
+        s"https://github.com/ProofDrivenQuerying/pdq/releases/download/v$pdqCommonVersion/pdq-common-$pdqCommonVersion.jar"
 
       // download the jar if it's not already present
       val outputFile = file(localTemporaryJarPath)
       if (!outputFile.exists()) {
-        outputFile.getParentFile().mkdirs()
-        new java.net.URL(pdqCommonJarUrl) #> outputFile !!
+        outputFile.getParentFile.mkdirs()
+        (new java.net.URL(pdqCommonJarUrl) #> outputFile).!!
       }
 
       // install the jar to the local Maven repository unless we previously saw the JAR file
@@ -58,7 +60,7 @@ lazy val guardedSaturationWrapper = project
             foundMavenCommand,
             "org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file",
             // relative to the Guarded-saturation directory
-            s"-Dfile=../../${localTemporaryJarPath}"
+            s"-Dfile=../../$localTemporaryJarPath"
           ),
           file("guarded-saturation-wrapper/Guarded-saturation")
         ).!
