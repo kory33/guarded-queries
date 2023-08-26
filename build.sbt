@@ -147,9 +147,7 @@ lazy val libIntegrationTests = project
   .dependsOn(lib, utilParser)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest-flatspec" % "3.2.16" % Test,
-      "net.aichler" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test,
-      "org.junit.jupiter" % "junit-jupiter" % "5.10.0" % Test
+      "org.scalatest" %% "scalatest-flatspec" % "3.2.16" % Test
     ),
     Test / logBuffered := true,
     Test / baseDirectory := (ThisBuild / baseDirectory).value

@@ -6,7 +6,6 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls
 import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NormalizingDPTableSEEnumeration
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndConjunctiveQueryTestCases
 import io.github.kory33.guardedqueries.core.testharnesses.RewriterEquivalenceTestHarness
-import org.junit.jupiter.api.Test
 import org.scalatest.flatspec.AnyFlatSpec
 import uk.ac.ox.cs.gsat.GSat
 
