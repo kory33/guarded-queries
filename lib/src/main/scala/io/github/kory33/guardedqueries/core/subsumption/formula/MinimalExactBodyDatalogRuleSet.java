@@ -1,7 +1,5 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula;
 
-import io.github.kory33.guardedqueries.core.fol.DatalogRule;
-
 import java.util.Arrays;
 
 /**

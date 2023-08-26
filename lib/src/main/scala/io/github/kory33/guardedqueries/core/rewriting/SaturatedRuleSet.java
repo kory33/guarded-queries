@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.rewriting;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.datalog.DatalogProgram;
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions;
 import uk.ac.ox.cs.gsat.AbstractSaturation;
 import uk.ac.ox.cs.gsat.GTGD;

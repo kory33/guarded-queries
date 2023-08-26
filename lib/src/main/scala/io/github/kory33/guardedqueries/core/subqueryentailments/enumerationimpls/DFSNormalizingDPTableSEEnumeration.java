@@ -2,9 +2,6 @@ package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpl
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine;
-import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature;
-import io.github.kory33.guardedqueries.core.fol.NormalGTGD;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin;
