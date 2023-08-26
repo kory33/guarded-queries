@@ -1,0 +1,25 @@
+package io.github.kory33.guardedqueries.core.testcases
+
+import io.github.kory33.guardedqueries.parser.FormulaParsers
+import io.github.kory33.guardedqueries.parser.FormulaParsingContext
+import uk.ac.ox.cs.gsat.GTGD
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.TypedConstant
+
+object TestCaseParsers {
+  val commonParsingContext =
+    new FormulaParsingContext(
+      // we regard all symbols of the form "c_{number}" as constants
+      (s: String) =>
+        s.startsWith("c_") && s.length > 2 && s.substring(2).chars.allMatch(Character.isDigit),
+      TypedConstant.create
+    )
+
+  val conjunctiveQuery = new FormulaParsers.WhitespaceIgnoringParser[ConjunctiveQuery](
+    FormulaParsers.conjunctiveQueryParser(commonParsingContext)
+  )
+
+  val gtgd = new FormulaParsers.WhitespaceIgnoringParser[GTGD](
+    FormulaParsers.gtgdParser(commonParsingContext)
+  )
+}
