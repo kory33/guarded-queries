@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration;
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance;

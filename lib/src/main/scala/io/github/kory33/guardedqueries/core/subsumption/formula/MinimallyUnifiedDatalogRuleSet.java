@@ -1,9 +1,6 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula;
 
 import com.google.common.collect.ImmutableList;
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact;
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance;
-import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin;
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions;
 
 import java.util.Arrays;
