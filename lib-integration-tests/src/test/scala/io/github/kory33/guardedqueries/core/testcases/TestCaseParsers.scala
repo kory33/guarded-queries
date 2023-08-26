@@ -7,19 +7,19 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
 object TestCaseParsers {
-  val commonParsingContext =
-    new FormulaParsingContext(
+  val commonParsingContext: FormulaParsingContext =
+    FormulaParsingContext(
       // we regard all symbols of the form "c_{number}" as constants
       (s: String) =>
         s.startsWith("c_") && s.length > 2 && s.substring(2).chars.allMatch(Character.isDigit),
       TypedConstant.create
     )
 
-  val conjunctiveQuery = new FormulaParsers.WhitespaceIgnoringParser[ConjunctiveQuery](
-    FormulaParsers.conjunctiveQueryParser(commonParsingContext)
-  )
+  val conjunctiveQuery: FormulaParsers.IgnoreWhitespaces[ConjunctiveQuery] =
+    FormulaParsers.IgnoreWhitespaces(
+      FormulaParsers.conjunctiveQueryParser(using commonParsingContext)
+    )
 
-  val gtgd = new FormulaParsers.WhitespaceIgnoringParser[GTGD](
-    FormulaParsers.gtgdParser(commonParsingContext)
-  )
+  val gtgd: FormulaParsers.IgnoreWhitespaces[GTGD] =
+    FormulaParsers.IgnoreWhitespaces(FormulaParsers.gtgdParser(using commonParsingContext))
 }

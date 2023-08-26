@@ -138,7 +138,7 @@ lazy val utilParser = project
   .dependsOn(lib)
   .settings(
     libraryDependencies ++= Seq(
-      "org.javafp" % "parsecj" % "0.6"
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
     )
   )
 
