@@ -29,7 +29,7 @@ object GenFormalInstance {
       factSet = tupleSet
         .map(tuple => ImmutableList.copyOf(tuple.asJavaCollection))
         .map(javaTuple => new FormalFact[Constant](predicate, javaTuple))
-    } yield new FormalInstance[Constant](factSet.asJava)
+    } yield FormalInstance[Constant](factSet.asJava)
   }
 
   def genFormalInstanceContainingPredicates(predicates: Set[Predicate],
@@ -39,7 +39,7 @@ object GenFormalInstance {
     predicates.toList
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
       .map { instanceList =>
-        new FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava)
+        FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava)
       }
   }
 }
@@ -48,6 +48,6 @@ object ShrinkFormalInstance {
   given Shrink[FormalInstance[Constant]] = Shrink { instance =>
     ShrinkSet.intoSubsets[FormalFact[Constant]]
       .shrink(instance.facts.asScala.toSet)
-      .map(factSet => new FormalInstance[Constant](factSet.asJava))
+      .map(factSet => FormalInstance[Constant](factSet.asJava))
   }
 }

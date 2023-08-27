@@ -63,7 +63,7 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   }
 
   // A test function that will be used for fixpoint computation tests
-  val simpleGeneratorFunction: java.util.function.Function[BigInt, java.util.Set[BigInt]] = x =>
+  val simpleGeneratorFunction: BigInt => java.util.Set[BigInt] = x =>
     Set(x * 2, x * 3)
       // we need to set some termination condition
       // or else the fixpoint will be infinite
@@ -110,8 +110,7 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  val simpleSetGeneratorFunction
-    : java.util.function.Function[java.util.Collection[BigInt], java.util.Set[BigInt]] = set =>
+  val simpleSetGeneratorFunction: java.util.Collection[BigInt] => java.util.Set[BigInt] = set =>
     new java.util.HashSet(
       set.asScala.flatMap(simpleGeneratorFunction.apply(_).asScala).asJavaCollection
     )

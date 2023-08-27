@@ -164,13 +164,13 @@ object App {
         log("Done minimizing the result in " + minimizeTimeNanos + " nanoseconds.")
 
         log("Rewritten query:")
-        log("  Goal atom: " + minimizedRewriteResult.goal())
+        log("  Goal atom: " + minimizedRewriteResult.goal)
         log("  Atomic rewriting part:")
-        minimizedRewriteResult.inputRuleSaturationRules().rules().forEach(rule =>
+        minimizedRewriteResult.inputRuleSaturationRules.rules.forEach(rule =>
           log("    " + formatDatalogRule(rule))
         )
         log("  Subgoal derivation part:")
-        minimizedRewriteResult.subgoalAndGoalDerivationRules().rules().forEach(rule =>
+        minimizedRewriteResult.subgoalAndGoalDerivationRules.rules.forEach(rule =>
           log("    " + formatDatalogRule(rule))
         )
 

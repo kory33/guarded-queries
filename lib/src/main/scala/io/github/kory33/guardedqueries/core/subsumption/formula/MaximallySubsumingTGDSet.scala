@@ -26,7 +26,7 @@ trait MaximallySubsumingTGDSet[F <: TGD] {
 }
 
 object MaximallySubsumingTGDSet {
-  @FunctionalInterface trait Factory[F <: TGD, S <: MaximallySubsumingTGDSet[F]] {
-    def emptyTGDSet: S
+  @FunctionalInterface trait Factory[F <: TGD, +S <: MaximallySubsumingTGDSet[F]] {
+    def emptyTGDSet(): S
   }
 }

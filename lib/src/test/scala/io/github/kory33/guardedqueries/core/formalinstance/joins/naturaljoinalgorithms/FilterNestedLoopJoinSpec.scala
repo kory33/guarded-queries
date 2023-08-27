@@ -83,7 +83,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
                                 h2: HomomorphicMapping[Constant]
   ): Boolean = {
     def asMap(h: HomomorphicMapping[Constant]): Map[Variable, Constant] =
-      h.variableOrdering().asScala.zip(h.orderedMapping().asScala).toMap
+      h.variableOrdering.asScala.zip(h.orderedMapping.asScala).toMap
 
     asMap(h1) == asMap(h2)
   }

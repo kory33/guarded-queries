@@ -36,7 +36,8 @@ object GSatEquivalenceTestHarness {
         testInstance,
         (c: Constant) => c
       )
-      new FormalInstance[Constant](new FilterNestedLoopJoin[Constant]((c: Constant) => c).join(
+
+      FormalInstance[Constant](new FilterNestedLoopJoin[Constant]((c: Constant) => c).join(
         gsatQuery,
         gsatSaturatedInstance
       ).materializeFunctionFreeAtom(answerAtom, (c: Constant) => c))
