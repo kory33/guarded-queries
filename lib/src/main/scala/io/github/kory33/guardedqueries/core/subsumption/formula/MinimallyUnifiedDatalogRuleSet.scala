@@ -6,7 +6,13 @@ import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 
+import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant}
+
 import java.util
+import uk.ac.ox.cs.pdq.fol.Term
+import uk.ac.ox.cs.pdq.fol.Atom
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 
 /**
  * An implementation of {@link MaximallySubsumingTGDSet} that keeps track of a set of datalog
@@ -26,6 +32,7 @@ import java.util
  */
 final class MinimallyUnifiedDatalogRuleSet
     extends IndexlessMaximallySubsumingTGDSet[DatalogRule] {
+
   override protected def firstRuleSubsumesSecond(
     first: DatalogRule,
     second: DatalogRule
@@ -38,7 +45,7 @@ final class MinimallyUnifiedDatalogRuleSet
       MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getBodyAtoms)
     ).allHomomorphisms.stream.anyMatch(homomorphism => {
       val substitutedFirstHead = homomorphism.materializeFunctionFreeAtoms(
-        util.Arrays.asList(first.getHeadAtoms),
+        util.Arrays.asList(first.getHeadAtoms: _*),
         MinimallyUnifiedDatalogRuleSet.VariableOrConstant.Constant(_)
       )
       val secondHead =
@@ -52,14 +59,14 @@ final class MinimallyUnifiedDatalogRuleSet
 object MinimallyUnifiedDatalogRuleSet {
   enum VariableOrConstant {
     case Variable(variable: Variable)
-    case Constant(constant: Constant)
+    case Constant(constant: PDQConstant)
   }
 
   object VariableOrConstant {
     def of(term: Term): VariableOrConstant =
       term match
-        case variable: Variable => VariableOrConstant.Variable(variable)
-        case constant: Constant => VariableOrConstant.Constant(constant)
+        case variable: Variable    => VariableOrConstant.Variable(variable)
+        case constant: PDQConstant => VariableOrConstant.Constant(constant)
         case _ =>
           throw new IllegalArgumentException("Either a constant or a variable is expected")
   }
@@ -68,7 +75,8 @@ object MinimallyUnifiedDatalogRuleSet {
     val appliedTerms = ImmutableList.copyOf(
       util.Arrays.stream(atom.getTerms).map(VariableOrConstant.of).iterator
     )
-    new Nothing(atom.getPredicate, appliedTerms)
+
+    FormalFact(atom.getPredicate, appliedTerms)
   }
 
   private def atomArrayIntoFormalInstance(atoms: Array[Atom]) = FormalInstance.fromIterator(

@@ -3,6 +3,8 @@ package io.github.kory33.guardedqueries.core.subqueryentailments
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import java.util.stream.Stream
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
+import io.github.kory33.guardedqueries.core.fol.NormalGTGD
 
 /**
  * The interface to objects that can compute subquery entailment relations. <p> An object
@@ -51,8 +53,8 @@ import java.util.stream.Stream
  * {@code oi} subsumes {@code si}. </li> </ol>
  */
 @FunctionalInterface trait SubqueryEntailmentEnumeration {
-  def apply(extensionalSignature: Nothing,
-            saturatedRuleSet: SaturatedRuleSet[_ <: Nothing],
+  def apply(extensionalSignature: FunctionFreeSignature,
+            saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
             boundVariableConnectedQuery: ConjunctiveQuery
   ): Stream[SubqueryEntailmentInstance]
 }

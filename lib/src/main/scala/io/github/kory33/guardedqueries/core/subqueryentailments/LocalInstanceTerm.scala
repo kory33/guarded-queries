@@ -9,9 +9,8 @@ import java.util.function.Predicate
 sealed trait LocalInstanceTerm {
   def isConstantOrSatisfies(predicate: Predicate[_ >: LocalInstanceTerm.LocalName]): Boolean =
     this match
-      case _: LocalInstanceTerm.RuleConstant => true
-      case _: LocalInstanceTerm.LocalName    => predicate.test(localName)
-      case _ => throw new IllegalStateException("Unreachable: " + this)
+      case _: LocalInstanceTerm.RuleConstant      => true
+      case localName: LocalInstanceTerm.LocalName => predicate.test(localName)
 
   def mapLocalNamesToTerm(mapper: Function[_ >: LocalInstanceTerm.LocalName, _ <: Term]): Term
 }
@@ -38,7 +37,7 @@ object LocalInstanceTerm {
                               mapper: Function[_ >: Variable, _ <: LocalInstanceTerm]
   ): LocalInstanceTerm =
     term match
-      case _: Constant => RuleConstant(constant)
-      case _: Variable => mapper.apply(variable)
-      case _           => throw new IllegalArgumentException("Unsupported term: " + term)
+      case constant: Constant => RuleConstant(constant)
+      case variable: Variable => mapper.apply(variable)
+      case _                  => throw new IllegalArgumentException("Unsupported term: " + term)
 }
