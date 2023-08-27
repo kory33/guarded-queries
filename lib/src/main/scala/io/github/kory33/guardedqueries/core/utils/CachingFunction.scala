@@ -14,3 +14,8 @@ final class CachingFunction[T, R](private val function: Function[T, R]) extends 
       result
     }
 }
+
+object CachingFunction {
+  def apply[T, R](function: Function[T, R]): CachingFunction[T, R] =
+    new CachingFunction[T, R](function)
+}

@@ -11,14 +11,16 @@ import java.util.stream.IntStream
 object ListExtensions {
   def productMappedCollectionsToStacks[I, R](
     items: util.List[I], /* pure */ mapperToIterable: Function[_ >: I, _ <: Iterable[R]]
-  ): Iterable[ImmutableStack[R]] = {
+  ): java.lang.Iterable[ImmutableStack[R]] = {
     val size = items.size
     val iterablesToProduct = items.stream.map(mapperToIterable).toList
     val freshIteratorAt = (index: Int) => iterablesToProduct.get(index).iterator
 
     // we store iterator of the first iterable at the bottom of the stack
     val initialIteratorStack =
-      ImmutableStack.fromIterable(IntStream.range(0, size).mapToObj(freshIteratorAt).toList)
+      ImmutableStack.fromIterable(IntStream.range(0, size).mapToObj(i =>
+        freshIteratorAt(i)
+      ).toList)
 
     () =>
       new util.Iterator[ImmutableStack[R]]() {
@@ -52,7 +54,7 @@ object ListExtensions {
                   val firstItemFromRestartedIterator = restartedIterator.next
                   currentItemStack = currentItemStack.push(firstItemFromRestartedIterator)
                 }
-                boundary.break
+                boundary.break()
               } else {
                 currentIteratorStack = currentIteratorStack.dropHead
                 currentItemStack = currentItemStack.dropHead
@@ -74,9 +76,9 @@ object ListExtensions {
 
   def productMappedCollectionsToSets[I, R](
     items: util.List[I], /* pure */ mapperToIterable: Function[_ >: I, _ <: Iterable[R]]
-  ): Iterable[ImmutableSet[R]] = () =>
+  ): java.lang.Iterable[ImmutableSet[R]] = () =>
     IteratorExtensions.mapInto(
       productMappedCollectionsToStacks(items, mapperToIterable).iterator,
-      ImmutableSet.copyOf
+      s => ImmutableSet.copyOf(s)
     )
 }

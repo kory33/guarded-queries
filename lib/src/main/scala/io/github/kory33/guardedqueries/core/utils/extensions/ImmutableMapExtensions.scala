@@ -2,12 +2,13 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 
 import com.google.common.collect.ImmutableMap
 import java.util
+import java.util.Collections
 
 object ImmutableMapExtensions {
   def consumeAndCopy[K, V](entries: util.Iterator[_ <: util.Map.Entry[_ <: K, _ <: V]])
     : ImmutableMap[K, V] = {
     val builder = ImmutableMap.builder[K, V]
-    entries.forEachRemaining((entry: _$1) => builder.put(entry.getKey, entry.getValue))
+    entries.forEachRemaining((entry) => builder.put(entry.getKey, entry.getValue))
     builder.build
   }
 
@@ -21,14 +22,12 @@ object ImmutableMapExtensions {
     // the keys we have added so far
     // we reverse the input array so that we can "throw away" key-conflicting entries
     // that appear first in the input array
-    val inputMaps = new util.ArrayList[util.Map[_ <: K, _ <: V]](util.Arrays.asList(maps))
-    Collections.reverse(inputMaps)
+    import scala.jdk.CollectionConverters._
+    val inputMaps = maps.reverse
     val keysWitnessed = new util.HashSet[K]
     val builder = ImmutableMap.builder[K, V]
-    import scala.collection.JavaConversions._
     for (map <- inputMaps) {
-      import scala.collection.JavaConversions._
-      for (entry <- map.entrySet) {
+      for (entry <- map.entrySet.asScala) {
         if (keysWitnessed.add(entry.getKey)) builder.put(entry.getKey, entry.getValue)
       }
     }

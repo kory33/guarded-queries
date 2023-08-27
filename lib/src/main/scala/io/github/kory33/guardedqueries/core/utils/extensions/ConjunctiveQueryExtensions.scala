@@ -22,14 +22,14 @@ object ConjunctiveQueryExtensions {
   def filterAtoms(conjunctiveQuery: ConjunctiveQuery,
                   atomPredicate: Predicate[_ >: Atom]
   ): Optional[ConjunctiveQuery] = {
-    val originalFreeVariables = ImmutableSet.copyOf(conjunctiveQuery.getFreeVariables)
+    val originalFreeVariables = conjunctiveQuery.getFreeVariables.toSet
     val filteredAtoms =
-      util.Arrays.stream(conjunctiveQuery.getAtoms).filter(atomPredicate).toArray(`new`)
+      conjunctiveQuery.getAtoms.filter(atomPredicate.test(_))
 
     // variables in filteredAtoms that are free in the original conjunctiveQuery
-    val filteredFreeVariables = util.Arrays.stream(filteredAtoms).flatMap((atom: Atom) =>
-      util.Arrays.stream(atom.getVariables)
-    ).filter(originalFreeVariables.contains).toArray(`new`)
+    val filteredFreeVariables = filteredAtoms
+      .flatMap(_.getVariables)
+      .filter(originalFreeVariables.contains)
 
     if (filteredAtoms.isEmpty) Optional.empty
     else Optional.of(ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms))
@@ -122,13 +122,15 @@ object ConjunctiveQueryExtensions {
                           boundVariables: util.Collection[_ <: Variable]
   ): Stream[ImmutableSet[Variable]] = {
     if (boundVariables.isEmpty) return Stream.empty
-    import scala.collection.JavaConversions._
-    for (variable <- boundVariables) {
-      if (!util.Arrays.asList(conjunctiveQuery.getBoundVariables).contains(variable))
+
+    import scala.jdk.CollectionConverters._
+    for (variable <- boundVariables.asScala) {
+      if (!conjunctiveQuery.getBoundVariables.contains(variable))
         throw new IllegalArgumentException(
           "Variable " + variable + " is not bound in the given CQ"
         )
     }
+
     val unionFindTree = new SimpleUnionFindTree[Variable](boundVariables)
     for (atom <- conjunctiveQuery.getAtoms) {
       val variablesToUnion =
@@ -157,7 +159,7 @@ object ConjunctiveQueryExtensions {
 
   def variablesIn(conjunctiveQuery: ConjunctiveQuery): ImmutableSet[Variable] =
     SetLikeExtensions.union(
-      util.Arrays.asList(conjunctiveQuery.getBoundVariables),
-      util.Arrays.asList(conjunctiveQuery.getFreeVariables)
+      util.Arrays.asList(conjunctiveQuery.getBoundVariables: _*),
+      util.Arrays.asList(conjunctiveQuery.getFreeVariables: _*)
     )
 }

@@ -7,11 +7,16 @@ import java.util.stream.Stream
 
 object FormulaExtensions {
   def streamPredicatesAppearingIn(formula: Formula): Stream[Predicate] = {
-    val children = formula.getChildren
-    if (children.length == 0) if (formula.isInstanceOf[Atom]) Stream.of(atom.getPredicate)
-    else throw new IllegalArgumentException(
-      "Formula " + formula + "is neither an atom nor a composite formula"
-    )
-    else Stream.of(children).flatMap(FormulaExtensions.streamPredicatesAppearingIn)
+    val children = formula.getChildren[Formula]
+    if (children.length == 0) {
+      formula match {
+        case atom: Atom => Stream.of(atom.getPredicate)
+        case _ => throw new IllegalArgumentException(
+            s"Formula ${formula} is neither an atom nor a composite formula"
+          )
+      }
+    } else {
+      Stream.of(children: _*).flatMap(streamPredicatesAppearingIn(_))
+    }
   }
 }

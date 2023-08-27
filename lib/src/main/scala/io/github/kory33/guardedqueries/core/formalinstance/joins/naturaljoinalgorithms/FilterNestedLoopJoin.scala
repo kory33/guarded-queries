@@ -108,7 +108,7 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Function[Consta
       )
 
       val groupedFacts =
-        relevantFactsStream.collect(Collectors.groupingBy(_.predicate))
+        relevantFactsStream.collect(Collectors.groupingBy[FormalFact[TA], Predicate](_.predicate))
 
       MapExtensions.composeWithFunction(groupedFacts, FormalInstance(_))
     }

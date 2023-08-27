@@ -4,6 +4,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.Constant
 import java.util
 import java.util.function.Function
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 
 trait DatalogSaturationEngine {
   def saturateInstance[TA](program: DatalogProgram,
@@ -11,7 +12,7 @@ trait DatalogSaturationEngine {
                            includeConstantsToTA: Function[Constant, TA]
   ): FormalInstance[TA] = this.saturateUnionOfSaturatedAndUnsaturatedInstance(
     program,
-    new FormalInstance[TA](util.Set.of),
+    FormalInstance[TA](util.Set.of[FormalFact[TA]]()),
     instance,
     includeConstantsToTA
   )

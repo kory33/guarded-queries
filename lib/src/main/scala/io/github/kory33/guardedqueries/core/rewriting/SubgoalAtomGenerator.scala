@@ -4,6 +4,9 @@ import com.google.common.collect.ImmutableSet
 import uk.ac.ox.cs.pdq.fol._
 import java.util
 import java.util.concurrent.atomic.AtomicInteger
+import io.github.kory33.guardedqueries.core.utils.CachingFunction
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions
+import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions
 
 /**
  * A mapping that sends a set V of connected variables to an atom that asserts that the query
@@ -30,7 +33,7 @@ class SubgoalAtomGenerator(
 
   final private var subgoalAtoms
     : CachingFunction[ /* query-connected */ ImmutableSet[ /* query-bound */ Variable], Atom] =
-    (variableSet) => {
+    CachingFunction { (variableSet: ImmutableSet[Variable]) =>
       // by the contract, we can (and should) reject variable sets that
       //  - are not connected, or
       //  - contain non-bound variables
@@ -48,7 +51,9 @@ class SubgoalAtomGenerator(
       val symbol = intentionalPredicatePrefix + "_" + predicateGeneratingCounter.getAndIncrement
       val subgoalPredicate = Predicate.create(symbol, neighbourhood.size)
       val orderedNeighbourhood = VariableSetExtensions.sortBySymbol(neighbourhood)
-      Atom.create(subgoalPredicate, orderedNeighbourhood.toArray(`new`))
+
+      import scala.jdk.CollectionConverters._
+      Atom.create(subgoalPredicate, orderedNeighbourhood.asScala.toArray: _*)
     }
 
   /**

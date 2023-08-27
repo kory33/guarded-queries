@@ -23,16 +23,17 @@ object IteratorExtensions {
   /**
    * Zip the iterator together with an infinite Long stream starting from 0.
    */
-  def zipWithIndex[T](iterator: util.Iterator[T]): util.Iterator[Pair[T, Long]] =
-    zip(iterator, LongStream.range(0, Long.MAX_VALUE).iterator)
+  def zipWithIndex[T](iterator: util.Iterator[T]): util.Iterator[Pair[T, java.lang.Long]] =
+    zip(iterator, LongStream.range(0, Long.MaxValue).iterator)
 
   /**
    * Convert an iterator to a stream.
    */
   def intoStream[T](iterator: util.Iterator[T]): Stream[T] = {
-    val iterable = () => iterator
+    val iterable: java.lang.Iterable[T] = () => iterator
     StreamSupport.stream(iterable.spliterator, false)
   }
+
   def mapInto[R, T](iterator: util.Iterator[_ <: T],
                     mapper: Function[_ >: T, _ <: R]
   ): util.Iterator[R] = new util.Iterator[R]() {

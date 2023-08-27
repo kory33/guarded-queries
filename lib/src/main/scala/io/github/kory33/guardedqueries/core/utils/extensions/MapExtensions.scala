@@ -19,9 +19,8 @@ object MapExtensions {
     ImmutableMapExtensions.consumeAndCopy(valueSet.stream.map((value: V) => {
       val preimageIterator = map.entrySet.stream.filter((entry: util.Map.Entry[K, V]) =>
         entry.getValue == value
-      ).map(util.Map.Entry.getKey).iterator
+      ).map(_.getKey).iterator
       util.Map.entry(value, ImmutableSet.copyOf(preimageIterator))
-
     }).iterator)
   }
 

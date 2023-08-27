@@ -8,27 +8,21 @@ import java.util.NoSuchElementException
 object ImmutableStack {
   case class Cons[T](head: T, tail: ImmutableStack[T]) extends ImmutableStack[T] {
     override def iterator: util.Iterator[T] = new util.Iterator[T]() {
-      private var current = Cons.this
+      private var current: ImmutableStack[T] = Cons.this
 
       override def hasNext: Boolean = !current.isEmpty
 
       override def next: T = {
         if (!hasNext) throw new NoSuchElementException("Nil")
-        val currentCons = current
-        current = currentCons.tail
-        currentCons.head
+        val oldCons = current.asInstanceOf[Cons[T]]
+        current = oldCons.tail
+        oldCons.head
       }
     }
 
-    override def toString: String = {
-      val builder = new lang.StringBuilder
-      builder.append("ImmutableStack(")
-      import scala.collection.JavaConversions._
-      for (item <- this) { builder.append(item).append(", ") }
-      builder.delete(builder.length - 2, builder.length)
-      builder.append(")")
-      builder.toString
-    }
+    override def toString: String =
+      import scala.jdk.CollectionConverters._
+      s"ImmutableStack(${this.iterator.asScala.mkString(", ")}))"
   }
 
   object Nil {
@@ -45,19 +39,21 @@ object ImmutableStack {
     override def toString = "ImmutableStack()"
   }
 
-  def fromIterable[T](iterable: Iterable[T]): ImmutableStack[T] = {
-    var current = Nil.getInstance
-    import scala.collection.JavaConversions._
-    for (item <- iterable) { current = current.push(item) }
+  def fromIterable[T](iterable: java.lang.Iterable[T]): ImmutableStack[T] = {
+    var current: ImmutableStack[T] = Nil.getInstance
+    import scala.jdk.CollectionConverters._
+    for (item <- iterable.asScala) { current = current.push(item) }
     current
   }
 
-  @SafeVarargs def of[T](items: T*): ImmutableStack[T] = fromIterable(util.Arrays.asList(items))
+  @SafeVarargs def of[T](items: T*): ImmutableStack[T] =
+    import scala.jdk.CollectionConverters._
+    fromIterable(items.asJava)
 
   def empty[T]: ImmutableStack[T] = Nil.getInstance
 }
 
-trait ImmutableStack[T] extends Iterable[T] {
+trait ImmutableStack[T] extends java.lang.Iterable[T] {
   def push(item: T) = new ImmutableStack.Cons[T](item, this)
 
   def isEmpty: Boolean =

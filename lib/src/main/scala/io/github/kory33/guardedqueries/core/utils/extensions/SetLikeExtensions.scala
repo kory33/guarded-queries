@@ -8,6 +8,7 @@ import java.util.Optional
 import java.util.function.Function
 import java.util.stream.IntStream
 import java.util.stream.Stream
+import scala.annotation.tailrec
 
 object SetLikeExtensions {
 
@@ -51,15 +52,17 @@ object SetLikeExtensions {
                     collection2: util.Collection[_ <: T]
   ): ImmutableSet[T] = {
     val set2 = ImmutableSet.copyOf(collection2)
-    ImmutableSet.copyOf(collection1.stream.filter((e: _$1) => !set2.contains(e)).iterator)
+    ImmutableSet.copyOf(collection1.stream.filter((e) => !set2.contains(e)).iterator)
   }
 
   /**
    * Powerset of a set of elements from the given collection, lazily streamed.
    */
   def powerset[T](collection: util.Collection[_ <: T]): Stream[ImmutableSet[T]] = {
+    import scala.jdk.CollectionConverters._
+
     // deduplicated ArrayList of elements
-    val arrayList = new util.ArrayList[_ <: T](ImmutableSet.copyOf(collection))
+    val arrayList = collection.asScala.toSet.toList
     val setSize = arrayList.size
 
     // every non-negative BigInteger less than this value represents a unique subset of the given collection
@@ -72,7 +75,7 @@ object SetLikeExtensions {
         if (currentIndex.compareTo(upperLimit) < 0) {
           val subset = ImmutableSet.copyOf[T](IntStream.range(0, setSize).filter(
             currentIndex.testBit
-          ).mapToObj(arrayList.get).iterator)
+          ).mapToObj(arrayList(_)).iterator)
           Optional.of(Pair.of(subset, currentIndex.add(BigInteger.ONE)))
         } else Optional.empty
 
@@ -90,7 +93,7 @@ object SetLikeExtensions {
    */
   def generateFromElementsUntilFixpoint[T](
     initialCollection: util.Collection[_ <: T],
-    generator: Function[_ >: T, _ <: util.Collection[_ <: T]]
+    generator: T => util.Collection[_ <: T]
   ): ImmutableSet[T] = {
     val hashSet = new util.HashSet[T](initialCollection)
     var elementsAddedInPreviousIteration = ImmutableSet.copyOf(hashSet)
@@ -103,8 +106,8 @@ object SetLikeExtensions {
         // from elements that have been newly added to the set
         // in the previous iteration
         elementsAddedInPreviousIteration.forEach((newElementToConsider: T) => {
-          import scala.collection.JavaConversions._
-          for (generatedElement <- generator.apply(newElementToConsider)) {
+          import scala.jdk.CollectionConverters._
+          for (generatedElement <- generator.apply(newElementToConsider).asScala) {
             // we only add elements that are not already in the set
             if (!hashSet.contains(generatedElement)) builder.add(generatedElement)
           }
@@ -127,21 +130,25 @@ object SetLikeExtensions {
    */
   def generateFromSetUntilFixpoint[T](
     initialCollection: util.Collection[_ <: T],
-    generator: Function[_ >: ImmutableSet[T], _ <: util.Collection[_ <: T]]
+    generator: ImmutableSet[T] => util.Collection[_ <: T]
   ): ImmutableSet[T] = {
     val hashSet = new util.HashSet[T](initialCollection)
-    while (true) {
+
+    @tailrec def recurse(): ImmutableSet[T] = {
       val elementsGeneratedSoFar = ImmutableSet.copyOf(hashSet)
       val elementsGeneratedInThisIteration =
         ImmutableSet.copyOf[T](generator.apply(elementsGeneratedSoFar))
 
       if (hashSet.containsAll(elementsGeneratedInThisIteration)) {
         // we have reached the least fixpoint above initialCollection
-        return ImmutableSet.copyOf(hashSet)
+        ImmutableSet.copyOf(hashSet)
       } else {
         hashSet.addAll(elementsGeneratedInThisIteration)
+        recurse()
       }
     }
+
+    recurse()
   }
 }
 class SetLikeExtensions private {}

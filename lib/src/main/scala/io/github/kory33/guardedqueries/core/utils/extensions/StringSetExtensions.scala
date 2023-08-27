@@ -1,12 +1,12 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
 import java.util
+import scala.annotation.tailrec
 
 object StringSetExtensions {
   def isPrefixOfSome(strings: util.Collection[String], string: String): Boolean = {
-    import scala.collection.JavaConversions._
-    for (s <- strings) { if (s.startsWith(string)) return true }
-    false
+    import scala.jdk.CollectionConverters._
+    strings.asScala.exists(_.startsWith(string))
   }
 
   /**
@@ -14,11 +14,12 @@ object StringSetExtensions {
    * {@code strings}.
    */
   def freshPrefix(strings: util.Collection[String], startingWith: String): String = {
-    var count = 0
-    while (true) {
-      val candidate = startingWith + Long.toHexString(count)
-      if (!isPrefixOfSome(strings, candidate)) return candidate
-      count += 1
+    @tailrec def searchForFreshPrefix(count: Long): String = {
+      val candidate = startingWith + count.toHexString
+      if (!isPrefixOfSome(strings, candidate)) candidate
+      else searchForFreshPrefix(count + 1)
     }
+
+    searchForFreshPrefix(0)
   }
 }

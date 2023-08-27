@@ -115,13 +115,16 @@ object MappingStreams {
        * which is [1], so we end up with [0,5,1].
        */
       def increment(): Unit = {
-        val availableIndices: util.HashSet[Integer] = null
-        val usedIndices = util.Arrays.stream(rangeElementIndices).boxed.collect(
-          Collectors.toCollection(util.HashSet(_))
-        )
-        availableIndices = IntStream.range(0, rangeSize).boxed.filter((i: Integer) =>
-          !usedIndices.contains(i)
-        ).collect(Collectors.toCollection(util.HashSet(_)))
+        val availableIndices: util.HashSet[Integer] = {
+          import scala.jdk.CollectionConverters._
+
+          val usedIndices = rangeElementIndices.toSet
+          val set = new util.HashSet[Integer]
+          (0 until rangeSize).filter(!usedIndices.contains(_)).foreach(i =>
+            set.add(new Integer(i))
+          )
+          set
+        }
 
         for (i <- rangeElementIndices.length - 1 to 0 by -1) {
           val oldEntry = rangeElementIndices(i)

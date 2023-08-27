@@ -16,8 +16,8 @@ object TGDExtensions {
     val headVariables = tgd.getHead.getFreeVariables
     val bodyVariables = tgd.getBody.getFreeVariables
     SetLikeExtensions.intersection(
-      util.Arrays.asList(headVariables),
-      util.Arrays.asList(bodyVariables)
+      util.Arrays.asList(headVariables: _*),
+      util.Arrays.asList(bodyVariables: _*)
     )
   }
 

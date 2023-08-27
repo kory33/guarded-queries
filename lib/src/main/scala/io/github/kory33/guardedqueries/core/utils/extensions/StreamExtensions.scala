@@ -13,7 +13,7 @@ object StreamExtensions {
    * Zip each element of a stream with its index (in the order traversed by the iterator)
    * starting from 0.
    */
-  def zipWithIndex[T](stream: Stream[T]): Stream[Pair[T, Long]] =
+  def zipWithIndex[T](stream: Stream[T]): Stream[Pair[T, java.lang.Long]] =
     IteratorExtensions.intoStream(IteratorExtensions.zipWithIndex(stream.iterator))
 
   /**
@@ -24,7 +24,7 @@ object StreamExtensions {
                       mapper: Function[_ >: T, _ <: R]
   ): Stream[util.Map.Entry[T, R]] = stream.map((t: T) => util.Map.entry(t, mapper.apply(t)))
 
-  def intoIterableOnce[T](stream: Stream[T]): Iterable[T] = stream.iterator
+  def intoIterableOnce[T](stream: Stream[T]): java.lang.Iterable[T] = () => stream.iterator
 
   def filterSubtype[T1, T2 <: T1](stream: Stream[T1], clazz: Class[T2]): Stream[T2] =
     stream.filter(clazz.isInstance).map(clazz.cast)

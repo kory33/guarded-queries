@@ -9,6 +9,7 @@ import uk.ac.ox.cs.pdq.fol.{Constant, Dependency, Formula}
 
 import java.util
 import java.util.stream.Stream
+import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 
 class SaturatedRuleSet[RuleClass <: GTGD](
   saturation: AbstractSaturation[_ <: GTGD],
@@ -22,7 +23,7 @@ class SaturatedRuleSet[RuleClass <: GTGD](
     DatalogProgram.tryFromDependencies(this.saturatedRules)
 
   val existentialRules: ImmutableList[RuleClass] =
-    ImmutableList.copyOf(originalRules.stream.filter((rule: _$1) =>
+    ImmutableList.copyOf(originalRules.stream.filter(rule =>
       rule.getExistential.length > 0
     ).iterator)
 

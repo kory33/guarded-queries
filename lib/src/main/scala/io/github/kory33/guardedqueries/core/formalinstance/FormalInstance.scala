@@ -18,12 +18,6 @@ case class FormalInstance[TermAlphabet](facts: ImmutableSet[FormalFact[TermAlpha
       fact.appliedTerms.stream
     ).iterator)
 
-  def this(fact: util.Iterator[FormalFact[TermAlphabet]]) =
-    this(ImmutableSet.copyOf(fact))
-
-  def this(facts: util.Collection[FormalFact[TermAlphabet]]) =
-    this(ImmutableSet.copyOf(facts))
-
   def getActiveTerms: ImmutableSet[TermAlphabet] = {
     // TODO remove this getter
     this.activeTerms
@@ -58,6 +52,12 @@ case class FormalInstance[TermAlphabet](facts: ImmutableSet[FormalFact[TermAlpha
 }
 
 object FormalInstance {
+  def apply[TA](fact: util.Iterator[FormalFact[TA]]): FormalInstance[TA] =
+    FormalInstance(ImmutableSet.copyOf(fact))
+
+  def apply[TA](facts: util.Collection[FormalFact[TA]]): FormalInstance[TA] =
+    FormalInstance(ImmutableSet.copyOf(facts))
+
   def asAtoms(instance: FormalInstance[Term]): ImmutableList[Atom] =
     ImmutableList.copyOf(instance.facts.stream.map(FormalFact.asAtom).iterator)
 
