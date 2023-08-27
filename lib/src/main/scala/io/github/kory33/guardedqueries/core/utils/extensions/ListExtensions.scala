@@ -7,6 +7,8 @@ import java.util.NoSuchElementException
 import java.util.function.Function
 import java.util.function.IntFunction
 import java.util.stream.IntStream
+import scala.jdk.CollectionConverters._
+import scala.util.boundary
 
 object ListExtensions {
   def productMappedCollectionsToStacks[I, R](
@@ -24,9 +26,27 @@ object ListExtensions {
 
     () =>
       new util.Iterator[ImmutableStack[R]]() {
-        private var currentIteratorStack = initialIteratorStack // the next stack to be returned
+        private var currentIteratorStack = initialIteratorStack
+
+        // the next stack to be returned
         // null if no more stack of elements can be produced
-        private var currentItemStack: ImmutableStack[R] = null
+        private var currentItemStack: ImmutableStack[R] = ImmutableStack.empty
+
+        // initialize currentItemStack
+        {
+          // we put "the element from the iterator at the bottom of initialIteratorStack"
+          // at the bottom of currentItemStack
+          boundary:
+            for (iterator <- initialIteratorStack.reverse.asScala) {
+              if (iterator.hasNext()) {
+                currentItemStack = currentItemStack.push(iterator.next())
+              } else {
+                // if any iterator is empty at the beginning, we cannot produce any stack of elements
+                currentItemStack = null
+                boundary.break()
+              }
+            }
+        }
 
         override def hasNext: Boolean = return currentItemStack != null
 
@@ -34,8 +54,6 @@ object ListExtensions {
           // invariant: during the loop, top `droppedIterators` have been exhausted
           //            after the loop, either the bottom iterator has been exhausted
           //            or all exhausted iterators have been replaced with fresh ones
-
-          import scala.util.boundary
           boundary:
             for (droppedIterators <- 0 until size) {
               // currentIteratorStack is nonempty because it originally had `size` iterators
