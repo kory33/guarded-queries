@@ -6,7 +6,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 
-import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant}
+import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant, Variable => PDQVariable}
 
 import java.util
 import uk.ac.ox.cs.pdq.fol.Term
@@ -58,14 +58,14 @@ final class MinimallyUnifiedDatalogRuleSet
 
 object MinimallyUnifiedDatalogRuleSet {
   enum VariableOrConstant {
-    case Variable(variable: Variable)
+    case Variable(variable: PDQVariable)
     case Constant(constant: PDQConstant)
   }
 
   object VariableOrConstant {
     def of(term: Term): VariableOrConstant =
       term match
-        case variable: Variable    => VariableOrConstant.Variable(variable)
+        case variable: PDQVariable => VariableOrConstant.Variable(variable)
         case constant: PDQConstant => VariableOrConstant.Constant(constant)
         case _ =>
           throw new IllegalArgumentException("Either a constant or a variable is expected")
