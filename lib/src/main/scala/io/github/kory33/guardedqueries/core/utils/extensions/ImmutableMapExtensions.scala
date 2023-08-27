@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
 import com.google.common.collect.ImmutableMap
-import java.util._
+import java.util
 
 object ImmutableMapExtensions {
   def consumeAndCopy[K, V](entries: util.Iterator[_ <: util.Map.Entry[_ <: K, _ <: V]])

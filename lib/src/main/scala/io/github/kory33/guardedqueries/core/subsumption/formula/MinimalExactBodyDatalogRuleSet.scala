@@ -1,6 +1,7 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import java.util
+import io.github.kory33.guardedqueries.core.fol.DatalogRule
 
 /**
  * An implementation of {@link IndexlessMaximallySubsumingTGDSet} that keeps track of a set of
@@ -14,6 +15,6 @@ final class MinimalExactBodyDatalogRuleSet
     first: DatalogRule,
     second: DatalogRule
   ): Boolean =
-    first.getHeadAtoms == second.getHeadAtoms &&
+    (first.getHeadAtoms sameElements second.getHeadAtoms) &&
       first.getBodyAtoms.toSet.subsetOf(second.getBodyAtoms.toSet)
 }

@@ -3,6 +3,8 @@ package io.github.kory33.guardedqueries.core.subsumption.formula
 import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet.VariableOrConstant
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
+import io.github.kory33.guardedqueries.core.fol.DatalogRule
+import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 
 import java.util
 

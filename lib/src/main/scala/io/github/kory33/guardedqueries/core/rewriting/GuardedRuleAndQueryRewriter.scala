@@ -4,9 +4,15 @@ import com.google.common.collect.ImmutableCollection
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
+import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
+import io.github.kory33.guardedqueries.core.fol.NormalGTGD
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
 import io.github.kory33.guardedqueries.core.utils.extensions.*
+import org.apache.commons.lang3.tuple.Pair
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
@@ -88,7 +94,6 @@ case class GuardedRuleAndQueryRewriter(
     // unification of variables mapped by localWitnessGuess to fresh variables
     val unification: ImmutableMap[Variable, Variable] = {
       val unificationMapBuilder = ImmutableMap.builder[Variable, Variable]
-      import scala.collection.JavaConversions._
       for (equivalenceClass <- neighbourhoodPreimages.values) {
         val unifiedVariable = ruleLocalVariableContext.getFreshVariable
         import scala.collection.JavaConversions._
@@ -155,9 +160,9 @@ case class GuardedRuleAndQueryRewriter(
         }
       }
       val replacedTerms =
-        orderedNeighbourhoodVariables.map(neighbourhoodVariableToTerm).toArray(`new`)
+        orderedNeighbourhoodVariables.map(neighbourhoodVariableToTerm).toArray
 
-      Atom.create(subgoalAtom.getPredicate, replacedTerms)
+      Atom.create(subgoalAtom.getPredicate, replacedTerms: _*)
     }
 
     // subgoalAtom has variables in the neighbourhood of coexistentialVariables as its parameters.
@@ -172,7 +177,7 @@ case class GuardedRuleAndQueryRewriter(
     // to which the unified variables were sent was active in localInstance).
     // Hence, the rule (mappedInstance → mappedSubgoalAtom) is a Datalog rule.
     DatalogRule(
-      FormalInstance.asAtoms(mappedInstance).toArray(`new`),
+      FormalInstance.asAtoms(mappedInstance).toArray,
       Array[Atom](mappedSubgoalAtom)
     )
   }
@@ -196,10 +201,8 @@ case class GuardedRuleAndQueryRewriter(
         ImmutableSet.copyOf(queryFreeVariables).size
       )
       val sortedFreeVariables =
-        VariableSetExtensions.sortBySymbol(util.Arrays.asList(queryFreeVariables)).toArray(
-          `new`
-        )
-      Atom.create(goalPredicate, sortedFreeVariables)
+        VariableSetExtensions.sortBySymbol(util.Arrays.asList(queryFreeVariables)).toArray
+      Atom.create(goalPredicate, sortedFreeVariables: _*)
     }
 
     val subgoalAtoms =
@@ -239,16 +242,17 @@ case class GuardedRuleAndQueryRewriter(
         ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(
           boundVariableConnectedQuery,
           baseWitnessVariables
-        ).map(ConjunctiveQuery.getAtoms).orElseGet(() => new Array[Atom](0))
+        ).map(_.getAtoms).orElseGet(() => new Array[Atom](0))
       val neighbourhoodsSubgoals = ConjunctiveQueryExtensions.connectedComponents(
         boundVariableConnectedQuery,
         existentialWitnessCandidate
-      ).map(subgoalAtoms.apply).toArray(`new`)
-      new Nothing(
+      ).map(subgoalAtoms.apply).toArray()
+
+      new DatalogRule(
         Stream.concat(
           util.Arrays.stream(baseWitnessJoinConditions),
           util.Arrays.stream(neighbourhoodsSubgoals)
-        ).toArray(`new`),
+        ).toArray(),
         Array[Atom](queryGoalAtom)
       )
 
@@ -285,7 +289,7 @@ case class GuardedRuleAndQueryRewriter(
 
     val bvccRewriteResults = StreamExtensions.zipWithIndex(
       cqConnectedComponents.maximallyConnectedSubqueries.stream
-    ).map((pair: Pair[ConjunctiveQuery, AnyRef]) => {
+    ).map(pair => {
       val maximallyConnectedSubquery = pair.getLeft
 
       // prepare a prefix for intentional predicates that may be introduced to rewrite a
@@ -316,19 +320,20 @@ case class GuardedRuleAndQueryRewriter(
       //  - goal predicates of each maximally connected subquery
       val bodyAtoms = Stream.concat(
         cqConnectedComponents.boundVariableFreeAtoms.stream,
-        bvccRewriteResults.stream.map(
-          GuardedRuleAndQueryRewriter.BoundVariableConnectedComponentRewriteResult.goalAtom
-        )
+        bvccRewriteResults.stream.map(_.goalAtom)
       ).toArray
 
       // ... to derive the final goal predicate
       TGD.create(bodyAtoms, Array[Atom](goalAtom))
     }
 
-    val allDerivationRules = ImmutableSet.builder[TGD].addAll(bvccRewriteResults.stream.map(
-      GuardedRuleAndQueryRewriter.BoundVariableConnectedComponentRewriteResult.goalDerivationRules
-    ).flatMap(util.Collection.stream).toList).add(subgoalBindingRule).build
-    new Nothing(
+    val allDerivationRules = ImmutableSet.builder[TGD].addAll(
+      bvccRewriteResults.stream.map(_.goalDerivationRules).flatMap(
+        util.Collection.stream
+      ).toList
+    ).add(subgoalBindingRule).build
+
+    new DatalogRewriteResult(
       DatalogProgram.tryFromDependencies(saturatedRuleSet.saturatedRules),
       DatalogProgram.tryFromDependencies(allDerivationRules),
       goalAtom

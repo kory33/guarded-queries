@@ -55,13 +55,11 @@ case class HomomorphicMapping[Term](
     atomWhoseVariablesAreInThisResult: Atom,
     constantInclusion: Function[Constant, Term]
   ) = {
-    val inputAtomAsFormalFact = FormalFact.fromAtom(atomWhoseVariablesAreInThisResult)
-    inputAtomAsFormalFact.map((term: Term) => {
-      if (term.isInstanceOf[Constant]) constantInclusion.apply(constant)
-      else if (term.isInstanceOf[Variable]) this.apply(variable)
-      else
-        throw new IllegalArgumentException("Term " + term + " is neither constant nor variable")
-
+    FormalFact.fromAtom(atomWhoseVariablesAreInThisResult).map({
+      case constant: Constant => constantInclusion.apply(constant)
+      case variable: Variable => this.apply(variable)
+      case term =>
+        throw new IllegalArgumentException(s"Term $term is neither constant nor variable")
     })
   }
 

@@ -9,6 +9,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import org.apache.commons.lang3.tuple.Pair
 import java.util
+import java.util.Optional
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 import java.util.stream.Stream
@@ -31,7 +32,7 @@ object MappingStreams {
       // if we have reached the end of the stream
       private var reachedEnd = rangeSize == 0
       // if we have invoked toMap() after reaching the end of the stream
-      private var alreadyEmittedLastMap = reachedEnd && !orderedDomain.isEmpty
+      private var _alreadyEmittedLastMap = reachedEnd && !orderedDomain.isEmpty
 
       /**
        * Increment index array. For example, if the array is [5, 4, 2] and rangeSize is 6, we
@@ -49,9 +50,9 @@ object MappingStreams {
         }
         reachedEnd = true
       }
-      def alreadyEmittedLastMap: Boolean = alreadyEmittedLastMap
+      def alreadyEmittedLastMap: Boolean = _alreadyEmittedLastMap
       def currentToMap: ImmutableMap[K, V] = {
-        if (reachedEnd) alreadyEmittedLastMap = true
+        if (reachedEnd) _alreadyEmittedLastMap = true
         ImmutableMapExtensions.consumeAndCopy(IntStream.range(
           0,
           rangeElementIndices.length
@@ -98,7 +99,7 @@ object MappingStreams {
       // boolean indicating whether we have called increment() after
       // reaching the maximum rangeElementIndices, which is
       // [rangeSize-1, rangeSize-2, ..., rangeSize - orderedDomain.size()]
-      private var hasReachedEndAndIncrementAttempted = false
+      private var _hasReachedEndAndIncrementAttempted = false
 
       /**
        * Increment index array. <p> We scan the index array from the end, and we try to
@@ -116,11 +117,11 @@ object MappingStreams {
       def increment(): Unit = {
         val availableIndices: util.HashSet[Integer] = null
         val usedIndices = util.Arrays.stream(rangeElementIndices).boxed.collect(
-          Collectors.toCollection(util.HashSet.`new`)
+          Collectors.toCollection(util.HashSet(_))
         )
         availableIndices = IntStream.range(0, rangeSize).boxed.filter((i: Integer) =>
           !usedIndices.contains(i)
-        ).collect(Collectors.toCollection(util.HashSet.`new`))
+        ).collect(Collectors.toCollection(util.HashSet(_)))
 
         for (i <- rangeElementIndices.length - 1 to 0 by -1) {
           val oldEntry = rangeElementIndices(i)
@@ -132,7 +133,7 @@ object MappingStreams {
             availableIndices.add(oldEntry)
             availableIndices.remove(newEntry)
             val sortedAvailableIndices = new util.ArrayList[Integer](availableIndices)
-            sortedAvailableIndices.sort(Integer.compareTo)
+            sortedAvailableIndices.sort((a, b) => a.compareTo(b))
             for (j <- i + 1 until rangeElementIndices.length) {
               rangeElementIndices(j) = sortedAvailableIndices.get(j - i - 1)
             }
@@ -142,9 +143,9 @@ object MappingStreams {
             availableIndices.add(oldEntry)
           }
         }
-        hasReachedEndAndIncrementAttempted = true
+        _hasReachedEndAndIncrementAttempted = true
       }
-      def hasReachedEndAndIncrementAttempted: Boolean = hasReachedEndAndIncrementAttempted
+      def hasReachedEndAndIncrementAttempted: Boolean = _hasReachedEndAndIncrementAttempted
       def toMap: ImmutableBiMap[K, V] = {
         val builder = ImmutableBiMap.builder[K, V]
         IntStream.range(0, rangeElementIndices.length).mapToObj((i: Int) =>
