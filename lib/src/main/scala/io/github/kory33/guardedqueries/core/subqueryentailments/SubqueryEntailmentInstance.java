@@ -3,7 +3,6 @@ package io.github.kory33.guardedqueries.core.subqueryentailments;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions;
 import uk.ac.ox.cs.pdq.fol.Constant;
 import uk.ac.ox.cs.pdq.fol.Variable;
 

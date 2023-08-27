@@ -1,9 +1,6 @@
 package io.github.kory33.guardedqueries.core.rewriting;
 
 import com.google.common.collect.ImmutableSet;
-import io.github.kory33.guardedqueries.core.utils.CachingFunction;
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions;
-import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions;
 import uk.ac.ox.cs.pdq.fol.*;
 
 import java.util.Collection;
