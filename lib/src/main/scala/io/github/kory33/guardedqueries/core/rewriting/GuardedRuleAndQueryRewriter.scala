@@ -142,7 +142,7 @@ case class GuardedRuleAndQueryRewriter(
 
     val mappedInstance = localInstance.map((t) => t.mapLocalNamesToTerm(nameToTermMap.get))
     val mappedSubgoalAtom: Atom = {
-      val subgoalAtom = subgoalAtoms.apply(coexistentialVariables)
+      val subgoalAtom = subgoalAtoms.apply(coexistentialVariables.asScala.toSet)
       val orderedNeighbourhoodVariables = subgoalAtom.getTerms.map((term: Term) =>
         term.asInstanceOf[
           Variable
@@ -199,20 +199,18 @@ case class GuardedRuleAndQueryRewriter(
   ) = {
     val queryGoalAtom: Atom = {
       val queryFreeVariables = boundVariableConnectedQuery.getFreeVariables
-      val goalPredicate = Predicate.create(
-        intentionalPredicatePrefix + "_GOAL",
-        ImmutableSet.copyOf(queryFreeVariables).size
-      )
-      val sortedFreeVariables =
-        VariableSetExtensions.sortBySymbol(
-          util.Arrays.asList(queryFreeVariables: _*)
-        ).asScala.toArray
+      val goalPredicate =
+        Predicate.create(s"${intentionalPredicatePrefix}_GOAL", queryFreeVariables.toSet.size)
 
-      Atom.create(goalPredicate, sortedFreeVariables: _*)
+      Atom.create(
+        goalPredicate,
+        VariableSetExtensions.sortBySymbol(queryFreeVariables.toSet): _*
+      )
     }
 
     val subgoalAtoms =
-      new SubgoalAtomGenerator(boundVariableConnectedQuery, intentionalPredicatePrefix + "_SGL")
+      SubgoalAtomGenerator(boundVariableConnectedQuery, s"${intentionalPredicatePrefix}_SGL")
+
     val subgoalDerivationRules = subqueryEntailmentEnumeration.apply(
       extensionalSignature,
       saturatedRules,
@@ -220,6 +218,7 @@ case class GuardedRuleAndQueryRewriter(
     ).map((subqueryEntailment) =>
       subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms)
     ).toList
+
     val subgoalGlueingRules = SetLikeExtensions.powerset(
       util.Arrays.asList(boundVariableConnectedQuery.getBoundVariables: _*)
     ).map(existentialWitnessCandidate => {
@@ -240,20 +239,19 @@ case class GuardedRuleAndQueryRewriter(
       //
       // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
       // the second conjunct "neighbourhoodsSubgoals".
-      val baseWitnessVariables = SetLikeExtensions.difference(
-        ConjunctiveQueryExtensions.variablesIn(boundVariableConnectedQuery),
-        existentialWitnessCandidate
-      )
+      val baseWitnessVariables =
+        ConjunctiveQueryExtensions.variablesIn(boundVariableConnectedQuery) --
+          existentialWitnessCandidate.asScala
+
       val baseWitnessJoinConditions =
-        ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(
-          boundVariableConnectedQuery,
-          baseWitnessVariables
-        ).map(_.getAtoms).orElseGet(() => new Array[Atom](0))
+        ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(baseWitnessVariables)(
+          boundVariableConnectedQuery
+        ).map(_.getAtoms).getOrElse(Array[Atom]())
 
       val neighbourhoodsSubgoals = ConjunctiveQueryExtensions.connectedComponents(
         boundVariableConnectedQuery,
-        existentialWitnessCandidate
-      ).map(subgoalAtoms.apply).toList().asScala.toArray
+        existentialWitnessCandidate.asScala.toSet
+      ).map(subgoalAtoms.apply)
 
       new DatalogRule(
         baseWitnessJoinConditions ++ neighbourhoodsSubgoals,
@@ -293,23 +291,21 @@ case class GuardedRuleAndQueryRewriter(
     val saturatedRuleSet = new SaturatedRuleSet[NormalGTGD](saturation, normalizedRules)
     val cqConnectedComponents = new CQBoundVariableConnectedComponents(query)
 
-    val bvccRewriteResults = StreamExtensions.zipWithIndex(
-      cqConnectedComponents.maximallyConnectedSubqueries.stream
-    ).map(pair => {
-      val maximallyConnectedSubquery = pair.getLeft
+    val bvccRewriteResults =
+      cqConnectedComponents.maximallyConnectedSubqueries.zipWithIndex.map(
+        (maximallyConnectedSubquery, index) => {
+          // prepare a prefix for intentional predicates that may be introduced to rewrite a
+          // maximally connected subquery. "SQ" stands for "subquery".
+          val subqueryIntentionalPredicatePrefix = s"${intentionalPredicatePrefix}_SQ$index"
 
-      // prepare a prefix for intentional predicates that may be introduced to rewrite a
-      // maximally connected subquery. "SQ" stands for "subquery".
-      val subqueryIntentionalPredicatePrefix =
-        intentionalPredicatePrefix + "_SQ" + pair.getRight
-
-      this.rewriteBoundVariableConnectedComponent(
-        extensionalSignature,
-        saturatedRuleSet,
-        maximallyConnectedSubquery,
-        subqueryIntentionalPredicatePrefix
-      )
-    }).toList
+          this.rewriteBoundVariableConnectedComponent(
+            extensionalSignature,
+            saturatedRuleSet,
+            maximallyConnectedSubquery,
+            subqueryIntentionalPredicatePrefix
+          )
+        }
+      ).toList
 
     val deduplicatedQueryVariables =
       ImmutableList.copyOf(ImmutableSet.copyOf(query.getFreeVariables))
@@ -325,15 +321,15 @@ case class GuardedRuleAndQueryRewriter(
       //  - bound-variable-free atoms
       //  - goal predicates of each maximally connected subquery
       val bodyAtoms =
-        cqConnectedComponents.boundVariableFreeAtoms.asScala.toArray ++
-          bvccRewriteResults.asScala.map(_.goalAtom)
+        cqConnectedComponents.boundVariableFreeAtoms.toArray ++
+          bvccRewriteResults.map(_.goalAtom)
 
       // ... to derive the final goal predicate
       TGD.create(bodyAtoms, Array[Atom](goalAtom))
     }
 
     val allDerivationRules = ImmutableSet.builder[TGD].addAll(
-      bvccRewriteResults.asScala.flatMap(_.goalDerivationRules.asScala).toSet.asJava
+      bvccRewriteResults.flatMap(_.goalDerivationRules.asScala).toSet.asJava
     ).add(subgoalBindingRule).build
 
     new DatalogRewriteResult(

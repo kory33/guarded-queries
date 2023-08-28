@@ -6,9 +6,9 @@ import org.scalacheck.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 
-import scala.jdk.CollectionConverters.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import com.hp.hpl.jena.sparql.function.library.e
 
 /**
  * An input for union-find algorithm;
@@ -19,7 +19,7 @@ private[this] case class UnionFindInput(collection: Set[Int],
   require(identifications.forall(t => collection.contains(t._1) && collection.contains(t._2)))
 
   def runOnFreshUnionFindTree: SimpleUnionFindTree[Int] = {
-    val tree = new SimpleUnionFindTree(collection.asJava)
+    val tree = new SimpleUnionFindTree(collection)
     identifications.foreach { case (a, b) => tree.unionTwo(a, b) }
     tree
   }
@@ -37,7 +37,7 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
   ".getEquivalenceClasses" should "output disjoint sets" in {
     forAll(genUnionFindInput, minSuccessful(1000)) { input =>
       val tree = input.runOnFreshUnionFindTree
-      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+      val equivalenceClasses = tree.getEquivalenceClasses
 
       assert {
         equivalenceClasses.forall { classA =>
@@ -52,7 +52,7 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
   ".getEquivalenceClasses" should "output sets that cover the input" in {
     forAll(genUnionFindInput, minSuccessful(1000)) { input =>
       val tree = input.runOnFreshUnionFindTree
-      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+      val equivalenceClasses = tree.getEquivalenceClasses
 
       assert(equivalenceClasses.flatten == input.collection)
     }
@@ -61,7 +61,7 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
   ".getEquivalenceClasses" should "output equivalence classes that contain all identification edges" in {
     forAll(genUnionFindInput, minSuccessful(1000)) { input =>
       val tree = input.runOnFreshUnionFindTree
-      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+      val equivalenceClasses = tree.getEquivalenceClasses
 
       assert {
         input.identifications.forall {
@@ -100,7 +100,7 @@ class SimpleUnionFindTreeSpec extends AnyFlatSpec with ScalaCheckPropertyChecks 
       }
 
       val tree = input.runOnFreshUnionFindTree
-      val equivalenceClasses = tree.getEquivalenceClasses.asScala.map(_.asScala.toSet).toSet
+      val equivalenceClasses = tree.getEquivalenceClasses
 
       assert {
         equivalenceClasses.forall { equivalenceClass =>

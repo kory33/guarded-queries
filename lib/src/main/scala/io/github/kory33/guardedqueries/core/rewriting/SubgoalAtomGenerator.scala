@@ -18,42 +18,49 @@ class SubgoalAtomGenerator(
   intentionalPredicatePrefix: String
 ) {
   private val connectedComponents =
-    new CQBoundVariableConnectedComponents(boundVariableConnectedQuery)
+    CQBoundVariableConnectedComponents(boundVariableConnectedQuery)
+
   if (connectedComponents.maximallyConnectedSubqueries.size > 1)
     throw new IllegalArgumentException(
-      "The given query (" + boundVariableConnectedQuery + ") is not bound-variable-connected."
+      s"The given query ($boundVariableConnectedQuery) is not bound-variable-connected."
     )
-  if (!connectedComponents.boundVariableFreeAtoms.isEmpty) throw new IllegalArgumentException(
-    "The given query (" + boundVariableConnectedQuery + ") contains bound-variable-free atoms."
-  )
 
-  private val queryBoundVariables: ImmutableSet[Variable] =
-    ImmutableSet.copyOf(boundVariableConnectedQuery.getBoundVariables)
+  if (!connectedComponents.boundVariableFreeAtoms.isEmpty)
+    throw new IllegalArgumentException(
+      s"The given query ($boundVariableConnectedQuery) contains bound-variable-free atoms."
+    )
+
+  private val queryBoundVariables: Set[Variable] =
+    boundVariableConnectedQuery.getBoundVariables.toSet
+
   private val predicateGeneratingCounter = new AtomicInteger(0)
 
   final private var subgoalAtoms
-    : CachingFunction[ /* query-connected */ ImmutableSet[ /* query-bound */ Variable], Atom] =
-    CachingFunction { (variableSet: ImmutableSet[Variable]) =>
+    : CachingFunction[ /* query-connected */ Set[ /* query-bound */ Variable], Atom] =
+    CachingFunction { (variableSet: Set[Variable]) =>
       // by the contract, we can (and should) reject variable sets that
       //  - are not connected, or
       //  - contain non-bound variables
       if (!ConjunctiveQueryExtensions.isConnected(boundVariableConnectedQuery, variableSet))
         throw new IllegalArgumentException(
-          "The given set of variables (" + variableSet + ") is not connected in the given query (" + boundVariableConnectedQuery + ")."
+          s"The given set of variables ($variableSet) is not connected in the given query ($boundVariableConnectedQuery)."
         )
-      if (!queryBoundVariables.containsAll(variableSet)) throw new IllegalArgumentException(
-        "The given set of variables (" + variableSet + ") contains non-bound variables in the given query (" + boundVariableConnectedQuery + ")."
-      )
+
+      if (!variableSet.subsetOf(queryBoundVariables))
+        throw new IllegalArgumentException(
+          s"The given set of variables ($variableSet) contains non-bound variables in the given query ($boundVariableConnectedQuery)."
+        )
+
       val neighbourhood = ConjunctiveQueryExtensions.neighbourhoodVariables(
         boundVariableConnectedQuery,
         variableSet
       )
-      val symbol = intentionalPredicatePrefix + "_" + predicateGeneratingCounter.getAndIncrement
-      val subgoalPredicate = Predicate.create(symbol, neighbourhood.size)
-      val orderedNeighbourhood = VariableSetExtensions.sortBySymbol(neighbourhood)
 
-      import scala.jdk.CollectionConverters._
-      Atom.create(subgoalPredicate, orderedNeighbourhood.asScala.toArray: _*)
+      val symbol =
+        s"${intentionalPredicatePrefix}_${predicateGeneratingCounter.getAndIncrement}"
+      val subgoalPredicate = Predicate.create(symbol, neighbourhood.size)
+
+      Atom.create(subgoalPredicate, VariableSetExtensions.sortBySymbol(neighbourhood): _*)
     }
 
   /**
@@ -65,6 +72,6 @@ class SubgoalAtomGenerator(
    * @throws IllegalArgumentException
    *   if the given set of variables is disconnected or contains free variables.
    */
-  def apply(variableSet: util.Collection[_ <: Variable]): Atom =
-    this.subgoalAtoms.apply(ImmutableSet.copyOf(variableSet))
+  def apply(variableSet: Set[Variable]): Atom =
+    this.subgoalAtoms.apply(variableSet)
 }

@@ -1,25 +1,24 @@
 package io.github.kory33.guardedqueries.core.utils.algorithms
 
-import com.google.common.collect.ImmutableSet
-import java.util
 import scala.annotation.tailrec
+import scala.collection.mutable
 
-final class SimpleUnionFindTree[V](values: util.Collection[_ <: V]) {
+final class SimpleUnionFindTree[V](values: Set[V]) {
   // invariants:
   //  - referenceTowardsRepresentative.keySet() intersection representatives is empty
   //  - referenceTowardsRepresentative.keySet() union representatives is constant after every operation
-  private var referenceTowardsRepresentative: util.HashMap[V, V] = new util.HashMap[V, V]
-  private var representatives: util.HashSet[V] = new util.HashSet[V](values)
+  private val referenceTowardsRepresentative: mutable.HashMap[V, V] = mutable.HashMap.empty
+  private val representatives: mutable.HashSet[V] = mutable.HashSet(values.toSeq: _*)
 
-  def representativeOfClassOf(value: V): V = {
+  private def representativeOfClassOf(value: V): V = {
     @tailrec def ascendUFTree(current: V): V =
-      if (representatives.contains(current)) {
+      if representatives.contains(current) then
         current
-      } else if (referenceTowardsRepresentative.containsKey(current)) {
-        ascendUFTree(referenceTowardsRepresentative.get(current))
-      } else {
-        throw new IllegalArgumentException(s"Unrecognized by the UF tree: ${value.toString}")
-      }
+      else
+        referenceTowardsRepresentative.get(current) match
+          case Some(parent) => ascendUFTree(parent)
+          case None =>
+            throw IllegalArgumentException(s"Unrecognized by the UF tree: ${value.toString}")
 
     ascendUFTree(value)
   }
@@ -34,26 +33,24 @@ final class SimpleUnionFindTree[V](values: util.Collection[_ <: V]) {
     }
   }
 
-  def unionAll(values: util.Collection[V]): Unit = {
-    val iterator = values.iterator
-    if (!iterator.hasNext) return
-    val first = iterator.next
-    iterator.forEachRemaining((value: V) => unionTwo(first, value))
-  }
+  def unionAll(values: List[V]): Unit =
+    values match
+      case head :: tail => tail.foreach(unionTwo(head, _))
+      case Nil          => ()
 
-  def getEquivalenceClasses: ImmutableSet[ImmutableSet[V]] = {
-    val equivClasses = new util.HashMap[V, util.HashSet[V]]
+  def unionAll(values: Iterable[V]): Unit = unionAll(values.toList)
 
-    import scala.jdk.CollectionConverters._
-    for (representative <- this.representatives.asScala) {
-      val freshClass = new util.HashSet[V]
-      freshClass.add(representative)
-      equivClasses.put(representative, freshClass)
+  def getEquivalenceClasses: Set[Set[V]] = {
+    val equivClasses = mutable.HashMap[V, mutable.HashSet[V]]()
+
+    for (representative <- this.representatives) {
+      equivClasses.put(representative, mutable.HashSet[V](representative))
     }
 
-    for (nonRepresentative <- this.referenceTowardsRepresentative.keySet.asScala) {
-      equivClasses.get(this.representativeOfClassOf(nonRepresentative)).add(nonRepresentative)
+    for (nonRepresentative <- this.referenceTowardsRepresentative.keySet) {
+      equivClasses(representativeOfClassOf(nonRepresentative)).add(nonRepresentative)
     }
-    ImmutableSet.copyOf(equivClasses.values.stream.map(ImmutableSet.copyOf).iterator)
+
+    equivClasses.values.map(_.toSet).toSet
   }
 }

@@ -26,35 +26,28 @@ import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExt
  * takes a {@link ConjunctiveQuery} object and computes the decomposition.
  */
 class CQBoundVariableConnectedComponents(cq: ConjunctiveQuery) {
-  private val cqBoundVariables: ImmutableSet[Variable] =
-    ImmutableSet.copyOf(cq.getBoundVariables)
+  private val cqBoundVariables: Set[Variable] = cq.getBoundVariables.toSet
 
-  val boundVariableFreeAtoms: ImmutableSet[Atom] =
-    ImmutableSet.copyOf(util.Arrays.stream(cq.getAtoms).filter((atom: Atom) =>
-      util.Arrays.stream(atom.getVariables).noneMatch(cqBoundVariables.contains)
-    ).iterator)
+  val boundVariableFreeAtoms: Set[Atom] =
+    cq.getAtoms.filter(atom => atom.getVariables.forall(!cqBoundVariables.contains(_))).toSet
 
-  val maximallyConnectedSubqueries: ImmutableSet[ConjunctiveQuery] = {
+  val maximallyConnectedSubqueries: Set[ConjunctiveQuery] = {
     // split bound variables into connected components
-    val boundVariableUFTree = new SimpleUnionFindTree(cqBoundVariables)
-    for (atom <- cq.getAtoms) {
-      val atomVariables = ImmutableSet.copyOf(atom.getVariables)
-      boundVariableUFTree.unionAll(SetLikeExtensions.intersection(
-        atomVariables,
-        cqBoundVariables
-      ))
+    val boundVariableConnectedComponents: Set[Set[Variable]] = {
+      val boundVariableUFTree = SimpleUnionFindTree(cqBoundVariables)
+
+      for (atom <- cq.getAtoms) {
+        boundVariableUFTree.unionAll(atom.getVariables.toSet.intersect(cqBoundVariables))
+      }
+
+      boundVariableUFTree.getEquivalenceClasses
     }
 
-    val boundVariableConnectedComponents = boundVariableUFTree.getEquivalenceClasses
-
-    ImmutableSet.copyOf(boundVariableConnectedComponents.stream.map((component) =>
-      ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(
-        cq,
-        component
-      ).get
+    boundVariableConnectedComponents.map(component =>
       // this .get() call succeeds because
       // we are strictly inducing a subquery by
       // a maximally connected component of bound variables
-    ).iterator)
+      ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(component)(cq).get
+    )
   }
 }

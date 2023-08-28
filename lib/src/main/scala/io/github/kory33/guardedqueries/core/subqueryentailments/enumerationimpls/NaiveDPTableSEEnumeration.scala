@@ -107,7 +107,7 @@ object NaiveDPTableSEEnumeration {
   ) = {
     val queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery)
     val queryExistentialVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables)
-    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
+    allPartialFunctionsBetween(queryVariables.asJava, ruleConstants).flatMap(
       (ruleConstantWitnessGuess: ImmutableMap[Variable, Constant]) => {
         val allCoexistentialVariableSets =
           SetLikeExtensions.powerset(queryExistentialVariables).filter(
@@ -115,7 +115,7 @@ object NaiveDPTableSEEnumeration {
           ).filter((variableSet: ImmutableSet[Variable]) =>
             SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet)
           ).filter((variableSet: ImmutableSet[Variable]) =>
-            ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet)
+            ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.asScala.toSet)
           )
         allCoexistentialVariableSets.flatMap((coexistentialVariables: ImmutableSet[Variable]) =>
           allLocalInstances(extensionalSignature, ruleConstants).flatMap(
@@ -124,31 +124,30 @@ object NaiveDPTableSEEnumeration {
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
               val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                conjunctiveQuery,
-                coexistentialVariables
-              ).get
-              val nonConstantNeighbourhood = SetLikeExtensions.difference(
+                coexistentialVariables.asScala.toSet
+              )(conjunctiveQuery).get
+              val nonConstantNeighbourhood =
                 ConjunctiveQueryExtensions.neighbourhoodVariables(
                   conjunctiveQuery,
-                  coexistentialVariables
-                ),
-                ruleConstantWitnessGuess.keySet
-              )
+                  coexistentialVariables.asScala.toSet
+                ) -- ruleConstantWitnessGuess.keySet.asScala
+
               val allLocalWitnessGuesses = allTotalFunctionsBetween(
-                nonConstantNeighbourhood,
+                nonConstantNeighbourhood.asJava,
                 localInstance.getActiveTermsInClass(classOf[LocalName])
               )
               allLocalWitnessGuesses.flatMap(localWitnessGuess => {
-                val subqueryConstants = SetLikeExtensions.difference(
-                  ConjunctiveQueryExtensions.constantsIn(relevantSubquery),
-                  ruleConstants
-                )
+                val subqueryConstants =
+                  ConjunctiveQueryExtensions.constantsIn(
+                    relevantSubquery
+                  ) -- ruleConstants.asScala
+
                 val nonWitnessingActiveLocalNames = SetLikeExtensions.difference(
                   localInstance.getActiveTermsInClass(classOf[LocalName]),
                   localWitnessGuess.values
                 )
                 val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
-                  subqueryConstants,
+                  subqueryConstants.asJava,
                   nonWitnessingActiveLocalNames
                 )
                 allQueryConstantEmbeddings.map(queryConstantEmbedding =>
@@ -309,9 +308,8 @@ final class NaiveDPTableSEEnumeration(
       // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
       // noinspection OptionalGetWithoutIsPresent
       val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-        connectedConjunctiveQuery,
-        instance.coexistentialVariables
-      ).get
+        instance.coexistentialVariables.asScala.toSet
+      )(connectedConjunctiveQuery).get
       val instancesWithGuessedVariablesPreserved = chaseLocalInstance(
         instance.localInstance,
         // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
@@ -379,46 +377,42 @@ final class NaiveDPTableSEEnumeration(
 
             val allSplitInstancesAreYesInstances = {
               val splitCoexistentialVariables =
-                ImmutableSet.copyOf(ConjunctiveQueryExtensions.connectedComponents(
+                ConjunctiveQueryExtensions.connectedComponents(
                   relevantSubquery,
-                  SetLikeExtensions.difference(
-                    instance.coexistentialVariables,
-                    newlyCoveredVariables
-                  )
-                ).iterator)
+                  instance.coexistentialVariables.asScala.toSet -- newlyCoveredVariables.asScala
+                )
 
-              splitCoexistentialVariables.stream.allMatch(
-                (splitCoexistentialVariablesComponent: ImmutableSet[Variable]) => {
-                  val newNeighbourhood = SetLikeExtensions.difference(
-                    ConjunctiveQueryExtensions.neighbourhoodVariables(
-                      relevantSubquery,
-                      splitCoexistentialVariablesComponent
-                    ),
-                    instance.ruleConstantWitnessGuess.keySet
-                  )
-                  // For the same reason as .get() call in the beginning of the method,
-                  // this .get() call succeeds.
-                  // noinspection OptionalGetWithoutIsPresent
-                  val newRelevantSubquery =
-                    ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                      relevantSubquery,
-                      splitCoexistentialVariablesComponent
-                    ).get
+              splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
+                val newNeighbourhood =
+                  ConjunctiveQueryExtensions.neighbourhoodVariables(
+                    relevantSubquery,
+                    splitCoexistentialVariablesComponent
+                  ) -- instance.ruleConstantWitnessGuess.keySet.asScala
 
-                  val inducedInstance = new SubqueryEntailmentInstance(
-                    instance.ruleConstantWitnessGuess,
-                    splitCoexistentialVariablesComponent,
-                    chasedInstance,
-                    MapExtensions.restrictToKeys(extendedLocalWitnessGuess, newNeighbourhood),
-                    MapExtensions.restrictToKeys(
-                      instance.queryConstantEmbedding,
-                      ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery)
-                    )
-                  )
-                  isYesInstance(inducedInstance)
+                // For the same reason as .get() call in the beginning of the method,
+                // this .get() call succeeds.
+                // noinspection OptionalGetWithoutIsPresent
+                val newRelevantSubquery =
+                  ConjunctiveQueryExtensions.subqueryRelevantToVariables(
+                    splitCoexistentialVariablesComponent
+                  )(relevantSubquery).get
 
-                }
-              )
+                val inducedInstance = new SubqueryEntailmentInstance(
+                  instance.ruleConstantWitnessGuess,
+                  ImmutableSet.copyOf(splitCoexistentialVariablesComponent.asJava),
+                  chasedInstance,
+                  MapExtensions.restrictToKeys(
+                    extendedLocalWitnessGuess,
+                    newNeighbourhood.asJava
+                  ),
+                  MapExtensions.restrictToKeys(
+                    instance.queryConstantEmbedding,
+                    ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery).asJava
+                  )
+                )
+                isYesInstance(inducedInstance)
+
+              })
             }
 
             if (allSplitInstancesAreYesInstances) {

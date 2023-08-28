@@ -27,10 +27,10 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
 
   ".filterAtom" should "only contain atoms in the input query" in {
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
-      val result = ConjunctiveQueryExtensions.filterAtoms(cq, applyToPredicateNumber(f)(_))
+      val result = ConjunctiveQueryExtensions.filterAtoms(cq)(applyToPredicateNumber(f))
 
-      whenever(result.isPresent) {
-        val filteredAtoms = result.get().getAtoms
+      whenever(result.isDefined) {
+        val filteredAtoms = result.get.getAtoms
         assert(filteredAtoms.forall(atom => cq.getAtoms.contains(atom)))
       }
     }
@@ -38,8 +38,8 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
 
   ".filterAtom" should "contain all and only atoms that satisfy the predicate" in {
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
-      val result = ConjunctiveQueryExtensions.filterAtoms(cq, applyToPredicateNumber(f)(_))
-      val atomsInResult = result.map(_.getAtoms()).orElse(Array.empty).toList
+      val result = ConjunctiveQueryExtensions.filterAtoms(cq)(applyToPredicateNumber(f))
+      val atomsInResult = result.map(_.getAtoms().toList).getOrElse(List.empty)
       val atomsInInput = cq.getAtoms.toList
 
       assert {
@@ -52,13 +52,13 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
 
   ".filterAtom" should "not change variable boundedness" in {
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
-      val result = ConjunctiveQueryExtensions.filterAtoms(cq, applyToPredicateNumber(f)(_))
-      val atomsInResult = result.map(_.getAtoms()).orElse(Array.empty).toList
+      val result = ConjunctiveQueryExtensions.filterAtoms(cq)(applyToPredicateNumber(f))
+      val atomsInResult = result.map(_.getAtoms().toList).getOrElse(List.empty)
       val variablesInResult = atomsInResult.flatMap(_.getVariables.toList)
 
       assert {
         variablesInResult.forall(v =>
-          cq.getBoundVariables.contains(v) == result.get().getBoundVariables.contains(v)
+          cq.getBoundVariables.contains(v) == result.get.getBoundVariables.contains(v)
         )
       }
     }
@@ -73,11 +73,9 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
     forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
       case (cq, variables) =>
         val atoms = cq.getAtoms.toList
-        val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables.asJava)
+        val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables)
 
-        assert {
-          components.iterator().asScala.flatMap(_.asScala).toSet == variables
-        }
+        assert { components.flatten == variables }
     }
   }
 
@@ -85,10 +83,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
     forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
       case (cq, variables) =>
         val atoms = cq.getAtoms.toList
-        val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables.asJava)
-          .iterator().asScala
-          .map(_.asScala.toSet)
-          .toSet
+        val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables)
 
         assert {
           components.forall(c1 => components.forall(c2 => c1 == c2 || c1.intersect(c2).isEmpty))
@@ -100,11 +95,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
     forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
       case (cq, inputVariableSet) =>
         val atoms = cq.getAtoms.toList
-        val components =
-          ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet.asJava)
-            .iterator().asScala
-            .map(_.asScala.toSet)
-            .toSet
+        val components = ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet)
 
         assert {
           cq.getAtoms.forall { atom =>
@@ -141,11 +132,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
         }
 
         val atoms = cq.getAtoms.toList
-        val components =
-          ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet.asJava)
-            .iterator().asScala
-            .map(_.asScala.toSet)
-            .toSet
+        val components = ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet)
 
         components.foreach { component =>
           component.foreach(v1 =>
