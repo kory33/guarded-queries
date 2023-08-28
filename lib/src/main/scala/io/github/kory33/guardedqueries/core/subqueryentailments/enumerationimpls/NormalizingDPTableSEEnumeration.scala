@@ -367,7 +367,7 @@ final class NormalizingDPTableSEEnumeration(
       for (chasedInstance <- instancesWithGuessedVariablesPreserved.asScala) {
         val localWitnessGuessExtensions = allPartialFunctionsBetween(
           instance.coexistentialVariables,
-          chasedInstance.getActiveTermsInClass(classOf[Nothing])
+          chasedInstance.getActiveTermsInClass(classOf[LocalName])
         )
 
         for (
