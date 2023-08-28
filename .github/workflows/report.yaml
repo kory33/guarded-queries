@@ -17,7 +17,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
-      - uses: xu-cheng/latex-action@v2
+      - uses: xu-cheng/latex-action@v3
         with:
           root_file: report.tex
           working_directory: ./report
