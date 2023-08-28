@@ -347,19 +347,16 @@ final class DFSNormalizingDPTableSEEnumeration(
 
           val newlyCoveredVariables = localWitnessGuessExtension.keySet
           val extendedLocalWitnessGuess =
-            ImmutableMapExtensions.union(instance.localWitnessGuess, localWitnessGuessExtension)
+            instance.localWitnessGuess.asScala.toMap ++ localWitnessGuessExtension.asScala
 
           val newlyCoveredAtomsOccurInChasedInstance = {
-            val extendedGuess = ImmutableMapExtensions.union(
-              extendedLocalWitnessGuess,
-              instance.ruleConstantWitnessGuessAsMapToInstanceTerms
-            )
-            val coveredVariables = extendedGuess.keySet.asScala.toSet
+            val extendedGuess =
+              extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms.asScala
 
             val newlyCoveredAtoms =
               relevantSubquery.getAtoms.filter((atom: Atom) => {
                 val atomVariables = atom.getVariables.toSet
-                val allVariablesAreCovered = atomVariables.subsetOf(coveredVariables)
+                val allVariablesAreCovered = atomVariables.subsetOf(extendedGuess.keySet)
 
                 // we no longer care about the part of the query
                 // which entirely lies in the neighborhood of coexistential variables
@@ -370,9 +367,11 @@ final class DFSNormalizingDPTableSEEnumeration(
                 allVariablesAreCovered && someVariableIsNewlyCovered
               })
 
-            newlyCoveredAtoms.map(atom =>
-              LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.get)
-            ).forall(instance.localInstance.containsFact)
+            newlyCoveredAtoms
+              .map(atom =>
+                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess(_))
+              )
+              .forall(instance.localInstance.containsFact)
           }
 
           if (!newlyCoveredAtomsOccurInChasedInstance) boundary.break()
@@ -405,7 +404,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                 ImmutableSet.copyOf(splitCoexistentialVariablesComponent.asJava),
                 instance.localInstance,
                 MapExtensions.restrictToKeys(
-                  extendedLocalWitnessGuess,
+                  extendedLocalWitnessGuess.asJava,
                   newNeighbourhood.asJava
                 ),
                 MapExtensions.restrictToKeys(

@@ -342,32 +342,28 @@ final class NaiveDPTableSEEnumeration(
 
             val newlyCoveredVariables = localWitnessGuessExtension.keySet
             val extendedLocalWitnessGuess =
-              ImmutableMapExtensions.union(
-                instance.localWitnessGuess,
-                localWitnessGuessExtension
-              )
+              instance.localWitnessGuess.asScala.toMap ++ localWitnessGuessExtension.asScala
+
             val newlyCoveredAtomsOccurInChasedInstance = {
-              val extendedGuess = ImmutableMapExtensions.union(
-                extendedLocalWitnessGuess,
-                instance.ruleConstantWitnessGuessAsMapToInstanceTerms
-              )
-              val coveredVariables = extendedGuess.keySet
+              val extendedGuess =
+                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms.asScala
+
               val newlyCoveredAtoms =
                 util.Arrays.stream(relevantSubquery.getAtoms).filter((atom: Atom) => {
-                  val atomVariables =
-                    ImmutableSet.copyOf(util.Arrays.asList(atom.getVariables: _*))
-                  val allVariablesAreCovered = coveredVariables.containsAll(atomVariables)
+                  val atomVariables = atom.getVariables.toSet
+                  val allVariablesAreCovered = atomVariables.subsetOf(extendedGuess.keySet)
+
                   // we no longer care about the part of the query
                   // which entirely lies in the neighborhood of coexistential variables
                   // of the instance
                   val someVariableIsNewlyCovered =
-                    atomVariables.stream.anyMatch(newlyCoveredVariables.contains)
-                  allVariablesAreCovered && someVariableIsNewlyCovered
+                    atomVariables.exists(newlyCoveredVariables.contains)
 
+                  allVariablesAreCovered && someVariableIsNewlyCovered
                 })
 
               newlyCoveredAtoms.map((atom: Atom) =>
-                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.get)
+                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess(_))
               ).allMatch(chasedInstance.containsFact)
             }
 
@@ -401,7 +397,7 @@ final class NaiveDPTableSEEnumeration(
                   ImmutableSet.copyOf(splitCoexistentialVariablesComponent.asJava),
                   chasedInstance,
                   MapExtensions.restrictToKeys(
-                    extendedLocalWitnessGuess,
+                    extendedLocalWitnessGuess.asJava,
                     newNeighbourhood.asJava
                   ),
                   MapExtensions.restrictToKeys(

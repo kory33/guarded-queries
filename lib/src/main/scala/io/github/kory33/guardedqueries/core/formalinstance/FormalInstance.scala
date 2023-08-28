@@ -58,6 +58,10 @@ object FormalInstance {
   def apply[TA](facts: util.Collection[FormalFact[TA]]): FormalInstance[TA] =
     FormalInstance(ImmutableSet.copyOf(facts))
 
+  def apply[TA](facts: Set[FormalFact[TA]]): FormalInstance[TA] =
+    import scala.jdk.CollectionConverters._
+    FormalInstance(facts.asJava)
+
   def asAtoms(instance: FormalInstance[Term]): ImmutableList[Atom] =
     ImmutableList.copyOf(instance.facts.stream.map(FormalFact.asAtom).iterator)
 

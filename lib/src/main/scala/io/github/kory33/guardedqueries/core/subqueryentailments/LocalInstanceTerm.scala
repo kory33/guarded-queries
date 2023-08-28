@@ -3,41 +3,33 @@ package io.github.kory33.guardedqueries.core.subqueryentailments
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Term
 import uk.ac.ox.cs.pdq.fol.Variable
-import java.util.function.Function
-import java.util.function.Predicate
 
 sealed trait LocalInstanceTerm {
-  def isConstantOrSatisfies(predicate: Predicate[_ >: LocalInstanceTerm.LocalName]): Boolean =
+  def isConstantOrSatisfies(predicate: LocalInstanceTerm.LocalName => Boolean): Boolean =
     this match
       case _: LocalInstanceTerm.RuleConstant      => true
-      case localName: LocalInstanceTerm.LocalName => predicate.test(localName)
+      case localName: LocalInstanceTerm.LocalName => predicate(localName)
 
-  def mapLocalNamesToTerm(mapper: Function[_ >: LocalInstanceTerm.LocalName, _ <: Term]): Term
+  def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term
 }
 
 object LocalInstanceTerm {
   case class LocalName(value: Int) extends LocalInstanceTerm {
-    override def mapLocalNamesToTerm(mapper: Function[
-      _ >: LocalInstanceTerm.LocalName,
-      _ <: Term
-    ]): Term = mapper.apply(this)
-
-    override def toString: String = "LocalName[" + value + "]"
+    override def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term =
+      mapper.apply(this)
   }
 
   case class RuleConstant(constant: Constant) extends LocalInstanceTerm {
-    override def mapLocalNamesToTerm(mapper: Function[
-      _ >: LocalInstanceTerm.LocalName,
-      _ <: Term
-    ]): Term = this.constant
-    override def toString: String = "RuleConstant[" + constant + "]"
+    override def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term =
+      this.constant
   }
 
-  def fromTermWithVariableMap(term: Term,
-                              mapper: Function[_ >: Variable, _ <: LocalInstanceTerm]
+  def fromTermWithVariableMap(
+    term: Term,
+    mapper: Variable => LocalInstanceTerm
   ): LocalInstanceTerm =
     term match
       case constant: Constant => RuleConstant(constant)
-      case variable: Variable => mapper.apply(variable)
+      case variable: Variable => mapper(variable)
       case _                  => throw new IllegalArgumentException("Unsupported term: " + term)
 }
