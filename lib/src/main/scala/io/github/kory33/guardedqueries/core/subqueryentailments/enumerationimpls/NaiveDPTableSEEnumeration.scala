@@ -357,7 +357,8 @@ final class NaiveDPTableSEEnumeration(
               val coveredVariables = extendedGuess.keySet
               val newlyCoveredAtoms =
                 util.Arrays.stream(relevantSubquery.getAtoms).filter((atom: Atom) => {
-                  val atomVariables = ImmutableSet.copyOf(util.Arrays.asList(atom.getVariables))
+                  val atomVariables =
+                    ImmutableSet.copyOf(util.Arrays.asList(atom.getVariables: _*))
                   val allVariablesAreCovered = coveredVariables.containsAll(atomVariables)
                   // we no longer care about the part of the query
                   // which entirely lies in the neighborhood of coexistential variables
