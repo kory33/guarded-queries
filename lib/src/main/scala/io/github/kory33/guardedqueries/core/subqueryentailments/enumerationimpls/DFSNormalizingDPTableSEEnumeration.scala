@@ -153,7 +153,7 @@ object DFSNormalizingDPTableSEEnumeration {
                   ruleConstants
                 )
                 val nonWitnessingActiveLocalNames = SetLikeExtensions.difference(
-                  localInstance.getActiveTermsInClass(classOf[Nothing]),
+                  localInstance.getActiveTermsInClass(classOf[LocalName]),
                   localWitnessGuess.values
                 )
                 val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
