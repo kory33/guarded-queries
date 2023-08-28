@@ -129,10 +129,7 @@ object ConjunctiveQueryExtensions {
   ): Boolean = connectedComponents(conjunctiveQuery, variables).size <= 1
 
   def constantsIn(conjunctiveQuery: ConjunctiveQuery): Set[Constant] =
-    conjunctiveQuery.getTerms.flatMap {
-      case constant: Constant => Some(constant)
-      case _                  => None
-    }.toSet
+    conjunctiveQuery.getTerms.collect { case constant: Constant => constant }.toSet
 
   def variablesIn(conjunctiveQuery: ConjunctiveQuery): Set[Variable] =
     conjunctiveQuery.getBoundVariables.toSet.union(conjunctiveQuery.getFreeVariables.toSet)
