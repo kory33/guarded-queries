@@ -9,7 +9,7 @@ import io.github.kory33.guardedqueries.core.testharnesses.RewriterEquivalenceTes
 import org.scalatest.flatspec.AnyFlatSpec
 import uk.ac.ox.cs.gsat.GSat
 
-class ShortCircuitingNormalizingAndNormalizingDPTableEquivalenceTests extends AnyFlatSpec {
+class DFSNormalizingAndNormalizingDPTableEquivalenceTests extends AnyFlatSpec {
   private val harness = new RewriterEquivalenceTestHarness(
     new GuardedRuleAndQueryRewriter(
       GSat.getInstance,
