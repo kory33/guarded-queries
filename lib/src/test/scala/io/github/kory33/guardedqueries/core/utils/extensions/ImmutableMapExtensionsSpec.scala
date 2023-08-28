@@ -12,7 +12,9 @@ class ImmutableMapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChec
   ".consumeAndCopy" should "be identity" in {
     forAll(minSuccessful(1000)) { (map: Map[String, Int]) =>
       assert {
-        ImmutableMapExtensions.consumeAndCopy(map.asJava.entrySet().iterator()).asScala.toMap == map
+        ImmutableMapExtensions.consumeAndCopy(
+          map.asJava.entrySet().iterator()
+        ).asScala.toMap == map
       }
     }
   }
@@ -20,7 +22,9 @@ class ImmutableMapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChec
   ".union" should "be equivalent to .fold(empty)(_ ++ _)" in {
     forAll(minSuccessful(1000)) { (xs: List[Map[Int, Int]]) =>
       assert {
-        ImmutableMapExtensions.union(xs.map(_.asJava).toArray*).asScala.toMap == xs.foldLeft(Map.empty[Int, Int])(_ ++ _)
+        ImmutableMapExtensions.union(xs.map(_.asJava).toArray*).asScala.toMap == xs.foldLeft(
+          Map.empty[Int, Int]
+        )(_ ++ _)
       }
     }
   }

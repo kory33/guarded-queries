@@ -21,7 +21,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
   // apply a given Int => Boolean function on the predicate number
   // on generated atoms
   def applyToPredicateNumber(f: Int => Boolean)(atom: Atom): Boolean = {
-    val name = atom.getPredicate().getName()
+    val name = atom.getPredicate.getName
     name.startsWith("P_") && f(name.drop(2).toInt)
   }
 
@@ -30,8 +30,8 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
       val result = ConjunctiveQueryExtensions.filterAtoms(cq, applyToPredicateNumber(f)(_))
 
       whenever(result.isPresent) {
-        val filteredAtoms = result.get().getAtoms()
-        assert(filteredAtoms.forall(atom => cq.getAtoms().contains(atom)))
+        val filteredAtoms = result.get().getAtoms
+        assert(filteredAtoms.forall(atom => cq.getAtoms.contains(atom)))
       }
     }
   }
@@ -40,7 +40,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
       val result = ConjunctiveQueryExtensions.filterAtoms(cq, applyToPredicateNumber(f)(_))
       val atomsInResult = result.map(_.getAtoms()).orElse(Array.empty).toList
-      val atomsInInput = cq.getAtoms().toList
+      val atomsInInput = cq.getAtoms.toList
 
       assert {
         atomsInResult.forall { atom =>
@@ -54,91 +54,106 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
       val result = ConjunctiveQueryExtensions.filterAtoms(cq, applyToPredicateNumber(f)(_))
       val atomsInResult = result.map(_.getAtoms()).orElse(Array.empty).toList
-      val variablesInResult = atomsInResult.flatMap(_.getVariables().toList)
+      val variablesInResult = atomsInResult.flatMap(_.getVariables.toList)
 
       assert {
         variablesInResult.forall(v =>
-          cq.getBoundVariables().contains(v) == result.get().getBoundVariables().contains(v)
+          cq.getBoundVariables.contains(v) == result.get().getBoundVariables.contains(v)
         )
       }
     }
   }
 
-  val largeCQAndItsBoundVariables: Gen[(ConjunctiveQuery, Set[Variable])] = largeCQ.flatMap(cq =>
-    GenSet.chooseSubset(cq.getBoundVariables().toSet).map((cq, _))
-  )
+  val largeCQAndItsBoundVariables: Gen[(ConjunctiveQuery, Set[Variable])] =
+    largeCQ.flatMap(cq =>
+      GenSet.chooseSubset(cq.getBoundVariables.toSet).map((cq, _))
+    )
 
   ".connectedComponents" should "cover the given set of query variables" in {
-    forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) { case (cq, variables) =>
-      val atoms = cq.getAtoms().toList
-      val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables.asJava)
+    forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
+      case (cq, variables) =>
+        val atoms = cq.getAtoms.toList
+        val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables.asJava)
 
-      assert {
-        components.iterator().asScala.flatMap(_.asScala).toSet == variables
-      }
+        assert {
+          components.iterator().asScala.flatMap(_.asScala).toSet == variables
+        }
     }
   }
 
   ".connectedComponents" should "partition the given set of query variables" in {
-    forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) { case (cq, variables) =>
-      val atoms = cq.getAtoms().toList
-      val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables.asJava)
-        .iterator().asScala
-        .map(_.asScala.toSet)
-        .toSet
+    forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
+      case (cq, variables) =>
+        val atoms = cq.getAtoms.toList
+        val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables.asJava)
+          .iterator().asScala
+          .map(_.asScala.toSet)
+          .toSet
 
-      assert {
-        components.forall(c1 => components.forall(c2 => c1 == c2 || c1.intersect(c2).isEmpty))
-      }
+        assert {
+          components.forall(c1 => components.forall(c2 => c1 == c2 || c1.intersect(c2).isEmpty))
+        }
     }
   }
 
   ".connectedComponents" should "put adjacent variables in the same component" in {
-    forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) { case (cq, inputVariableSet) =>
-      val atoms = cq.getAtoms().toList
-      val components = ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet.asJava)
-        .iterator().asScala
-        .map(_.asScala.toSet)
-        .toSet
+    forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
+      case (cq, inputVariableSet) =>
+        val atoms = cq.getAtoms.toList
+        val components =
+          ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet.asJava)
+            .iterator().asScala
+            .map(_.asScala.toSet)
+            .toSet
 
-      assert {
-        cq.getAtoms().forall { atom =>
-          val inputVariablesInAtom = atom.getVariables().toSet.intersect(inputVariableSet)
+        assert {
+          cq.getAtoms.forall { atom =>
+            val inputVariablesInAtom = atom.getVariables.toSet.intersect(inputVariableSet)
 
-          inputVariablesInAtom.forall(v1 => inputVariablesInAtom.forall(v2 =>
-            components.exists(c => c.contains(v1) && c.contains(v2))
-          ))
+            inputVariablesInAtom.forall(v1 =>
+              inputVariablesInAtom.forall(v2 =>
+                components.exists(c => c.contains(v1) && c.contains(v2))
+              )
+            )
+          }
         }
-      }
     }
   }
 
   ".connectedComponents" should "put two variables only if they are connected by a sequence of atoms" in {
-    forAll(largeCQAndItsBoundVariables, minSuccessful(1000)) { case (cq, inputVariableSet) =>
-      def atomsContainingAnyOf(variables: Set[Variable]): Set[Atom] =
-        cq.getAtoms().toList.filter(_.getVariables().toSet.intersect(variables).nonEmpty).toSet
+    forAll(largeCQAndItsBoundVariables, minSuccessful(1000)) {
+      case (cq, inputVariableSet) =>
+        def atomsContainingAnyOf(variables: Set[Variable]): Set[Atom] =
+          cq.getAtoms.toList.filter(
+            _.getVariables.toSet.intersect(variables).nonEmpty
+          ).toSet
 
-      def variablesAdjacentTo(variables: Set[Variable]): Set[Variable] =
-        atomsContainingAnyOf(variables).flatMap(_.getVariables().toSet).intersect(inputVariableSet)
+        def variablesAdjacentTo(variables: Set[Variable]): Set[Variable] =
+          atomsContainingAnyOf(variables).flatMap(_.getVariables.toSet).intersect(
+            inputVariableSet
+          )
 
-      @scala.annotation.tailrec
-      def variablesReachableFrom(variables: Set[Variable]): Set[Variable] = {
-        val adjacentVariables = variablesAdjacentTo(variables)
-        if (adjacentVariables == variables) variables
-        else variablesReachableFrom(adjacentVariables)
-      }
+        @scala.annotation.tailrec
+        def variablesReachableFrom(variables: Set[Variable]): Set[Variable] = {
+          val adjacentVariables = variablesAdjacentTo(variables)
+          if (adjacentVariables == variables) variables
+          else variablesReachableFrom(adjacentVariables)
+        }
 
-      val atoms = cq.getAtoms().toList
-      val components = ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet.asJava)
-        .iterator().asScala
-        .map(_.asScala.toSet)
-        .toSet
+        val atoms = cq.getAtoms.toList
+        val components =
+          ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet.asJava)
+            .iterator().asScala
+            .map(_.asScala.toSet)
+            .toSet
 
-      components.foreach { component =>
-        component.foreach(v1 => component.foreach(v2 =>
-          assert(variablesReachableFrom(Set(v1)) == variablesReachableFrom(Set(v2)))
-        ))
-      }
+        components.foreach { component =>
+          component.foreach(v1 =>
+            component.foreach(v2 =>
+              assert(variablesReachableFrom(Set(v1)) == variablesReachableFrom(Set(v2)))
+            )
+          )
+        }
     }
   }
 }

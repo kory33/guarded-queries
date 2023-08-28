@@ -15,7 +15,7 @@ val installKaon2 = taskKey[Unit]("Install kaon2 jar to local Maven repository")
 val mavenPackage = taskKey[File]("Package submodule using Maven")
 
 lazy val root = (project in file("."))
-  .aggregate(guardedSaturationWrapper, lib, utilParser, libIntegrationTests, app)
+  .aggregate(guardedSaturationWrapper, lib, formulaParsers, libIntegrationTests, app)
 
 lazy val guardedSaturationWrapper = project
   .in(file("guarded-saturation-wrapper"))
@@ -32,7 +32,7 @@ lazy val guardedSaturationWrapper = project
 
       List("mvn", "mvn.cmd").find(testMvnCommand) match {
         case Some(mvnExecutableName) => mvnExecutableName
-        case None => throw new Exception("Could not find Maven executable")
+        case None                    => throw new Exception("Could not find Maven executable")
       }
     },
     installPdqJar := {
@@ -66,7 +66,7 @@ lazy val guardedSaturationWrapper = project
         ).!
 
         Set.empty
-      } (Set(file(localTemporaryJarPath)))
+      }(Set(file(localTemporaryJarPath)))
     },
     installKaon2 := {
       val foundMavenCommand = findMavenCommand.value
@@ -91,7 +91,7 @@ lazy val guardedSaturationWrapper = project
         ).!
 
         Set.empty
-      } (Set(file("guarded-saturation-wrapper/Guarded-saturation/src/main/resources/kaon2.jar")))
+      }(Set(file("guarded-saturation-wrapper/Guarded-saturation/src/main/resources/kaon2.jar")))
     },
     mavenPackage := {
       // task dependencies
@@ -102,7 +102,8 @@ lazy val guardedSaturationWrapper = project
       val cachedMvnPackage =
         FileFunction.cached(
           streams.value.cacheDirectory / "maven-package",
-          inStyle = FilesInfo.lastModified, outStyle = FilesInfo.exists
+          inStyle = FilesInfo.lastModified,
+          outStyle = FilesInfo.exists
         ) { _ =>
           Process(
             // some tests in GSat just fail right now, so ignore tests
@@ -110,14 +111,16 @@ lazy val guardedSaturationWrapper = project
             file("guarded-saturation-wrapper/Guarded-saturation")
           ).!
 
-          Set(file("guarded-saturation-wrapper/Guarded-saturation/target/guarded-saturation-1.0.0-jar-with-dependencies.jar"))
+          Set(file(
+            "guarded-saturation-wrapper/Guarded-saturation/target/guarded-saturation-1.0.0-jar-with-dependencies.jar"
+          ))
         }
 
       val inputFiles =
         (file("guarded-saturation-wrapper/Guarded-saturation") ** "*") ---
-        (file("guarded-saturation-wrapper/Guarded-saturation/target") ** "*")
+          (file("guarded-saturation-wrapper/Guarded-saturation/target") ** "*")
       cachedMvnPackage(inputFiles.get.toSet).head
-    },
+    }
   )
 
 lazy val lib = project
@@ -127,25 +130,24 @@ lazy val lib = project
     libraryDependencies ++= Seq(
       "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
       "org.scalatest" %% "scalatest-flatspec" % "3.2.16" % Test
-    ),
+    )
   )
 
-lazy val utilParser = project
-  .in(file("util-parser"))
+lazy val formulaParsers = project
+  .in(file("formula-parsers"))
   .dependsOn(lib)
   .settings(
     libraryDependencies ++= Seq(
-      "org.javafp" % "parsecj" % "0.6"
-    ),
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
+    )
   )
 
 lazy val libIntegrationTests = project
   .in(file("lib-integration-tests"))
-  .dependsOn(lib, utilParser)
+  .dependsOn(lib, formulaParsers)
   .settings(
     libraryDependencies ++= Seq(
-      "net.aichler" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test,
-      "org.junit.jupiter" % "junit-jupiter" % "5.10.0" % Test
+      "org.scalatest" %% "scalatest-flatspec" % "3.2.16" % Test
     ),
     Test / logBuffered := true,
     Test / baseDirectory := (ThisBuild / baseDirectory).value
@@ -153,8 +155,8 @@ lazy val libIntegrationTests = project
 
 lazy val app = project
   .in(file("app"))
-  .dependsOn(lib, utilParser)
+  .dependsOn(lib, formulaParsers)
   .settings(
     Compile / mainClass := Some("io.github.kory33.guardedqueries.app.App"),
-    assembly / assemblyJarName := "guarded-saturation-0.1.0.jar",
+    assembly / assemblyJarName := "guarded-saturation-0.1.0.jar"
   )

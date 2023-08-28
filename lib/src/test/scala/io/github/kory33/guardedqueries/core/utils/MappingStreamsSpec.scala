@@ -12,23 +12,25 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  val smallSetSize = Gen.chooseNum(0, 5)
-  def javaSetOfSize(size: Int) = ImmutableSet.copyOf((1 to size).map(Integer.valueOf).asJava)
+  val smallSetSize: Gen[Int] = Gen.chooseNum(0, 5)
+  def javaSetOfSize(size: Int): ImmutableSet[Integer] =
+    ImmutableSet.copyOf((1 to size).map(Integer.valueOf).asJava)
 
   def respectsDomainAndCodomain(
     javaMap: java.util.Map[Integer, Integer],
     domain: java.util.Set[Integer],
     codomain: java.util.Set[Integer]
-  ) =
+  ): Boolean =
     javaMap.keySet().asScala.forall(domain.contains) &&
-    javaMap.values().asScala.forall(codomain.contains)
+      javaMap.values().asScala.forall(codomain.contains)
 
   ".allTotalFunctionsBetween" should "produce maps that respect domain and codomain" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val domain = javaSetOfSize(domainSize)
       val codomain = javaSetOfSize(codomainSize)
 
-      val allFunctions = MappingStreams.allTotalFunctionsBetween(domain, codomain).iterator().asScala
+      val allFunctions =
+        MappingStreams.allTotalFunctionsBetween(domain, codomain).iterator().asScala
 
       assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
@@ -48,13 +50,14 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       })
     }
   }
-  
+
   ".allPartialFunctionsBetween" should "produce maps that respect domain and codomain" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val domain = javaSetOfSize(domainSize)
       val codomain = javaSetOfSize(codomainSize)
 
-      val allFunctions = MappingStreams.allPartialFunctionsBetween(domain, codomain).iterator().asScala
+      val allFunctions =
+        MappingStreams.allPartialFunctionsBetween(domain, codomain).iterator().asScala
 
       assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
@@ -75,16 +78,20 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       val domain = javaSetOfSize(domainSize)
       val codomain = javaSetOfSize(codomainSize)
 
-      val allFunctions = MappingStreams.allInjectiveTotalFunctionsBetween(domain, codomain).iterator().asScala
+      val allFunctions =
+        MappingStreams.allInjectiveTotalFunctionsBetween(domain, codomain).iterator().asScala
 
       assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
   }
-  
+
   ".allInjectiveTotalFunctionsBetween" should "enumerate all injections" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val allInjectiveTotalFunctions = MappingStreams
-        .allInjectiveTotalFunctionsBetween(javaSetOfSize(domainSize), javaSetOfSize(codomainSize))
+        .allInjectiveTotalFunctionsBetween(
+          javaSetOfSize(domainSize),
+          javaSetOfSize(codomainSize)
+        )
         .iterator().asScala.toSet
 
       val allTotalFunctions = MappingStreams
@@ -93,8 +100,12 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
       assert {
         allTotalFunctions
-          .filter(function => function.keySet().size == function.entrySet().asScala.map(_.getValue()).toSet.size)
-          .forall(function => allInjectiveTotalFunctions.contains(ImmutableBiMap.copyOf(function)))
+          .filter(function =>
+            function.keySet().size == function.entrySet().asScala.map(_.getValue()).toSet.size
+          )
+          .forall(function =>
+            allInjectiveTotalFunctions.contains(ImmutableBiMap.copyOf(function))
+          )
       }
     }
   }

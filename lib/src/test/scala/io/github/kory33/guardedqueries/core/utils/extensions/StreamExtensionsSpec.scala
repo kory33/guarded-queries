@@ -20,7 +20,7 @@ class StreamExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
           .zipWithIndex(xs.asJava.stream())
           .toList
           .asScala.toList
-          .map(p => (p.getKey(), p.getValue())) == xs.zipWithIndex
+          .map(p => (p.getKey, p.getValue)) == xs.zipWithIndex
       }
     }
   }
@@ -30,7 +30,7 @@ class StreamExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       assert {
         StreamExtensions
           .associate(xs.asJava.stream(), f(_))
-          .toList.asScala.map(e => (e.getKey(), e.getValue()))
+          .toList.asScala.map(e => (e.getKey, e.getValue))
           .toMap == xs.map(x => (x, f(x))).toMap
       }
     }
@@ -61,8 +61,15 @@ class StreamExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       whenever(initial != 0) {
         assert {
           StreamExtensions
-            .unfold(initial, x => if (x.abs < 1000) Optional.of(Pair.of(x.toString(), x * 2)) else Optional.empty())
-            .toList.asScala.toList == List.unfold(initial)(x => if (x.abs < 1000) Some((x.toString(), x * 2)) else None)
+            .unfold(
+              initial,
+              x =>
+                if (x.abs < 1000) Optional.of(Pair.of(x.toString, x * 2))
+                else Optional.empty()
+            )
+            .toList.asScala.toList == List.unfold(initial)(x =>
+            if (x.abs < 1000) Some((x.toString(), x * 2)) else None
+          )
         }
       }
     }
