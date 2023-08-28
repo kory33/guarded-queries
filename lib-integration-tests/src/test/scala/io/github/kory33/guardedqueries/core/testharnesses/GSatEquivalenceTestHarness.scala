@@ -14,6 +14,8 @@ import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
+import scala.jdk.CollectionConverters._
+
 import java.time.Instant
 import java.util.Date
 import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
@@ -97,7 +99,7 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
     val gsatRewriting =
       DatalogProgram.tryFromDependencies(gsatImplementation.run(
         ImmutableList.builder[Dependency]
-          .addAll(ruleQuery.guardedRules)
+          .addAll(ruleQuery.guardedRules.asJava)
           .addAll(ruleQuery.reducibleQuery.reductionRules)
           .build
       ))
@@ -108,7 +110,7 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
     val ourRewritingStart = System.nanoTime
     val ourRewriting =
       rewriterToBeTested.rewrite(
-        ruleQuery.guardedRules,
+        ruleQuery.guardedRules.asJava,
         ruleQuery.reducibleQuery.originalQuery
       )
     GSatEquivalenceTestHarness.logWithTime(

@@ -9,18 +9,19 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
+import scala.jdk.CollectionConverters._
 import java.util.stream.IntStream
 
 object InstanceGeneration {
   def allFactsOver(predicate: Predicate,
-                   constantsToUse: ImmutableSet[Constant]
+                   constantsToUse: Set[Constant]
   ): FormalInstance[Constant] = {
     val predicateArgIndices =
       ImmutableList.copyOf(IntStream.range(0, predicate.getArity).iterator)
 
     val allFormalFacts = MappingStreams.allTotalFunctionsBetween(
       predicateArgIndices,
-      constantsToUse
+      constantsToUse.asJava
     ).map((mapping: ImmutableMap[Integer, Constant]) =>
       new FormalFact[Constant](
         predicate,
@@ -33,12 +34,10 @@ object InstanceGeneration {
 
   def randomInstanceOver(signature: FunctionFreeSignature): FormalInstance[Constant] = {
     val constantsToUse =
-      ImmutableSet.copyOf(IntStream.range(0, signature.maxArity * 4).mapToObj[Constant](
-        (i: Int) => TypedConstant.create("c_" + i)
-      ).iterator)
+      (0 until signature.maxArity * 4).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
 
-    val allFactsOverSignature = signature.predicates.stream.flatMap((p: Predicate) =>
-      allFactsOver(p, constantsToUse).facts.stream
+    val allFactsOverSignature = signature.predicates.flatMap(p =>
+      allFactsOver(p, constantsToUse).facts.asScala
     )
 
     /**
@@ -50,6 +49,6 @@ object InstanceGeneration {
 
     FormalInstance[Constant](allFactsOverSignature.filter((fact: FormalFact[Constant]) =>
       Math.random < selectionRate
-    ).iterator)
+    ))
   }
 }

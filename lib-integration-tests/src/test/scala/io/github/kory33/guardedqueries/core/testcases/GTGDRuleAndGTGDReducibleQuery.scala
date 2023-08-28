@@ -9,14 +9,11 @@ import java.util
 /**
  * A test case containing GTGD rules and a GTGD-reducible query.
  */
-case class GTGDRuleAndGTGDReducibleQuery(guardedRules: util.Collection[_ <: GTGD],
+case class GTGDRuleAndGTGDReducibleQuery(guardedRules: Set[GTGD],
                                          reducibleQuery: GTGDReducibleConjunctiveQuery
 ) {
   def signatureOfOriginalQuery: FunctionFreeSignature =
-    FunctionFreeSignature.encompassingRuleQuery(
-      this.guardedRules,
-      this.reducibleQuery.originalQuery
-    )
+    FunctionFreeSignature.encompassingRuleQuery(guardedRules, reducibleQuery.originalQuery)
 
   def asGTGDRuleAndConjunctiveQuery: GTGDRuleAndConjunctiveQuery =
     GTGDRuleAndConjunctiveQuery(guardedRules, reducibleQuery.originalQuery)
