@@ -14,8 +14,6 @@ import uk.ac.ox.cs.pdq.fol._
 import java.util
 import java.util.Comparator
 import java.util.Optional
-import java.util.function.Consumer
-import java.util.function.Function
 import java.util.stream.Collectors
 
 /**
@@ -36,7 +34,7 @@ object FilterNestedLoopJoin {
                                       atomToMatches: ImmutableMap[Atom, JoinResult[TA]],
                                       resultVariableOrdering: ImmutableList[Variable],
                                       partialHomomorphism: ImmutableList[Optional[TA]],
-                                      visitEachCompleteHomomorphism: Consumer[ImmutableList[TA]]
+                                      visitEachCompleteHomomorphism: ImmutableList[TA] => Unit
   ): Unit = {
     if (remainingAtomsToJoin.isEmpty) {
       // If there are no more atoms to join, the given partial homomorphism
@@ -44,7 +42,7 @@ object FilterNestedLoopJoin {
       val unwrappedHomomorphism =
         ImmutableList.copyOf[TA](partialHomomorphism.stream.map(_.get).iterator)
 
-      visitEachCompleteHomomorphism.accept(unwrappedHomomorphism)
+      visitEachCompleteHomomorphism(unwrappedHomomorphism)
       return
     }
 
@@ -88,7 +86,7 @@ object FilterNestedLoopJoin {
     }
   }
 }
-class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Function[Constant, TA])
+class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
     extends NaturalJoinAlgorithm[TA, FormalInstance[TA]] {
   override def join(query: ConjunctiveQuery,
                     formalInstance: FormalInstance[TA]
@@ -108,7 +106,9 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Function[Consta
       )
 
       val groupedFacts =
-        relevantFactsStream.collect(Collectors.groupingBy[FormalFact[TA], Predicate](_.predicate))
+        relevantFactsStream.collect(
+          Collectors.groupingBy[FormalFact[TA], Predicate](_.predicate)
+        )
 
       MapExtensions.composeWithFunction(groupedFacts, FormalInstance(_))
     }

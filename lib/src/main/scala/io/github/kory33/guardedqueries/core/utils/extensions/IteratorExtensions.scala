@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 
 import org.apache.commons.lang3.tuple.Pair
 import java.util
-import java.util.function.Function
 import java.util.stream.LongStream
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
@@ -17,11 +16,10 @@ object IteratorExtensions {
     StreamSupport.stream(iterable.spliterator, false)
   }
 
-  def mapInto[R, T](iterator: util.Iterator[_ <: T],
-                    mapper: Function[_ >: T, _ <: R]
-  ): util.Iterator[R] = new util.Iterator[R]() {
-    override def hasNext: Boolean = iterator.hasNext
+  def mapInto[R, T](iterator: util.Iterator[_ <: T], mapper: T => R): util.Iterator[R] =
+    new util.Iterator[R]() {
+      override def hasNext: Boolean = iterator.hasNext
 
-    override def next: R = mapper.apply(iterator.next)
-  }
+      override def next: R = mapper.apply(iterator.next)
+    }
 }

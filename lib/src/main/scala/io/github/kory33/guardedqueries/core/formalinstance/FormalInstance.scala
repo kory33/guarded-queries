@@ -9,8 +9,6 @@ import uk.ac.ox.cs.pdq.fol.Term
 
 import java.util
 import java.util.Objects
-import java.util.function.Function
-import java.util.function.Predicate
 
 case class FormalInstance[TermAlphabet](facts: ImmutableSet[FormalFact[TermAlphabet]]) {
   private lazy val activeTerms: ImmutableSet[TermAlphabet] =
@@ -29,15 +27,15 @@ case class FormalInstance[TermAlphabet](facts: ImmutableSet[FormalFact[TermAlpha
       clazz
     ).iterator)
 
-  def map[T](mapper: Function[TermAlphabet, T]): FormalInstance[T] =
+  def map[T](mapper: TermAlphabet => T): FormalInstance[T] =
     FormalInstance.fromIterator(this.facts.stream.map((fact: FormalFact[TermAlphabet]) =>
       fact.map(mapper)
     ).iterator)
 
-  def restrictToAlphabetsWith(predicate: Predicate[TermAlphabet])
+  def restrictToAlphabetsWith(predicate: TermAlphabet => Boolean)
     : FormalInstance[TermAlphabet] =
     FormalInstance.fromIterator(this.facts.stream.filter((fact: FormalFact[TermAlphabet]) =>
-      fact.appliedTerms.stream.allMatch(predicate)
+      fact.appliedTerms.stream.allMatch(predicate(_))
     ).iterator)
 
   def restrictToSignature(signature: FunctionFreeSignature): FormalInstance[TermAlphabet] =

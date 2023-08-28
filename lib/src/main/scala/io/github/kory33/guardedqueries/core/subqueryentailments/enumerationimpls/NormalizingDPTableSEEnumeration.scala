@@ -21,7 +21,6 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import java.util
-import java.util.function.Function
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import io.github.kory33.guardedqueries.core.utils.MappingStreams.*

@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.utils.datastructures.ImmutableStack
 import java.util
 import java.util.NoSuchElementException
-import java.util.function.Function
-import java.util.function.IntFunction
 import java.util.stream.IntStream
 import scala.jdk.CollectionConverters._
 import scala.util.boundary

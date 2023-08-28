@@ -7,7 +7,6 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 import java.util
-import java.util.function.Function
 
 /**
  * A mapping from variables to terms, which is part of a homomorphism mapping a query to an
@@ -21,7 +20,7 @@ import java.util.function.Function
 case class HomomorphicMapping[Term](
   variableOrdering: ImmutableList[Variable],
   orderedMapping: ImmutableList[Term]
-) extends Function[Variable, Term] {
+) extends (Variable => Term) {
   if (variableOrdering.size != orderedMapping.size) throw new IllegalArgumentException(
     "variableOrdering and orderedMapping must have the same size"
   )
@@ -53,7 +52,7 @@ case class HomomorphicMapping[Term](
    */
   def materializeFunctionFreeAtom(
     atomWhoseVariablesAreInThisResult: Atom,
-    constantInclusion: Function[Constant, Term]
+    constantInclusion: Constant => Term
   ) = {
     FormalFact.fromAtom(atomWhoseVariablesAreInThisResult).map({
       case constant: Constant => constantInclusion.apply(constant)
@@ -74,7 +73,7 @@ case class HomomorphicMapping[Term](
    */
   def materializeFunctionFreeAtoms(
     atomsWhoseVariablesAreInThisResult: util.Collection[Atom],
-    constantInclusion: Function[Constant, Term]
+    constantInclusion: Constant => Term
   ) = FormalInstance.fromIterator(atomsWhoseVariablesAreInThisResult.stream.map((atom: Atom) =>
     this.materializeFunctionFreeAtom(atom, constantInclusion)
   ).iterator)

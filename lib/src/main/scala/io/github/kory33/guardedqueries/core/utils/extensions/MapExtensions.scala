@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableBiMap
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
 import java.util
-import java.util.function.Function
 import java.util.stream.Stream
 
 object MapExtensions {
@@ -26,7 +25,7 @@ object MapExtensions {
 
   def composeWithFunction[K, V1, V2](
     map: util.Map[K, V1],
-    function: Function[_ >: V1, _ <: V2]
+    function: V1 => V2
   ): ImmutableMap[K, V2] = ImmutableMapExtensions.consumeAndCopy(map.entrySet.stream.map(
     (entry: util.Map.Entry[K, V1]) =>
       util.Map.entry(entry.getKey, function.apply(entry.getValue))

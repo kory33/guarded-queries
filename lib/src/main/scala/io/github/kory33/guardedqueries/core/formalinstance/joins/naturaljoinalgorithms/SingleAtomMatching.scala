@@ -9,13 +9,12 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 import java.util
 import java.util.Optional
-import java.util.function.Function
 
 object SingleAtomMatching {
   private def tryMatch[TA](atomicQuery: Atom,
                            orderedQueryVariables: ImmutableList[Variable],
                            appliedTerms: ImmutableList[TA],
-                           includeConstantsToTA: Function[Constant, TA]
+                           includeConstantsToTA: Constant => TA
   ): Optional[ImmutableList[TA]] = {
     val homomorphism = new util.ArrayList[Optional[TA]](orderedQueryVariables.size)
 
@@ -65,7 +64,7 @@ object SingleAtomMatching {
    */
   def allMatches[TA](atomicQuery: Atom,
                      instance: FormalInstance[TA],
-                     includeConstantsToTA: Function[Constant, TA]
+                     includeConstantsToTA: Constant => TA
   ): JoinResult[TA] = {
     val orderedQueryVariables =
       ImmutableList.copyOf(ImmutableSet.copyOf(atomicQuery.getVariables))

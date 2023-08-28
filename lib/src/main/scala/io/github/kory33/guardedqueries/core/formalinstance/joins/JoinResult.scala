@@ -6,7 +6,6 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 import java.util
-import java.util.function.Function
 
 /**
  * A class of objects representing the result of a join operation. <p> We say that a {@code
@@ -47,7 +46,7 @@ class JoinResult[Term](
    *   a list of formal facts that are the result of materializing the given atom
    */
   def materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult: Atom,
-                                  constantInclusion: Function[Constant, Term]
+                                  constantInclusion: Constant => Term
   ): ImmutableList[FormalFact[Term]] =
     ImmutableList.copyOf(this.allHomomorphisms.stream.map((h: HomomorphicMapping[Term]) =>
       h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion)

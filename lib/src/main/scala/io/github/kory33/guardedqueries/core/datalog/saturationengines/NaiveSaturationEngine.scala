@@ -10,7 +10,6 @@ import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import uk.ac.ox.cs.pdq.fol.Constant
 import java.util
-import java.util.function.Function
 
 /**
  * An implementation of [[DatalogSaturationEngine]] that performs naive bottom-up saturation.
@@ -23,7 +22,7 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
    */
   private def chaseSingleStep[TA](program: DatalogProgram,
                                   facts: ImmutableSet[FormalFact[TA]],
-                                  includeConstantsToTA: Function[Constant, TA]
+                                  includeConstantsToTA: Constant => TA
   ) = {
     val inputInstance = new FormalInstance[TA](facts)
     val producedFacts = new util.HashSet[FormalFact[TA]]
@@ -46,7 +45,7 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
     program: DatalogProgram,
     saturatedInstance: FormalInstance[TA],
     instance: FormalInstance[TA],
-    includeConstantsToTA: Function[Constant, TA]
+    includeConstantsToTA: Constant => TA
   ): FormalInstance[TA] = {
     val saturatedFactSet = SetLikeExtensions.generateFromSetUntilFixpoint(
       SetLikeExtensions.union(saturatedInstance.facts, instance.facts),

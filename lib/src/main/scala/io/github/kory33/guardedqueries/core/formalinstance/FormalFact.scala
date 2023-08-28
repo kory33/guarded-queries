@@ -4,14 +4,13 @@ import com.google.common.collect.ImmutableList
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Term
-import java.util.function.Function
 
 case class FormalFact[TermAlphabet](predicate: Predicate,
                                     appliedTerms: ImmutableList[TermAlphabet]
 ) {
-  def map[T](mapper: Function[_ >: TermAlphabet, _ <: T]) = new FormalFact[T](
+  def map[T](mapper: TermAlphabet => T) = new FormalFact[T](
     this.predicate,
-    ImmutableList.copyOf(this.appliedTerms.stream.map(mapper).iterator)
+    ImmutableList.copyOf(this.appliedTerms.stream.map(mapper(_)).iterator)
   )
 
   override def toString: String =

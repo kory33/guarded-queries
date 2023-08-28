@@ -4,7 +4,6 @@ import org.apache.commons.lang3.tuple.Pair
 import java.util
 import java.util.Optional
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Function
 import java.util.stream.Stream
 
 object StreamExtensions {
@@ -13,9 +12,8 @@ object StreamExtensions {
    * From a given stream of elements of type {@code T}, create a new stream that associates each
    * element with its mapped value.
    */
-  def associate[T, R](stream: Stream[T],
-                      mapper: Function[_ >: T, _ <: R]
-  ): Stream[util.Map.Entry[T, R]] = stream.map((t: T) => util.Map.entry(t, mapper.apply(t)))
+  def associate[T, R](stream: Stream[T], mapper: T => R): Stream[util.Map.Entry[T, R]] =
+    stream.map((t: T) => util.Map.entry(t, mapper.apply(t)))
 
   def intoIterableOnce[T](stream: Stream[T]): java.lang.Iterable[T] = () => stream.iterator
 
@@ -31,7 +29,7 @@ object StreamExtensions {
 
   def unfoldMutable[MutableState, Output](
     mutableState: MutableState,
-    mutateAndYieldNext: Function[_ >: MutableState, Optional[Output]]
+    mutateAndYieldNext: MutableState => Optional[Output]
   ): Stream[Output] = {
     val iterator = new util.Iterator[Output]() {
       private var nextOutput: Optional[Output] = mutateAndYieldNext.apply(mutableState)
