@@ -1,5 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
+import scala.jdk.CollectionConverters.*
 import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
 import uk.ac.ox.cs.pdq.fol.Atom
@@ -23,16 +24,18 @@ object ConjunctiveQueryExtensions {
                   atomPredicate: Predicate[_ >: Atom]
   ): Optional[ConjunctiveQuery] = {
     val originalFreeVariables = conjunctiveQuery.getFreeVariables.toSet
-    val filteredAtoms =
-      conjunctiveQuery.getAtoms.filter(atomPredicate.test(_))
+    val filteredAtoms = conjunctiveQuery.getAtoms.filter(atomPredicate.test)
 
-    // variables in filteredAtoms that are free in the original conjunctiveQuery
-    val filteredFreeVariables = filteredAtoms
-      .flatMap(_.getVariables)
-      .filter(originalFreeVariables.contains)
+    if (filteredAtoms.isEmpty) {
+      Optional.empty
+    } else {
+      // variables in filteredAtoms that are free in the original conjunctiveQuery
+      val filteredFreeVariables = filteredAtoms
+        .flatMap(_.getVariables)
+        .filter(originalFreeVariables.contains)
 
-    if (filteredAtoms.isEmpty) Optional.empty
-    else Optional.of(ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms))
+      Optional.of(ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms))
+    }
   }
 
   /**
@@ -57,14 +60,13 @@ object ConjunctiveQueryExtensions {
                                         variables: util.Collection[_ <: Variable]
   ): Optional[ConjunctiveQuery] = {
     val variableSet = ImmutableSet.copyOf[Variable](variables)
-    val cqBoundVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables)
     filterAtoms(
       conjunctiveQuery,
       (atom: Atom) => {
         // variables in the atom that are bound in the CQ
         val atomBoundVariables = SetLikeExtensions.intersection(
-          util.Arrays.asList(atom.getVariables),
-          cqBoundVariables
+          atom.getVariables.toList.asJavaCollection,
+          conjunctiveQuery.getBoundVariables.toSet.asJavaCollection
         )
         variableSet.containsAll(atomBoundVariables) && atomBoundVariables.size > 0
       }
@@ -83,14 +85,14 @@ object ConjunctiveQueryExtensions {
                                   variables: util.Collection[_ <: Variable]
   ): Optional[ConjunctiveQuery] = {
     val variableSet = ImmutableSet.copyOf[Variable](variables)
-    val cqBoundVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables)
+
     filterAtoms(
       conjunctiveQuery,
       (atom: Atom) => {
         // variables in the atom that are bound in the CQ
         val atomBoundVariables = SetLikeExtensions.intersection(
-          util.Arrays.asList(atom.getVariables),
-          cqBoundVariables
+          atom.getVariables.toList.asJavaCollection,
+          conjunctiveQuery.getBoundVariables.toList.asJavaCollection
         )
         SetLikeExtensions.nontriviallyIntersects(atomBoundVariables, variableSet)
       }
