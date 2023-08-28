@@ -217,15 +217,13 @@ final class NaiveDPTableSEEnumeration(
                 ImmutableSet.copyOf(existentialRule.getHead.getBoundVariables)
 
               // An assignment existential variables into "fresh" local names not used in the parent
-              val headVariableHomomorphism = ImmutableMapExtensions.consumeAndCopy(
-                StreamExtensions.zipWithIndex(existentialVariables.stream).map(pair => {
-                  // for i'th head variable, we use localNamesUsableInChildren(i)
-                  val variable = pair.getKey
-                  val index = pair.getValue.intValue
-                  val localName = localNamesUsableInChildren.get(index)
-                  util.Map.entry(variable, localName: LocalInstanceTerm)
-                }).iterator
-              )
+              val headVariableHomomorphism =
+                existentialVariables.asScala
+                  .zipWithIndex
+                  .map { (variable, index) =>
+                    (variable, localNamesUsableInChildren.get(index))
+                  }
+                  .toMap
 
               val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
                 LocalInstanceTerm.RuleConstant(_)
@@ -234,7 +232,8 @@ final class NaiveDPTableSEEnumeration(
                 instance
               )
               val extendedJoinResult =
-                bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism)
+                bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism.asJava)
+
               val allSubstitutedHeadAtoms = extendedJoinResult.materializeFunctionFreeAtom(
                 headAtom,
                 LocalInstanceTerm.RuleConstant(_)

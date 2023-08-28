@@ -10,23 +10,6 @@ import java.util.stream.StreamSupport
 object IteratorExtensions {
 
   /**
-   * Zip two iterators together.
-   */
-  def zip[L, R](leftIterator: util.Iterator[L],
-                rightIterator: util.Iterator[R]
-  ): util.Iterator[Pair[L, R]] = new util.Iterator[Pair[L, R]]() {
-    override def hasNext: Boolean = leftIterator.hasNext && rightIterator.hasNext
-
-    override def next: Pair[L, R] = Pair.of(leftIterator.next, rightIterator.next)
-  }
-
-  /**
-   * Zip the iterator together with an infinite Long stream starting from 0.
-   */
-  def zipWithIndex[T](iterator: util.Iterator[T]): util.Iterator[Pair[T, java.lang.Long]] =
-    zip(iterator, LongStream.range(0, Long.MaxValue).iterator)
-
-  /**
    * Convert an iterator to a stream.
    */
   def intoStream[T](iterator: util.Iterator[T]): Stream[T] = {

@@ -262,18 +262,14 @@ final class NormalizingDPTableSEEnumeration(
                       .toSet.removedAll(inheritedLocalNames)
                       .toVector
 
-                  val headVariableHomomorphism = ImmutableMapExtensions.consumeAndCopy(
-                    StreamExtensions.zipWithIndex(existentialVariables.stream).map(pair => {
-                      // for i'th head existential variable, we use namesToReuseInChild(i)
-                      val variable = pair.getKey
-                      val index = pair.getValue.intValue
-                      val localName = namesToReuseInChild(index)
-                      util.Map.entry(variable, localName)
-                    }).iterator
-                  )
+                  val headVariableHomomorphism =
+                    existentialVariables.asScala
+                      .zipWithIndex
+                      .map { (variable, index) => (variable, namesToReuseInChild(index)) }
+                      .toMap
 
                   val extendedHomomorphism =
-                    bodyHomomorphism.extendWithMapping(headVariableHomomorphism)
+                    bodyHomomorphism.extendWithMapping(headVariableHomomorphism.asJava)
 
                   // The instance containing only the head atom produced by the existential rule.
                   // This should be a singleton instance because the existential rule is normal.

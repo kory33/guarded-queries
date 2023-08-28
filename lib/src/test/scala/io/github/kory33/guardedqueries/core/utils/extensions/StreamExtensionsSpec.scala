@@ -13,18 +13,6 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class StreamExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   import org.scalacheck.Prop.propBoolean
 
-  ".zipWithIndex.toList.asScala" should "be equivalent to Scala's zipWithIndex" in {
-    forAll(minSuccessful(1000)) { (xs: List[Int]) =>
-      assert {
-        StreamExtensions
-          .zipWithIndex(xs.asJava.stream())
-          .toList
-          .asScala.toList
-          .map(p => (p.getKey, p.getValue)) == xs.zipWithIndex
-      }
-    }
-  }
-
   ".associate" should "be equivalent to Scala's .map(x => (x, f(x))).toMap" in {
     forAll(minSuccessful(1000)) { (xs: List[Int], f: Int => String) =>
       assert {

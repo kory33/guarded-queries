@@ -10,13 +10,6 @@ import java.util.stream.Stream
 object StreamExtensions {
 
   /**
-   * Zip each element of a stream with its index (in the order traversed by the iterator)
-   * starting from 0.
-   */
-  def zipWithIndex[T](stream: Stream[T]): Stream[Pair[T, java.lang.Long]] =
-    IteratorExtensions.intoStream(IteratorExtensions.zipWithIndex(stream.iterator))
-
-  /**
    * From a given stream of elements of type {@code T}, create a new stream that associates each
    * element with its mapped value.
    */
