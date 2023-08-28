@@ -17,25 +17,25 @@ import java.util.stream.Collectors
  *   - no function symbols
  */
 object FunctionFreeSignature {
-  def fromFormulas(formulas: util.Collection[_ <: Formula]) =
-    new FunctionFreeSignature(formulas.stream.flatMap(
-      FormulaExtensions.streamPredicatesAppearingIn
-    ).collect(Collectors.toList))
+  def fromFormulas(formulas: Set[Formula]) =
+    new FunctionFreeSignature(formulas.flatMap(
+      FormulaExtensions.predicatesAppearingIn
+    ))
 
-  def encompassingRuleQuery(rules: util.Collection[_ <: GTGD],
-                            query: ConjunctiveQuery
-  ): FunctionFreeSignature = FunctionFreeSignature.fromFormulas(
-    ImmutableList.builder[Formula].addAll(rules).add(query).build
-  )
+  def encompassingRuleQuery(rules: Set[GTGD], query: ConjunctiveQuery): FunctionFreeSignature =
+    FunctionFreeSignature.fromFormulas(Set(query: Formula) ++ rules)
 }
 
-case class FunctionFreeSignature(predicates: ImmutableSet[Predicate]) {
-  def this(predicates: java.lang.Iterable[? <: Predicate]) = {
-    this(ImmutableSet.copyOf[Predicate](predicates))
+case class FunctionFreeSignature(predicates: Set[Predicate]) {
+  def this(predicates: Iterable[Predicate]) = {
+    this(predicates.toSet)
   }
 
-  def predicateNames: ImmutableSet[String] =
-    ImmutableSet.copyOf(predicates.stream.map(_.getName).toList)
+  def predicateNames: Set[String] =
+    predicates.map(_.getName)
 
-  def maxArity: Int = predicates.stream.mapToInt(_.getArity).max.orElse(0)
+  def maxArity: Int = predicates.map(_.getArity) match {
+    case arities if arities.isEmpty => 0
+    case arities                    => arities.max
+  }
 }

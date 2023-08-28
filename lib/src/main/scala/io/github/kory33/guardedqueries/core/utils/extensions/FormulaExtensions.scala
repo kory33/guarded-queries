@@ -3,20 +3,20 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Formula
 import uk.ac.ox.cs.pdq.fol.Predicate
-import java.util.stream.Stream
 
 object FormulaExtensions {
-  def streamPredicatesAppearingIn(formula: Formula): Stream[Predicate] = {
+  def predicatesAppearingIn(formula: Formula): Set[Predicate] = {
     val children = formula.getChildren[Formula]
+
     if (children.length == 0) {
-      formula match {
-        case atom: Atom => Stream.of(atom.getPredicate)
-        case _ => throw new IllegalArgumentException(
+      formula match
+        case atom: Atom => Set(atom.getPredicate)
+        case _ =>
+          throw new IllegalArgumentException(
             s"Formula ${formula} is neither an atom nor a composite formula"
           )
-      }
     } else {
-      Stream.of(children: _*).flatMap(streamPredicatesAppearingIn(_))
+      children.toSet.flatMap(predicatesAppearingIn(_))
     }
   }
 }

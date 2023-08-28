@@ -75,7 +75,7 @@ object DFSNormalizingDPTableSEEnumeration {
       maxArityOfExtensionalSignature
     ).mapToObj(LocalInstanceTerm.LocalName(_)).iterator)
     val allLocalInstanceTerms = SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms)
-    val predicateList = extensionalSignature.predicates.stream.toList
+    val predicateList = extensionalSignature.predicates.toList
     val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
       val predicateParameterIndices = IntStream.range(0, predicate.getArity).boxed.toList
       val allFormalFactsOverThePredicate = ImmutableList.copyOf(allTotalFunctionsBetween(
@@ -97,7 +97,7 @@ object DFSNormalizingDPTableSEEnumeration {
     }
     val allInstancesOverLocalNameSet = IteratorExtensions.mapInto(
       ListExtensions.productMappedCollectionsToSets(
-        predicateList,
+        predicateList.asJava,
         allLocalInstancesOverThePredicate
       ).iterator,
       FormalInstance.unionAll
@@ -247,25 +247,24 @@ final class DFSNormalizingDPTableSEEnumeration(
               : Stream[FormalInstance[LocalInstanceTerm]] = {
               // The set of local names that are inherited from the parent instance
               // to the child instance.
-              val inheritedLocalNames = ImmutableSet.copyOf(TGDExtensions.frontierVariables(
-                existentialRule
-              ).stream.map(bodyHomomorphism).iterator)
+              val inheritedLocalNames =
+                TGDExtensions.frontierVariables(existentialRule).map(bodyHomomorphism.apply)
+
               // Names we can reuse (i.e. assign to existential variables in the rule)
               // in the child instance. All names in this set should be considered distinct
               // from the names in the parent instance having the same value, so we
               // are explicitly ignoring the "implicit equality coding" semantics here.
-              val namesToReuseInChild = SetLikeExtensions.difference(
-                IntStream.range(0, maxArityOfAllPredicatesUsedInRules).mapToObj(
-                  LocalName(_)
-                ).toList,
-                inheritedLocalNames
-              ).asList
+              val namesToReuseInChild =
+                (0 until maxArityOfAllPredicatesUsedInRules).map(LocalName(_))
+                  .toSet.removedAll(inheritedLocalNames)
+                  .toList
+
               val headVariableHomomorphism = ImmutableMapExtensions.consumeAndCopy(
                 StreamExtensions.zipWithIndex(existentialVariables.stream).map((pair) => {
                   // for i'th head existential variable, we use namesToReuseInChild(i)
                   val variable = pair.getKey
                   val index = pair.getValue.intValue
-                  val localName = namesToReuseInChild.get(index)
+                  val localName = namesToReuseInChild(index)
                   java.util.Map.entry[Variable, LocalInstanceTerm](variable, localName)
                 }).iterator
               )
@@ -281,7 +280,8 @@ final class DFSNormalizingDPTableSEEnumeration(
                 ))
 
               // if names are not preserved, we reject this homomorphism
-              if (!inheritedLocalNames.containsAll(namesToBePreserved)) return Stream.empty
+              if (!namesToBePreserved.asScala.toSet.subsetOf(inheritedLocalNames))
+                return Stream.empty
 
               // The set of facts in the parent instance that are
               // "guarded" by the head of the existential rule.
@@ -562,7 +562,7 @@ final class DFSNormalizingDPTableSEEnumeration(
   ): Stream[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants
     val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules,
+      saturatedRuleSet.allRules.asScala.toSet,
       connectedConjunctiveQuery
     ).maxArity
     val dpTable = new DPTable(

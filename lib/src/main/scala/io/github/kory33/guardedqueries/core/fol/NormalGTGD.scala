@@ -82,11 +82,8 @@ object NormalGTGD {
 
     val splitExistentialRules =
       existentialRules.zipWithIndex.flatMap { (originalRule, index) =>
-        val intermediaryPredicateVariables = {
-          val frontierVariables = TGDExtensions.frontierVariables(originalRule)
-
-          (frontierVariables.asScala.toList ++ originalRule.getExistential.toList).toSet.toArray
-        }
+        val intermediaryPredicateVariables =
+          (TGDExtensions.frontierVariables(originalRule) ++ originalRule.getExistential).toArray
 
         val intermediaryPredicate: Predicate = {
           val predicateName =

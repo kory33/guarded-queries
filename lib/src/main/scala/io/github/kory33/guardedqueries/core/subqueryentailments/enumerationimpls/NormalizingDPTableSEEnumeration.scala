@@ -75,7 +75,7 @@ object NormalizingDPTableSEEnumeration {
     ).mapToObj(LocalInstanceTerm.LocalName(_)).iterator)
 
     val allLocalInstanceTerms = SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms)
-    val predicateList = extensionalSignature.predicates.stream.toList
+    val predicateList = extensionalSignature.predicates.toList
     val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
       val predicateParameterIndices = IntStream.range(0, predicate.getArity).boxed.toList
       val allFormalFactsOverThePredicate = ImmutableList.copyOf(allTotalFunctionsBetween(
@@ -100,7 +100,7 @@ object NormalizingDPTableSEEnumeration {
 
     val allInstancesOverLocalNameSet = IteratorExtensions.mapInto(
       ListExtensions.productMappedCollectionsToSets(
-        predicateList,
+        predicateList.asJava,
         allLocalInstancesOverThePredicate
       ).iterator,
       FormalInstance.unionAll
@@ -207,128 +207,125 @@ final class NormalizingDPTableSEEnumeration(
                                    namesToBePreservedDuringChase: ImmutableSet[LocalName]
     ) = {
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
-      val shortcutChaseOneStep =
-        FunctionExtensions.asFunction((instance: FormalInstance[LocalInstanceTerm]) => {
-          def foo(instance: FormalInstance[LocalInstanceTerm]) = {
-            // We need to chase the instance with all existential rules
-            // while preserving all names in namesToBePreservedDuringChase.
-            //
-            // A name is preserved by a chase step if and only if
-            // it appears in the substituted head of the existential rule.
-            //
-            // We can first find all possible homomorphisms from the body of
-            // the existential rule to the instance by a join algorithm,
-            // and then filter out those that do not preserve the names.
-            //
-            // NORMALIZATION: unlike in NaiveDPTableSEEnumeration,
-            // when we apply an existential rule, we "reuse" local names below
-            // maxArityOfAllPredicatesUsedInRules (since we don't care
-            // about the identity of local names at all, we can ignore the
-            // "direct equivalence" semantics for implicitly-equality-coded
-            // tree codes).
-            val allChasesWithRule = (existentialRule: NormalGTGD) => {
-              def foo(existentialRule: NormalGTGD) = {
-                val headAtom = existentialRule.getHeadAtoms()(0)
+      val shortcutChaseOneStep = (instance: FormalInstance[LocalInstanceTerm]) => {
+        def foo(instance: FormalInstance[LocalInstanceTerm]) = {
+          // We need to chase the instance with all existential rules
+          // while preserving all names in namesToBePreservedDuringChase.
+          //
+          // A name is preserved by a chase step if and only if
+          // it appears in the substituted head of the existential rule.
+          //
+          // We can first find all possible homomorphisms from the body of
+          // the existential rule to the instance by a join algorithm,
+          // and then filter out those that do not preserve the names.
+          //
+          // NORMALIZATION: unlike in NaiveDPTableSEEnumeration,
+          // when we apply an existential rule, we "reuse" local names below
+          // maxArityOfAllPredicatesUsedInRules (since we don't care
+          // about the identity of local names at all, we can ignore the
+          // "direct equivalence" semantics for implicitly-equality-coded
+          // tree codes).
+          val allChasesWithRule = (existentialRule: NormalGTGD) => {
+            def foo(existentialRule: NormalGTGD) = {
+              val headAtom = existentialRule.getHeadAtoms()(0)
 
-                // A set of existential variables in the existential rule
-                val existentialVariables =
-                  ImmutableSet.copyOf(existentialRule.getHead.getBoundVariables)
-                val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
-                  LocalInstanceTerm.RuleConstant(_)
-                ).join(
-                  TGDExtensions.bodyAsCQ(existentialRule),
-                  instance
-                )
+              // A set of existential variables in the existential rule
+              val existentialVariables =
+                ImmutableSet.copyOf(existentialRule.getHead.getBoundVariables)
+              val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
+                LocalInstanceTerm.RuleConstant(_)
+              ).join(
+                TGDExtensions.bodyAsCQ(existentialRule),
+                instance
+              )
 
-                // because we are "reusing" local names, we can no longer
-                // uniformly extend homomorphisms to existential variables
-                // (i.e. local names to which existential variables are mapped depend on
-                //  how frontier variables are mapped to local names, as those are the
-                //  local names that get inherited to the child instance)
-                bodyJoinResult.allHomomorphisms.stream.flatMap((bodyHomomorphism) => {
-                  def foo(bodyHomomorphism: HomomorphicMapping[LocalInstanceTerm])
-                    : Stream[FormalInstance[LocalInstanceTerm]] = {
+              // because we are "reusing" local names, we can no longer
+              // uniformly extend homomorphisms to existential variables
+              // (i.e. local names to which existential variables are mapped depend on
+              //  how frontier variables are mapped to local names, as those are the
+              //  local names that get inherited to the child instance)
+              bodyJoinResult.allHomomorphisms.stream.flatMap((bodyHomomorphism) => {
+                def foo(bodyHomomorphism: HomomorphicMapping[LocalInstanceTerm])
+                  : Stream[FormalInstance[LocalInstanceTerm]] = {
 
-                    // The set of local names that are inherited from the parent instance
-                    // to the child instance.
-                    val inheritedLocalNames =
-                      ImmutableSet.copyOf(TGDExtensions.frontierVariables(
-                        existentialRule
-                      ).stream.map(bodyHomomorphism).iterator)
+                  // The set of local names that are inherited from the parent instance
+                  // to the child instance.
+                  val inheritedLocalNames =
+                    TGDExtensions.frontierVariables(existentialRule).map(bodyHomomorphism.apply)
 
-                    // Names we can reuse (i.e. assign to existential variables in the rule)
-                    // in the child instance. All names in this set should be considered distinct
-                    // from the names in the parent instance having the same value, so we
-                    // are explicitly ignoring the "implicit equality coding" semantics here.
-                    val namesToReuseInChild = SetLikeExtensions.difference(
-                      IntStream.range(0, maxArityOfAllPredicatesUsedInRules).mapToObj(
-                        LocalInstanceTerm.LocalName(_)
-                      ).toList,
-                      inheritedLocalNames
-                    ).asList
+                  // Names we can reuse (i.e. assign to existential variables in the rule)
+                  // in the child instance. All names in this set should be considered distinct
+                  // from the names in the parent instance having the same value, so we
+                  // are explicitly ignoring the "implicit equality coding" semantics here.
+                  val namesToReuseInChild =
+                    (0 until maxArityOfAllPredicatesUsedInRules).map(LocalName(_))
+                      .toSet.removedAll(inheritedLocalNames)
+                      .toVector
 
-                    val headVariableHomomorphism = ImmutableMapExtensions.consumeAndCopy(
-                      StreamExtensions.zipWithIndex(existentialVariables.stream).map(pair => {
-                        // for i'th head existential variable, we use namesToReuseInChild(i)
-                        val variable = pair.getKey
-                        val index = pair.getValue.intValue
-                        val localName = namesToReuseInChild.get(index)
-                        util.Map.entry(variable, localName)
-                      }).iterator
+                  val headVariableHomomorphism = ImmutableMapExtensions.consumeAndCopy(
+                    StreamExtensions.zipWithIndex(existentialVariables.stream).map(pair => {
+                      // for i'th head existential variable, we use namesToReuseInChild(i)
+                      val variable = pair.getKey
+                      val index = pair.getValue.intValue
+                      val localName = namesToReuseInChild(index)
+                      util.Map.entry(variable, localName)
+                    }).iterator
+                  )
+
+                  val extendedHomomorphism =
+                    bodyHomomorphism.extendWithMapping(headVariableHomomorphism)
+
+                  // The instance containing only the head atom produced by the existential rule.
+                  // This should be a singleton instance because the existential rule is normal.
+                  val headInstance =
+                    FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(
+                      headAtom,
+                      LocalInstanceTerm.RuleConstant(_)
+                    ))
+
+                  // if names are not preserved, we reject this homomorphism
+                  if (
+                    !namesToBePreservedDuringChase.asScala.toSet.subsetOf(inheritedLocalNames)
+                  )
+                    return Stream.empty
+
+                  // The set of facts in the parent instance that are
+                  // "guarded" by the head of the existential rule.
+                  // Those are precisely the facts that have its local names
+                  // appearing in the head of the existential rule
+                  // as a homomorphic image of a frontier variable in the rule.
+                  val inheritedFactsInstance = instance.restrictToAlphabetsWith((term) =>
+                    term.isConstantOrSatisfies(inheritedLocalNames.contains)
+                  )
+
+                  // The child instance, which is the saturation of the union of
+                  // the set of inherited facts and the head instance.
+                  val childInstance =
+                    datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                      datalogSaturation,
+                      // because the parent is saturated, a restriction of it to the alphabet
+                      // occurring in the child is also saturated.
+                      inheritedFactsInstance,
+                      headInstance,
+                      LocalInstanceTerm.RuleConstant(_)
                     )
 
-                    val extendedHomomorphism =
-                      bodyHomomorphism.extendWithMapping(headVariableHomomorphism)
-
-                    // The instance containing only the head atom produced by the existential rule.
-                    // This should be a singleton instance because the existential rule is normal.
-                    val headInstance =
-                      FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(
-                        headAtom,
-                        LocalInstanceTerm.RuleConstant(_)
-                      ))
-
-                    // if names are not preserved, we reject this homomorphism
-                    if (!inheritedLocalNames.containsAll(namesToBePreservedDuringChase))
-                      return Stream.empty
-
-                    // The set of facts in the parent instance that are
-                    // "guarded" by the head of the existential rule.
-                    // Those are precisely the facts that have its local names
-                    // appearing in the head of the existential rule
-                    // as a homomorphic image of a frontier variable in the rule.
-                    val inheritedFactsInstance = instance.restrictToAlphabetsWith((term) =>
-                      term.isConstantOrSatisfies(inheritedLocalNames.contains)
-                    )
-
-                    // The child instance, which is the saturation of the union of
-                    // the set of inherited facts and the head instance.
-                    val childInstance =
-                      datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
-                        datalogSaturation,
-                        // because the parent is saturated, a restriction of it to the alphabet
-                        // occurring in the child is also saturated.
-                        inheritedFactsInstance,
-                        headInstance,
-                        LocalInstanceTerm.RuleConstant(_)
-                      )
-
-                    // we only need to keep chasing with extensional signature
-                    Stream.of(childInstance.restrictToSignature(extensionalSignature))
-                  }
-                  foo(bodyHomomorphism)
-                })
-              }
-              foo(existentialRule)
+                  // we only need to keep chasing with extensional signature
+                  Stream.of(childInstance.restrictToSignature(extensionalSignature))
+                }
+                foo(bodyHomomorphism)
+              })
             }
-
-            val children =
-              saturatedRuleSet.existentialRules.stream.flatMap(allChasesWithRule(_))
-
-            ImmutableList.copyOf(children.iterator)
+            foo(existentialRule)
           }
-          foo(instance)
-        })
+
+          val children =
+            saturatedRuleSet.existentialRules.stream.flatMap(allChasesWithRule(_))
+
+          ImmutableList.copyOf(children.iterator)
+        }
+        foo(instance)
+      }
 
       // we keep chasing until we reach a fixpoint
       SetLikeExtensions.generateFromElementsUntilFixpoint(
@@ -480,7 +477,7 @@ final class NormalizingDPTableSEEnumeration(
   ): Stream[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants
     val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules,
+      saturatedRuleSet.allRules.asScala.toSet,
       connectedConjunctiveQuery
     ).maxArity
 

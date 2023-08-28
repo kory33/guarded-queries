@@ -277,7 +277,9 @@ case class GuardedRuleAndQueryRewriter(
     // Set of predicates that may appear in the input database.
     // Any predicate not in this signature can be considered as intentional predicates
     // and may be ignored in certain cases, such as when generating "test" instances.
-    val extensionalSignature = FunctionFreeSignature.encompassingRuleQuery(rules, query)
+    val extensionalSignature =
+      FunctionFreeSignature.encompassingRuleQuery(rules.asScala.toSet, query)
+
     val intentionalPredicatePrefix = StringSetExtensions.freshPrefix(
       extensionalSignature.predicateNames, // stands for Intentional Predicates
       "IP"
