@@ -11,6 +11,8 @@ import io.github.kory33.guardedqueries.core.testcases.{
 }
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, Term, Variable}
 
+import scala.jdk.CollectionConverters._
+
 import java.time.Instant
 import java.util.Date
 import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
@@ -79,7 +81,7 @@ case class RewriterEquivalenceTestHarness(firstRewriter: GuardedRuleAndQueryRewr
     RewriterEquivalenceTestHarness.logWithTime(s"Rewriting with $firstRewriter...")
 
     val firstRewritingStart = System.nanoTime
-    val firstRewriting = firstRewriter.rewrite(ruleQuery.guardedRules, ruleQuery.query)
+    val firstRewriting = firstRewriter.rewrite(ruleQuery.guardedRules.asJava, ruleQuery.query)
     RewriterEquivalenceTestHarness.logWithTime(
       s"Done rewriting with $firstRewriter in ${System.nanoTime - firstRewritingStart}ns"
     )
@@ -87,7 +89,7 @@ case class RewriterEquivalenceTestHarness(firstRewriter: GuardedRuleAndQueryRewr
     val minimizedFirstRewriting = minimizeRewriteResultAndLogIntermediateCounts(firstRewriting)
     RewriterEquivalenceTestHarness.logWithTime(s"Rewriting with $secondRewriter...")
     val secondRewritingStart = System.nanoTime
-    val secondRewriting = secondRewriter.rewrite(ruleQuery.guardedRules, ruleQuery.query)
+    val secondRewriting = secondRewriter.rewrite(ruleQuery.guardedRules.asJava, ruleQuery.query)
     RewriterEquivalenceTestHarness.logWithTime(
       s"Done rewriting with $secondRewriter in ${System.nanoTime - secondRewritingStart}ns"
     )
