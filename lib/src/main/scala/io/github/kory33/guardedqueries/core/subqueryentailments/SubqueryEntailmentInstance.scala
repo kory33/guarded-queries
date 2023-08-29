@@ -1,22 +1,20 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments
 
 import com.google.common.collect.ImmutableBiMap
-import com.google.common.collect.ImmutableMap
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 
 case class SubqueryEntailmentInstance(
-  ruleConstantWitnessGuess: ImmutableMap[Variable, Constant],
-  coexistentialVariables: ImmutableSet[Variable],
+  ruleConstantWitnessGuess: Map[Variable, Constant],
+  coexistentialVariables: Set[Variable],
   localInstance: FormalInstance[LocalInstanceTerm],
-  localWitnessGuess: ImmutableMap[Variable, LocalInstanceTerm.LocalName],
+  localWitnessGuess: Map[Variable, LocalInstanceTerm.LocalName],
   queryConstantEmbedding: ImmutableBiMap[Constant, LocalInstanceTerm.LocalName]
 ) {
   def ruleConstantWitnessGuessAsMapToInstanceTerms
-    : ImmutableMap[Variable, LocalInstanceTerm.RuleConstant] =
+    : Map[Variable, LocalInstanceTerm.RuleConstant] =
     MapExtensions.composeWithFunction(
       this.ruleConstantWitnessGuess,
       LocalInstanceTerm.RuleConstant(_)

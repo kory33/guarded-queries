@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
@@ -23,15 +22,14 @@ import java.util
  *   operation
  */
 class JoinResult[Term](
-  variableOrdering: ImmutableList[Variable],
-  orderedMappingsOfAllHomomorphisms: ImmutableList[ImmutableList[Term]]
+  variableOrdering: List[Variable],
+  orderedMappingsOfAllHomomorphisms: List[List[Term]]
 ) {
-  // invariant: a single instance of ImmutableList<Variable> variableOrdering is shared among
+  // invariant: a single instance of List<Variable> variableOrdering is shared among
   //            all HomomorphicMapping objects
-  final var allHomomorphisms: ImmutableList[HomomorphicMapping[Term]] =
-    ImmutableList.copyOf(orderedMappingsOfAllHomomorphisms.stream.map(
-      (homomorphism: ImmutableList[Term]) =>
-        new HomomorphicMapping[Term](variableOrdering, homomorphism)
+  final var allHomomorphisms: List[HomomorphicMapping[Term]] =
+    List.copyOf(orderedMappingsOfAllHomomorphisms.stream.map((homomorphism: List[Term]) =>
+      new HomomorphicMapping[Term](variableOrdering, homomorphism)
     ).iterator)
 
   /**
@@ -47,8 +45,8 @@ class JoinResult[Term](
    */
   def materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult: Atom,
                                   constantInclusion: Constant => Term
-  ): ImmutableList[FormalFact[Term]] =
-    ImmutableList.copyOf(this.allHomomorphisms.stream.map((h: HomomorphicMapping[Term]) =>
+  ): List[FormalFact[Term]] =
+    List.copyOf(this.allHomomorphisms.stream.map((h: HomomorphicMapping[Term]) =>
       h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion)
     ).iterator)
 
@@ -78,22 +76,22 @@ class JoinResult[Term](
       throw new IllegalArgumentException(
         "The given constant homomorphism has a conflicting variable mapping"
       )
-    val extensionVariableOrdering = ImmutableList.copyOf(constantHomomorphism.keySet)
-    val extensionMapping = ImmutableList.copyOf(
+    val extensionVariableOrdering = List.copyOf(constantHomomorphism.keySet)
+    val extensionMapping = List.copyOf(
       extensionVariableOrdering.stream.map(constantHomomorphism.get).iterator
     )
-    val extendedVariableOrdering = ImmutableList.builder[Variable].addAll(
+    val extendedVariableOrdering = List.builder[Variable].addAll(
       variableOrdering
     ).addAll(extensionVariableOrdering).build
     val extendedHomomorphisms = allHomomorphisms.stream.map(
       (homomorphism: HomomorphicMapping[Term]) =>
-        ImmutableList.builder[Term].addAll(homomorphism.orderedMapping).addAll(
+        List.builder[Term].addAll(homomorphism.orderedMapping).addAll(
           extensionMapping
         ).build
     )
     new JoinResult[Term](
       extendedVariableOrdering,
-      ImmutableList.copyOf(extendedHomomorphisms.iterator)
+      List.copyOf(extendedHomomorphisms.iterator)
     )
   }
 }

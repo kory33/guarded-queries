@@ -1,10 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils
 
 import com.google.common.collect.ImmutableBiMap
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
-import com.google.common.collect.ImmutableSet
-import io.github.kory33.guardedqueries.core.utils.extensions.ImmutableMapExtensions
+import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import org.apache.commons.lang3.tuple.Pair
@@ -17,9 +14,9 @@ import java.util.stream.Stream
 object MappingStreams {
   def allTotalFunctionsBetween[K, V](domain: util.Collection[K],
                                      range: util.Collection[V]
-  ): Stream[ImmutableMap[K, V]] = {
-    val orderedDomain = ImmutableList.copyOf(ImmutableSet.copyOf(domain))
-    val orderedRange = ImmutableList.copyOf(ImmutableSet.copyOf(range))
+  ): Stream[Map[K, V]] = {
+    val orderedDomain = List.copyOf(Set.copyOf(domain))
+    val orderedRange = List.copyOf(Set.copyOf(range))
     val rangeSize = orderedRange.size
     /*
      * An internal state representing a mapping between domain and range.
@@ -51,9 +48,9 @@ object MappingStreams {
         reachedEnd = true
       }
       def alreadyEmittedLastMap: Boolean = _alreadyEmittedLastMap
-      def currentToMap: ImmutableMap[K, V] = {
+      def currentToMap: Map[K, V] = {
         if (reachedEnd) _alreadyEmittedLastMap = true
-        ImmutableMapExtensions.consumeAndCopy(IntStream.range(
+        MapExtensions.consumeAndCopy(IntStream.range(
           0,
           rangeElementIndices.length
         ).mapToObj((i: Int) =>
@@ -76,14 +73,14 @@ object MappingStreams {
   }
   def allPartialFunctionsBetween[K, V](domain: util.Collection[K],
                                        range: util.Collection[V]
-  ): Stream[ImmutableMap[K, V]] = SetLikeExtensions.powerset(domain).flatMap(
-    (domainSubset: ImmutableSet[K]) => allTotalFunctionsBetween(domainSubset, range)
+  ): Stream[Map[K, V]] = SetLikeExtensions.powerset(domain).flatMap((domainSubset: Set[K]) =>
+    allTotalFunctionsBetween(domainSubset, range)
   )
   def allInjectiveTotalFunctionsBetween[K, V](domain: util.Collection[K],
                                               range: util.Collection[V]
   ): Stream[ImmutableBiMap[K, V]] = {
-    val orderedDomain = ImmutableList.copyOf(ImmutableSet.copyOf(domain))
-    val orderedRange = ImmutableList.copyOf(ImmutableSet.copyOf(range))
+    val orderedDomain = List.copyOf(Set.copyOf(domain))
+    val orderedRange = List.copyOf(Set.copyOf(range))
     val rangeSize = orderedRange.size
     if (orderedDomain.size > rangeSize) return Stream.empty
     /*

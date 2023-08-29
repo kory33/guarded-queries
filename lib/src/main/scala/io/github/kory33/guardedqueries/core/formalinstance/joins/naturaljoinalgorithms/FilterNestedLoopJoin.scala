@@ -1,13 +1,10 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
-import io.github.kory33.guardedqueries.core.utils.extensions.ImmutableMapExtensions
+import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import uk.ac.ox.cs.pdq.fol._
@@ -30,17 +27,17 @@ object FilterNestedLoopJoin {
    * each {@code JoinResult} in {@code atomToMatches} does not contain duplicate tuples, no
    * duplicate tuples will be passed to {@code visitEachCompleteHomomorphism}.
    */
-  private def visitAllJoinResults[TA](remainingAtomsToJoin: ImmutableList[Atom],
-                                      atomToMatches: ImmutableMap[Atom, JoinResult[TA]],
-                                      resultVariableOrdering: ImmutableList[Variable],
-                                      partialHomomorphism: ImmutableList[Optional[TA]],
-                                      visitEachCompleteHomomorphism: ImmutableList[TA] => Unit
+  private def visitAllJoinResults[TA](remainingAtomsToJoin: List[Atom],
+                                      atomToMatches: Map[Atom, JoinResult[TA]],
+                                      resultVariableOrdering: List[Variable],
+                                      partialHomomorphism: List[Optional[TA]],
+                                      visitEachCompleteHomomorphism: List[TA] => Unit
   ): Unit = {
     if (remainingAtomsToJoin.isEmpty) {
       // If there are no more atoms to join, the given partial homomorphism
       // should be complete. So unwrap Optionals and visit
       val unwrappedHomomorphism =
-        ImmutableList.copyOf[TA](partialHomomorphism.stream.map(_.get).iterator)
+        List.copyOf[TA](partialHomomorphism.stream.map(_.get).iterator)
 
       visitEachCompleteHomomorphism(unwrappedHomomorphism)
       return
@@ -79,7 +76,7 @@ object FilterNestedLoopJoin {
           remainingAtomsToJoin.subList(1, remainingAtomsToJoin.size),
           atomToMatches,
           resultVariableOrdering,
-          ImmutableList.copyOf(homomorphismExtension),
+          List.copyOf(homomorphismExtension),
           visitEachCompleteHomomorphism
         )
       }
@@ -91,7 +88,7 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
   override def join(query: ConjunctiveQuery,
                     formalInstance: FormalInstance[TA]
   ): JoinResult[TA] = {
-    val queryAtoms = ImmutableSet.copyOf(query.getAtoms)
+    val queryAtoms = Set.copyOf(query.getAtoms)
 
     // we throw IllegalArgumentException if the query contains existential atoms
     if (query.getBoundVariables.length != 0)
@@ -100,7 +97,7 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
     val queryPredicates =
       util.Arrays.stream(query.getAtoms).map(_.getPredicate).collect(Collectors.toSet)
 
-    val relevantRelationsToInstancesMap: ImmutableMap[Predicate, FormalInstance[TA]] = {
+    val relevantRelationsToInstancesMap: Map[Predicate, FormalInstance[TA]] = {
       val relevantFactsStream = formalInstance.facts.stream.filter((fact: FormalFact[TA]) =>
         queryPredicates.contains(fact.predicate)
       )
@@ -113,7 +110,7 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
       MapExtensions.composeWithFunction(groupedFacts, FormalInstance(_))
     }
 
-    val queryAtomsToMatches = ImmutableMapExtensions.consumeAndCopy(StreamExtensions.associate(
+    val queryAtomsToMatches = MapExtensions.consumeAndCopy(StreamExtensions.associate(
       queryAtoms.stream,
       (atom: Atom) =>
         SingleAtomMatching.allMatches(
@@ -125,21 +122,21 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
 
     // we start joining from the outer
     val queryAtomsOrderedByMatchSizes =
-      ImmutableList.copyOf(queryAtomsToMatches.keySet.stream.sorted(Comparator.comparing(
-        (atom: Atom) => queryAtomsToMatches.get(atom).allHomomorphisms.size
+      List.copyOf(queryAtomsToMatches.keySet.stream.sorted(Comparator.comparing((atom: Atom) =>
+        queryAtomsToMatches.get(atom).allHomomorphisms.size
       )).iterator)
 
     val queryVariableOrdering =
-      ImmutableList.copyOf(ImmutableSet.copyOf(util.Arrays.stream(query.getAtoms).flatMap(
-        (atom: Atom) => util.Arrays.stream(atom.getVariables)
+      List.copyOf(Set.copyOf(util.Arrays.stream(query.getAtoms).flatMap((atom: Atom) =>
+        util.Arrays.stream(atom.getVariables)
       ).iterator))
 
     val emptyHomomorphism =
-      ImmutableList.copyOf(queryVariableOrdering.stream.map((v: Variable) =>
+      List.copyOf(queryVariableOrdering.stream.map((v: Variable) =>
         Optional.empty[TA]
       ).iterator)
 
-    val resultBuilder = ImmutableList.builder[ImmutableList[TA]]
+    val resultBuilder = List.builder[List[TA]]
 
     FilterNestedLoopJoin.visitAllJoinResults(
       queryAtomsOrderedByMatchSizes,

@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.utils.datastructures.ImmutableStack
 import java.util
 import java.util.NoSuchElementException
@@ -92,9 +91,9 @@ object ListExtensions {
 
   def productMappedCollectionsToSets[I, R](
     items: util.List[I], /* pure */ mapperToIterable: I => java.lang.Iterable[R]
-  ): java.lang.Iterable[ImmutableSet[R]] = () =>
+  ): java.lang.Iterable[Set[R]] = () =>
     IteratorExtensions.mapInto(
       productMappedCollectionsToStacks(items, mapperToIterable(_)).iterator,
-      s => ImmutableSet.copyOf(s)
+      s => Set.copyOf(s)
     )
 }

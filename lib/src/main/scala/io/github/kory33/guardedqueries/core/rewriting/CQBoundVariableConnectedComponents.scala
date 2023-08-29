@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import com.google.common.collect.ImmutableSet
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Variable
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery

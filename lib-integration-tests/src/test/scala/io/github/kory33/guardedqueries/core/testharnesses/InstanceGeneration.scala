@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import com.google.common.collect.{ImmutableList, ImmutableMap, ImmutableSet}
+import com.google.common.collect.{List, Map, Set}
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
@@ -17,15 +17,15 @@ object InstanceGeneration {
                    constantsToUse: Set[Constant]
   ): FormalInstance[Constant] = {
     val predicateArgIndices =
-      ImmutableList.copyOf(IntStream.range(0, predicate.getArity).iterator)
+      List.copyOf(IntStream.range(0, predicate.getArity).iterator)
 
     val allFormalFacts = MappingStreams.allTotalFunctionsBetween(
       predicateArgIndices,
       constantsToUse.asJava
-    ).map((mapping: ImmutableMap[Integer, Constant]) =>
+    ).map((mapping: Map[Integer, Constant]) =>
       new FormalFact[Constant](
         predicate,
-        ImmutableList.copyOf(predicateArgIndices.stream.map(mapping.get).iterator)
+        List.copyOf(predicateArgIndices.stream.map(mapping.get).iterator)
       )
     )
 

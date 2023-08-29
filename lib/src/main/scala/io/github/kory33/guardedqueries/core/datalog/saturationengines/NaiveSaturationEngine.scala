@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.datalog.saturationengines
 
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
@@ -21,7 +20,7 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
    * given datalog program once.
    */
   private def chaseSingleStep[TA](program: DatalogProgram,
-                                  facts: ImmutableSet[FormalFact[TA]],
+                                  facts: Set[FormalFact[TA]],
                                   includeConstantsToTA: Constant => TA
   ) = {
     val inputInstance = new FormalInstance[TA](facts)
@@ -49,7 +48,7 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
   ): FormalInstance[TA] = {
     val saturatedFactSet = SetLikeExtensions.generateFromSetUntilFixpoint(
       SetLikeExtensions.union(saturatedInstance.facts, instance.facts),
-      (facts: ImmutableSet[FormalFact[TA]]) =>
+      (facts: Set[FormalFact[TA]]) =>
         chaseSingleStep(program, facts, includeConstantsToTA)
     )
     new FormalInstance[TA](saturatedFactSet)

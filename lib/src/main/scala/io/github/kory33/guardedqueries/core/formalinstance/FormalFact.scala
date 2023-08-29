@@ -1,16 +1,13 @@
 package io.github.kory33.guardedqueries.core.formalinstance
 
-import com.google.common.collect.ImmutableList
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Term
 
-case class FormalFact[TermAlphabet](predicate: Predicate,
-                                    appliedTerms: ImmutableList[TermAlphabet]
-) {
+case class FormalFact[TermAlphabet](predicate: Predicate, appliedTerms: List[TermAlphabet]) {
   def map[T](mapper: TermAlphabet => T) = new FormalFact[T](
     this.predicate,
-    ImmutableList.copyOf(this.appliedTerms.stream.map(mapper(_)).iterator)
+    List.copyOf(this.appliedTerms.stream.map(mapper(_)).iterator)
   )
 
   override def toString: String =
@@ -23,5 +20,5 @@ object FormalFact {
     Atom.create(fact.predicate, fact.appliedTerms.asScala.toArray: _*)
 
   def fromAtom(atom: Atom) =
-    new FormalFact[Term](atom.getPredicate, ImmutableList.copyOf(atom.getTerms))
+    new FormalFact[Term](atom.getPredicate, List.copyOf(atom.getTerms))
 }

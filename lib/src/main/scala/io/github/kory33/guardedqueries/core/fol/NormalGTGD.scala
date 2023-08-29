@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.fol
 
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Variable}
@@ -31,7 +30,7 @@ object NormalGTGD {
    * head appear in the body.
    */
   class FullGTGD(body: util.Collection[Atom], head: util.Collection[Atom])
-      extends NormalGTGD(ImmutableSet.copyOf(body), ImmutableSet.copyOf(head)) {
+      extends NormalGTGD(Set.copyOf(body), Set.copyOf(head)) {
     if (getExistential.length != 0) throw new IllegalArgumentException(
       "Datalog rules cannot contain existential variables, got " + super.toString
     )
@@ -73,7 +72,7 @@ object NormalGTGD {
    */
   def normalize(inputRules: util.Collection[_ <: GTGD],
                 intermediaryPredicatePrefix: String
-  ): ImmutableSet[NormalGTGD] = {
+  ): Set[NormalGTGD] = {
     import scala.jdk.CollectionConverters.*
 
     val (fullRules, existentialRules) =
@@ -105,6 +104,6 @@ object NormalGTGD {
         List(splitExistentialRule, splitFullRule)
       }
 
-    ImmutableSet.copyOf((fullGTGDs ++ splitExistentialRules).asJava)
+    Set.copyOf((fullGTGDs ++ splitExistentialRules).asJava)
   }
 }

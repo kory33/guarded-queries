@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.Atom
@@ -18,8 +17,8 @@ import java.util
  * object represents is {@code x -> a, y -> a, z -> b}.
  */
 case class HomomorphicMapping[Term](
-  variableOrdering: ImmutableList[Variable],
-  orderedMapping: ImmutableList[Term]
+  variableOrdering: List[Variable],
+  orderedMapping: List[Term]
 ) extends (Variable => Term) {
   if (variableOrdering.size != orderedMapping.size) throw new IllegalArgumentException(
     "variableOrdering and orderedMapping must have the same size"
@@ -97,12 +96,12 @@ case class HomomorphicMapping[Term](
         s"additionalMapping $additionalMapping contains a variable in variableOrdering $variableOrdering"
       )
 
-    val newVariableOrdering = ImmutableList.builder[Variable].addAll(variableOrdering).addAll(
+    val newVariableOrdering = List.builder[Variable].addAll(variableOrdering).addAll(
       additionalMapping.keySet
     ).build
 
     val newMappingSize = newVariableOrdering.size
-    val newOrderedMapping = ImmutableList.builder[Term]
+    val newOrderedMapping = List.builder[Term]
     for (index <- 0 until newMappingSize) {
       if (index < orderedMapping.size) newOrderedMapping.add(orderedMapping.get(index))
       else newOrderedMapping.add(additionalMapping.get(newVariableOrdering.get(index)))

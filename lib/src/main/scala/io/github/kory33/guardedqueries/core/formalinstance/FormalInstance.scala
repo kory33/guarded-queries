@@ -1,7 +1,5 @@
 package io.github.kory33.guardedqueries.core.formalinstance
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import uk.ac.ox.cs.pdq.fol.Atom
@@ -10,19 +8,19 @@ import uk.ac.ox.cs.pdq.fol.Term
 import java.util
 import java.util.Objects
 
-case class FormalInstance[TermAlphabet](facts: ImmutableSet[FormalFact[TermAlphabet]]) {
-  private lazy val activeTerms: ImmutableSet[TermAlphabet] =
-    ImmutableSet.copyOf(this.facts.stream.flatMap((fact: FormalFact[TermAlphabet]) =>
+case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
+  private lazy val activeTerms: Set[TermAlphabet] =
+    Set.copyOf(this.facts.stream.flatMap((fact: FormalFact[TermAlphabet]) =>
       fact.appliedTerms.stream
     ).iterator)
 
-  def getActiveTerms: ImmutableSet[TermAlphabet] = {
+  def getActiveTerms: Set[TermAlphabet] = {
     // TODO remove this getter
     this.activeTerms
   }
 
-  def getActiveTermsInClass[T <: TermAlphabet](clazz: Class[T]): ImmutableSet[T] =
-    ImmutableSet.copyOf(StreamExtensions.filterSubtype(
+  def getActiveTermsInClass[T <: TermAlphabet](clazz: Class[T]): Set[T] =
+    Set.copyOf(StreamExtensions.filterSubtype(
       this.getActiveTerms.stream,
       clazz
     ).iterator)
@@ -51,32 +49,32 @@ case class FormalInstance[TermAlphabet](facts: ImmutableSet[FormalFact[TermAlpha
 
 object FormalInstance {
   def apply[TA](fact: util.Iterator[FormalFact[TA]]): FormalInstance[TA] =
-    FormalInstance(ImmutableSet.copyOf(fact))
+    FormalInstance(Set.copyOf(fact))
 
   def apply[TA](facts: util.Collection[FormalFact[TA]]): FormalInstance[TA] =
-    FormalInstance(ImmutableSet.copyOf(facts))
+    FormalInstance(Set.copyOf(facts))
 
   def apply[TA](facts: Set[FormalFact[TA]]): FormalInstance[TA] =
     import scala.jdk.CollectionConverters._
     FormalInstance(facts.asJava)
 
-  def asAtoms(instance: FormalInstance[Term]): ImmutableList[Atom] =
-    ImmutableList.copyOf(instance.facts.stream.map(FormalFact.asAtom).iterator)
+  def asAtoms(instance: FormalInstance[Term]): List[Atom] =
+    List.copyOf(instance.facts.stream.map(FormalFact.asAtom).iterator)
 
   def fromIterator[TermAlphabet](facts: util.Iterator[FormalFact[TermAlphabet]]) =
-    new FormalInstance[TermAlphabet](ImmutableSet.copyOf(facts))
+    new FormalInstance[TermAlphabet](Set.copyOf(facts))
 
   def unionAll[TermAlphabet](instances: java.lang.Iterable[FormalInstance[TermAlphabet]])
     : FormalInstance[TermAlphabet] = {
-    val factSetBuilder = ImmutableSet.builder[FormalFact[TermAlphabet]]
+    val factSetBuilder = Set.builder[FormalFact[TermAlphabet]]
     instances.forEach((instance: FormalInstance[TermAlphabet]) =>
       factSetBuilder.addAll(instance.facts)
     )
     new FormalInstance[TermAlphabet](factSetBuilder.build)
   }
 
-  def empty[TermAlphabet] = new FormalInstance[TermAlphabet](ImmutableSet.of)
+  def empty[TermAlphabet] = new FormalInstance[TermAlphabet](Set.of)
 
   def of[TermAlphabet](facts: FormalFact[TermAlphabet]*) =
-    new FormalInstance[TermAlphabet](ImmutableSet.copyOf(facts.toArray))
+    new FormalInstance[TermAlphabet](Set.copyOf(facts.toArray))
 }

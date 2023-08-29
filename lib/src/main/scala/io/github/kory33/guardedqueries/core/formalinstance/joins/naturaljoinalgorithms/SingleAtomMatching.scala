@@ -1,7 +1,5 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import uk.ac.ox.cs.pdq.fol.Atom
@@ -12,10 +10,10 @@ import java.util.Optional
 
 object SingleAtomMatching {
   private def tryMatch[TA](atomicQuery: Atom,
-                           orderedQueryVariables: ImmutableList[Variable],
-                           appliedTerms: ImmutableList[TA],
+                           orderedQueryVariables: List[Variable],
+                           appliedTerms: List[TA],
                            includeConstantsToTA: Constant => TA
-  ): Optional[ImmutableList[TA]] = {
+  ): Optional[List[TA]] = {
     val homomorphism = new util.ArrayList[Optional[TA]](orderedQueryVariables.size)
 
     for (i <- 0 until orderedQueryVariables.size) { homomorphism.add(Optional.empty) }
@@ -51,7 +49,7 @@ object SingleAtomMatching {
     // if we have reached this point, we have successfully matched all variables in the query
     // to constants applied to the fact, so return the homomorphism
     val unwrappedHomomorphism =
-      ImmutableList.copyOf(homomorphism.stream.map(_.get).iterator)
+      List.copyOf(homomorphism.stream.map(_.get).iterator)
     Optional.of(unwrappedHomomorphism)
   }
 
@@ -67,9 +65,9 @@ object SingleAtomMatching {
                      includeConstantsToTA: Constant => TA
   ): JoinResult[TA] = {
     val orderedQueryVariables =
-      ImmutableList.copyOf(ImmutableSet.copyOf(atomicQuery.getVariables))
+      List.copyOf(Set.copyOf(atomicQuery.getVariables))
     val queryPredicate = atomicQuery.getPredicate
-    val homomorphisms = ImmutableList.builder[ImmutableList[TA]]
+    val homomorphisms = List.builder[List[TA]]
 
     import scala.jdk.CollectionConverters._
     for (fact <- instance.facts.asScala) {

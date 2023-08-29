@@ -1,7 +1,5 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
@@ -16,25 +14,25 @@ class SaturatedRuleSet[RuleClass <: GTGD](
   originalRules: util.Collection[_ <: RuleClass]
 ) {
 
-  val saturatedRules: ImmutableList[GTGD] =
-    ImmutableList.copyOf(saturation.run(new util.ArrayList[Dependency](originalRules)))
+  val saturatedRules: List[GTGD] =
+    List.copyOf(saturation.run(new util.ArrayList[Dependency](originalRules)))
 
   val saturatedRulesAsDatalogProgram: DatalogProgram =
     DatalogProgram.tryFromDependencies(this.saturatedRules)
 
-  val existentialRules: ImmutableList[RuleClass] =
-    ImmutableList.copyOf(originalRules.stream.filter(rule =>
+  val existentialRules: List[RuleClass] =
+    List.copyOf(originalRules.stream.filter(rule =>
       rule.getExistential.length > 0
     ).iterator)
 
-  val allRules: ImmutableList[GTGD] = {
-    val allRulesBuilder: ImmutableList.Builder[GTGD] = ImmutableList.builder[GTGD]
+  val allRules: List[GTGD] = {
+    val allRulesBuilder: List.Builder[GTGD] = List.builder[GTGD]
     allRulesBuilder.addAll(existentialRules)
     allRulesBuilder.addAll(saturatedRules)
     allRulesBuilder.build
   }
 
-  lazy val constants: ImmutableSet[Constant] = ImmutableSet.copyOf(
+  lazy val constants: Set[Constant] = Set.copyOf(
     this.allRules.stream.flatMap(SaturatedRuleSet.constantsInFormula).iterator
   )
 }

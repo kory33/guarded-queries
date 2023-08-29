@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import com.google.common.collect.ImmutableSet
 import org.apache.commons.lang3.tuple.Pair
 import java.math.BigInteger
 import java.util
@@ -16,16 +15,16 @@ object SetLikeExtensions {
    */
   def union[T](collection1: util.Collection[_ <: T],
                collection2: util.Collection[_ <: T]
-  ): ImmutableSet[T] = ImmutableSet.builder[T].addAll(collection1).addAll(collection2).build
+  ): Set[T] = Set.builder[T].addAll(collection1).addAll(collection2).build
 
   /**
    * Intersection of elements from two collections.
    */
   def intersection[T](collection1: util.Collection[_ <: T],
                       collection2: util.Collection[_ <: T]
-  ): ImmutableSet[T] = {
-    val set2 = ImmutableSet.copyOf(collection2)
-    ImmutableSet.copyOf(collection1.stream.filter(set2.contains).iterator)
+  ): Set[T] = {
+    val set2 = Set.copyOf(collection2)
+    Set.copyOf(collection1.stream.filter(set2.contains).iterator)
   }
 
   /**
@@ -34,7 +33,7 @@ object SetLikeExtensions {
   def nontriviallyIntersects(collection1: util.Collection[_],
                              collection2: util.Collection[_]
   ): Boolean = {
-    val set2 = ImmutableSet.copyOf(collection2)
+    val set2 = Set.copyOf(collection2)
     collection1.stream.anyMatch(set2.contains)
   }
 
@@ -49,15 +48,15 @@ object SetLikeExtensions {
    */
   def difference[T](collection1: util.Collection[_ <: T],
                     collection2: util.Collection[_ <: T]
-  ): ImmutableSet[T] = {
-    val set2 = ImmutableSet.copyOf(collection2)
-    ImmutableSet.copyOf(collection1.stream.filter((e) => !set2.contains(e)).iterator)
+  ): Set[T] = {
+    val set2 = Set.copyOf(collection2)
+    Set.copyOf(collection1.stream.filter((e) => !set2.contains(e)).iterator)
   }
 
   /**
    * Powerset of a set of elements from the given collection, lazily streamed.
    */
-  def powerset[T](collection: util.Collection[_ <: T]): Stream[ImmutableSet[T]] = {
+  def powerset[T](collection: util.Collection[_ <: T]): Stream[Set[T]] = {
     import scala.jdk.CollectionConverters._
 
     // deduplicated ArrayList of elements
@@ -72,7 +71,7 @@ object SetLikeExtensions {
       (currentIndex: BigInteger) => {
         // currentIndex < upperLimit
         if (currentIndex.compareTo(upperLimit) < 0) {
-          val subset = ImmutableSet.copyOf[T](IntStream.range(0, setSize).filter(
+          val subset = Set.copyOf[T](IntStream.range(0, setSize).filter(
             currentIndex.testBit
           ).mapToObj(arrayList(_)).iterator)
           Optional.of(Pair.of(subset, currentIndex.add(BigInteger.ONE)))
@@ -93,12 +92,12 @@ object SetLikeExtensions {
   def generateFromElementsUntilFixpoint[T](
     initialCollection: util.Collection[_ <: T],
     generator: T => util.Collection[_ <: T]
-  ): ImmutableSet[T] = {
+  ): Set[T] = {
     val hashSet = new util.HashSet[T](initialCollection)
-    var elementsAddedInPreviousIteration = ImmutableSet.copyOf(hashSet)
+    var elementsAddedInPreviousIteration = Set.copyOf(hashSet)
     while (!elementsAddedInPreviousIteration.isEmpty) {
-      val newlyGeneratedElements: ImmutableSet[T] = {
-        val builder = ImmutableSet.builder[T]
+      val newlyGeneratedElements: Set[T] = {
+        val builder = Set.builder[T]
 
         // assuming that the generator function is pure,
         // it is only meaningful to generate new elements
@@ -117,7 +116,7 @@ object SetLikeExtensions {
       hashSet.addAll(newlyGeneratedElements)
       elementsAddedInPreviousIteration = newlyGeneratedElements
     }
-    ImmutableSet.copyOf(hashSet)
+    Set.copyOf(hashSet)
   }
 
   /**
@@ -129,18 +128,18 @@ object SetLikeExtensions {
    */
   def generateFromSetUntilFixpoint[T](
     initialCollection: util.Collection[_ <: T],
-    generator: ImmutableSet[T] => util.Collection[_ <: T]
-  ): ImmutableSet[T] = {
+    generator: Set[T] => util.Collection[_ <: T]
+  ): Set[T] = {
     val hashSet = new util.HashSet[T](initialCollection)
 
-    @tailrec def recurse(): ImmutableSet[T] = {
-      val elementsGeneratedSoFar = ImmutableSet.copyOf(hashSet)
+    @tailrec def recurse(): Set[T] = {
+      val elementsGeneratedSoFar = Set.copyOf(hashSet)
       val elementsGeneratedInThisIteration =
-        ImmutableSet.copyOf[T](generator.apply(elementsGeneratedSoFar))
+        Set.copyOf[T](generator.apply(elementsGeneratedSoFar))
 
       if (hashSet.containsAll(elementsGeneratedInThisIteration)) {
         // we have reached the least fixpoint above initialCollection
-        ImmutableSet.copyOf(hashSet)
+        Set.copyOf(hashSet)
       } else {
         hashSet.addAll(elementsGeneratedInThisIteration)
         recurse()

@@ -16,7 +16,6 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Atom
 import scala.jdk.CollectionConverters._
-import com.google.common.collect.ImmutableList
 import uk.ac.ox.cs.pdq.fol.Variable
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
@@ -73,8 +72,8 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
     homomorphism <-
       Gen.listOfN(variablesInQuery.size, GenFormula.genConstant(15)).map { constants =>
         new HomomorphicMapping(
-          ImmutableList.copyOf(variablesInQuery.toList.asJava),
-          ImmutableList.copyOf(constants.asJava)
+          List.copyOf(variablesInQuery.toList.asJava),
+          List.copyOf(constants.asJava)
         )
       }
   } yield (query, homomorphism)

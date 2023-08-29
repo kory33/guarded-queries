@@ -2,8 +2,6 @@ package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpl
 
 import scala.jdk.CollectionConverters.*
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
 import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
@@ -25,7 +23,6 @@ import java.util
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
-import com.google.common.collect.ImmutableMap
 import uk.ac.ox.cs.pdq.fol.Atom
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
 
@@ -34,10 +31,10 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTer
  */
 object NaiveDPTableSEEnumeration {
   private def allLocalInstances(extensionalSignature: FunctionFreeSignature,
-                                ruleConstants: ImmutableSet[Constant]
+                                ruleConstants: Set[Constant]
   ) = {
     val maxArityOfExtensionalSignature = extensionalSignature.maxArity
-    val ruleConstantsAsLocalTerms = ImmutableSet.copyOf(
+    val ruleConstantsAsLocalTerms = Set.copyOf(
       ruleConstants.stream.map(LocalInstanceTerm.RuleConstant(_)).iterator
     )
 
@@ -50,13 +47,13 @@ object NaiveDPTableSEEnumeration {
     val allActiveLocalNames = SetLikeExtensions.powerset(IntStream.range(
       0,
       maxArityOfExtensionalSignature * 2
-    ).boxed.toList).filter((localNameSet: ImmutableSet[Integer]) =>
+    ).boxed.toList).filter((localNameSet: Set[Integer]) =>
       localNameSet.size <= maxArityOfExtensionalSignature
     )
 
-    allActiveLocalNames.flatMap((localNameSet: ImmutableSet[Integer]) => {
-      def foo(localNameSet: ImmutableSet[Integer]) = {
-        val localNames = ImmutableSet.copyOf(
+    allActiveLocalNames.flatMap((localNameSet: Set[Integer]) => {
+      def foo(localNameSet: Set[Integer]) = {
+        val localNames = Set.copyOf(
           localNameSet.stream.map(LocalInstanceTerm.LocalName(_)).iterator
         )
         val allLocalInstanceTerms =
@@ -64,11 +61,11 @@ object NaiveDPTableSEEnumeration {
         val predicateList = extensionalSignature.predicates.toList
         val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
           val predicateParameterIndices = IntStream.range(0, predicate.getArity).boxed.toList
-          val allFormalFactsOverThePredicate = ImmutableList.copyOf(allTotalFunctionsBetween(
+          val allFormalFactsOverThePredicate = List.copyOf(allTotalFunctionsBetween(
             predicateParameterIndices,
             allLocalInstanceTerms
           ).map(parameterMap => {
-            val parameterList = ImmutableList.copyOf(IntStream.range(
+            val parameterList = List.copyOf(IntStream.range(
               0,
               predicate.getArity
             ).mapToObj(parameterMap.get).iterator)
@@ -101,22 +98,22 @@ object NaiveDPTableSEEnumeration {
 
   private def allWellFormedSubqueryEntailmentInstancesFor(
     extensionalSignature: FunctionFreeSignature,
-    ruleConstants: ImmutableSet[Constant],
+    ruleConstants: Set[Constant],
     conjunctiveQuery: ConjunctiveQuery
   ) = {
     val queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery)
-    val queryExistentialVariables = ImmutableSet.copyOf(conjunctiveQuery.getBoundVariables)
+    val queryExistentialVariables = Set.copyOf(conjunctiveQuery.getBoundVariables)
     allPartialFunctionsBetween(queryVariables.asJava, ruleConstants).flatMap(
-      (ruleConstantWitnessGuess: ImmutableMap[Variable, Constant]) => {
+      (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
         val allCoexistentialVariableSets =
           SetLikeExtensions.powerset(queryExistentialVariables).filter(
-            (variableSet: ImmutableSet[Variable]) => !variableSet.isEmpty
-          ).filter((variableSet: ImmutableSet[Variable]) =>
+            (variableSet: Set[Variable]) => !variableSet.isEmpty
+          ).filter((variableSet: Set[Variable]) =>
             SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet)
-          ).filter((variableSet: ImmutableSet[Variable]) =>
+          ).filter((variableSet: Set[Variable]) =>
             ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.asScala.toSet)
           )
-        allCoexistentialVariableSets.flatMap((coexistentialVariables: ImmutableSet[Variable]) =>
+        allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allLocalInstances(extensionalSignature, ruleConstants).flatMap(
             (localInstance: FormalInstance[LocalInstanceTerm]) => {
               // As coexistentialVariables is a nonempty subset of queryVariables,
@@ -186,7 +183,7 @@ final class NaiveDPTableSEEnumeration(
     }
 
     private def chaseLocalInstance(localInstance: FormalInstance[LocalInstanceTerm],
-                                   namesToBePreservedDuringChase: ImmutableSet[LocalName]
+                                   namesToBePreservedDuringChase: Set[LocalName]
     ) = {
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
       val shortcutChaseOneStep = (instance: FormalInstance[LocalInstanceTerm]) => {
@@ -213,7 +210,7 @@ final class NaiveDPTableSEEnumeration(
 
               // A set of existential variables in the existential rule
               val existentialVariables =
-                ImmutableSet.copyOf(existentialRule.getHead.getBoundVariables)
+                Set.copyOf(existentialRule.getHead.getBoundVariables)
 
               // An assignment existential variables into "fresh" local names not used in the parent
               val headVariableHomomorphism =
@@ -280,7 +277,7 @@ final class NaiveDPTableSEEnumeration(
           }
           val children =
             saturatedRuleSet.existentialRules.stream.flatMap(allChasesWithRule(_))
-          ImmutableList.copyOf(children.iterator)
+          List.copyOf(children.iterator)
         }
         foo(instance)
       }
@@ -392,7 +389,7 @@ final class NaiveDPTableSEEnumeration(
 
                 val inducedInstance = new SubqueryEntailmentInstance(
                   instance.ruleConstantWitnessGuess,
-                  ImmutableSet.copyOf(splitCoexistentialVariablesComponent.asJava),
+                  Set.copyOf(splitCoexistentialVariablesComponent.asJava),
                   chasedInstance,
                   MapExtensions.restrictToKeys(
                     extendedLocalWitnessGuess.asJava,

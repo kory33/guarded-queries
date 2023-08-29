@@ -1,9 +1,6 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
 import com.google.common.collect.ImmutableCollection
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD
@@ -96,8 +93,8 @@ case class GuardedRuleAndQueryRewriter(
     val neighbourhoodPreimages = MapExtensions.preimages(localWitnessGuess, activeLocalNames)
 
     // unification of variables mapped by localWitnessGuess to fresh variables
-    val unification: ImmutableMap[Variable, Variable] = {
-      val unificationMapBuilder = ImmutableMap.builder[Variable, Variable]
+    val unification: Map[Variable, Variable] = {
+      val unificationMapBuilder = Map.builder[Variable, Variable]
       import scala.jdk.CollectionConverters._
       for (equivalenceClass <- neighbourhoodPreimages.values.asScala) {
         val unifiedVariable = ruleLocalVariableContext.getFreshVariable
@@ -110,7 +107,7 @@ case class GuardedRuleAndQueryRewriter(
 
     // Mapping of local names to variables (or constants for local names bound to query-constant).
     // Contains all active local names in the key set.
-    val nameToTermMap = ImmutableMapExtensions.consumeAndCopy(StreamExtensions.associate(
+    val nameToTermMap = MapExtensions.consumeAndCopy(StreamExtensions.associate(
       activeLocalNames.stream,
       localName => {
         val preimage = neighbourhoodPreimages.get(localName)
@@ -310,7 +307,7 @@ case class GuardedRuleAndQueryRewriter(
       ).toList
 
     val deduplicatedQueryVariables =
-      ImmutableList.copyOf(ImmutableSet.copyOf(query.getFreeVariables))
+      List.copyOf(Set.copyOf(query.getFreeVariables))
 
     val goalPredicate =
       Predicate.create(intentionalPredicatePrefix + "_GOAL", deduplicatedQueryVariables.size)
@@ -330,7 +327,7 @@ case class GuardedRuleAndQueryRewriter(
       TGD.create(bodyAtoms, Array[Atom](goalAtom))
     }
 
-    val allDerivationRules = ImmutableSet.builder[TGD].addAll(
+    val allDerivationRules = Set.builder[TGD].addAll(
       bvccRewriteResults.flatMap(_.goalDerivationRules.asScala).toSet.asJava
     ).add(subgoalBindingRule).build
 

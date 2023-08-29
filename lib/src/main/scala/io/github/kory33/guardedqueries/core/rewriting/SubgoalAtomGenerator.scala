@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import com.google.common.collect.ImmutableSet
 import uk.ac.ox.cs.pdq.fol._
 import java.util
 import java.util.concurrent.atomic.AtomicInteger

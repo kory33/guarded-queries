@@ -1,7 +1,5 @@
 package io.github.kory33.guardedqueries.core.fol
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery

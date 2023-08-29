@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet.VariableOrConstant
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
@@ -72,7 +71,7 @@ object MinimallyUnifiedDatalogRuleSet {
   }
 
   private def atomIntoFormalFact(atom: Atom) = {
-    val appliedTerms = ImmutableList.copyOf(
+    val appliedTerms = List.copyOf(
       util.Arrays.stream(atom.getTerms).map(VariableOrConstant.of).iterator
     )
 

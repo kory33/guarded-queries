@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
@@ -98,7 +97,7 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
     val gsatRewritingStart = System.nanoTime
     val gsatRewriting =
       DatalogProgram.tryFromDependencies(gsatImplementation.run(
-        ImmutableList.builder[Dependency]
+        List.builder[Dependency]
           .addAll(ruleQuery.guardedRules.asJava)
           .addAll(ruleQuery.reducibleQuery.reductionRules)
           .build

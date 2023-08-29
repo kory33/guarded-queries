@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
-import com.google.common.collect.ImmutableSet
 import uk.ac.ox.cs.pdq.fol.TGD
 import java.util
 
@@ -27,5 +26,5 @@ abstract class IndexlessMaximallySubsumingTGDSet[F <: TGD] extends MaximallySubs
       rulesKnownToBeMaximalSoFar.add(rule)
     }
   }
-  override final def getRules: ImmutableSet[F] = ImmutableSet.copyOf(rulesKnownToBeMaximalSoFar)
+  override final def getRules: Set[F] = Set.copyOf(rulesKnownToBeMaximalSoFar)
 }

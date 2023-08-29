@@ -7,7 +7,6 @@ import org.scalacheck.Gen
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen
-import com.google.common.collect.ImmutableList
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 import org.scalacheck.Shrink
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkSet
@@ -27,7 +26,7 @@ object GenFormalInstance {
     for {
       tupleSet <- GenSet.chooseSubset(buildTuples(Nil).toSet)
       factSet = tupleSet
-        .map(tuple => ImmutableList.copyOf(tuple.asJavaCollection))
+        .map(tuple => List.copyOf(tuple.asJavaCollection))
         .map(javaTuple => new FormalFact[Constant](predicate, javaTuple))
     } yield FormalInstance[Constant](factSet.asJava)
   }

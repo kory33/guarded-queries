@@ -5,16 +5,14 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 
 import scala.jdk.CollectionConverters.*
-import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableBiMap
-import com.google.common.collect.ImmutableSet
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallSetSize: Gen[Int] = Gen.chooseNum(0, 5)
-  def javaSetOfSize(size: Int): ImmutableSet[Integer] =
-    ImmutableSet.copyOf((1 to size).map(Integer.valueOf).asJava)
+  def javaSetOfSize(size: Int): Set[Integer] =
+    Set.copyOf((1 to size).map(Integer.valueOf).asJava)
 
   def respectsDomainAndCodomain(
     javaMap: java.util.Map[Integer, Integer],

@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
-import com.google.common.collect.ImmutableSet
 import uk.ac.ox.cs.pdq.fol.TGD
 
 /**
@@ -22,7 +21,7 @@ trait MaximallySubsumingTGDSet[F <: TGD] {
   /**
    * Get the set of rules currently recorded in the set.
    */
-  def getRules: ImmutableSet[F]
+  def getRules: Set[F]
 }
 
 object MaximallySubsumingTGDSet {

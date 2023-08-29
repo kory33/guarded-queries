@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
 import io.github.kory33.guardedqueries.testutils.scalacheck.{GenFormalInstance, GenFormula}
@@ -86,7 +85,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     atom <- genSmallAtom
     variablesInAtom = atom.getVariables.toSet.toList
     homomorphism <- Gen.listOfN(variablesInAtom.size, GenFormula.genConstant(10))
-  } yield (atom, new HomomorphicMapping[Constant](ImmutableList.copyOf(variablesInAtom.asJava), ImmutableList.copyOf(homomorphism.asJava)))
+  } yield (atom, new HomomorphicMapping[Constant](List.copyOf(variablesInAtom.asJava), List.copyOf(homomorphism.asJava)))
 
   it should "find every valid answer" in {
     // We test that for every pair of query and a homomorphism,
