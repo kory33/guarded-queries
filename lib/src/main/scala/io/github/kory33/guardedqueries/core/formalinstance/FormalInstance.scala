@@ -28,7 +28,7 @@ case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
   def containsFact(fact: FormalFact[TermAlphabet]): Boolean = facts.contains(fact)
 
   def isSuperInstanceOf(other: FormalInstance[TermAlphabet]): Boolean =
-    facts.subsetOf(other.facts)
+    other.facts.subsetOf(facts)
 
   def asAtoms(using TermAlphabet =:= Term): Set[Atom] = facts.map(_.asAtom)
 }
