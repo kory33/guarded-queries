@@ -84,8 +84,8 @@ object DFSNormalizingDPTableSEEnumeration {
         .map(FormalInstance(_))
     }
 
-    val allInstancesOverLocalNameSet = ListExtensions.productMappedCollectionsToSets(
-      predicates,
+    val allInstancesOverLocalNameSet = ListExtensions.productMappedIterablesToLists(
+      predicates.toList,
       allLocalInstancesOverThePredicate
     ).map(FormalInstance.unionAll)
 

@@ -7,7 +7,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.boundary
 
 object ListExtensions {
-  private def productMappedCollectionsToLists[I, R](
+  def productMappedIterablesToLists[I, R](
     items: List[I], /* pure */ mapperToIterable: I => Iterable[R]
   ): Iterator[List[R]] = {
     val iterablesToProduct = items.map(mapperToIterable(_)).toList
@@ -25,18 +25,12 @@ object ListExtensions {
 
       // initialize currentItemStack
       {
-        // we put "the element from the iterator at the bottom of initialIteratorStack"
-        // at the bottom of currentItemStack
-        boundary:
-          for (iterator <- initialIteratorStack.reverse) {
-            if (iterator.hasNext) {
-              currentItemStack = Some(iterator.next() :: currentItemStack.get)
-            } else {
-              // if any iterator is empty at the beginning, we cannot produce any stack of elements
-              currentItemStack = None
-              boundary.break()
-            }
-          }
+        if (currentIteratorStack.exists(!_.hasNext)) {
+          // if any iterator is empty at the beginning, we cannot produce any stack of elements
+          currentItemStack = None
+        } else {
+          currentItemStack = Some(currentIteratorStack.map(_.next))
+        }
       }
 
       override def hasNext: Boolean = currentItemStack.isDefined
@@ -47,33 +41,30 @@ object ListExtensions {
         //            or all exhausted iterators have been replaced with fresh ones
         boundary:
           for (droppedIterators <- 0 until items.size) {
-            // currentIteratorStack is nonempty because it originally had `size` iterators
+            // currentIteratorStack is nonempty because it originally had `items.size` iterators
             val iteratorToAdvance = currentIteratorStack.head
 
-            if (iteratorToAdvance.hasNext) {
-              currentItemStack = Some(iteratorToAdvance.next :: currentItemStack.get.tail)
-
-              // "restart" iterations of dropped top iterators from the beginning
-              for (i <- 0 until droppedIterators) {
-                // we dropped top iterators, which are of last iterables in iterablesToProduct
-                val restartedIterator = freshIteratorAt.apply(items.size - droppedIterators + i)
-                currentIteratorStack = restartedIterator :: currentIteratorStack
-
-                // we checked in the class initializer that all fresh iterators have at least one element
-                // so as long as the mapperToIterable is pure, we can safely call next() here
-                val firstItemFromRestartedIterator = restartedIterator.next
-                currentItemStack = Some(firstItemFromRestartedIterator :: currentItemStack.get)
-              }
-
-              boundary.break()
-            } else {
+            if (!iteratorToAdvance.hasNext) {
+              // keep dropping exhausted iterators
               currentIteratorStack = currentIteratorStack.tail
               currentItemStack = Some(currentItemStack.get.tail)
+            } else {
+              currentItemStack = Some(iteratorToAdvance.next :: currentItemStack.get.tail)
+
+              // "restart" iterations of dropped top-`droppedIterators` iterators from the beginning
+              val restartedIterators = (0 until droppedIterators).map(freshIteratorAt).toList
+
+              // we checked in the class initializer that all fresh iterators have at least one element
+              // so as long as the mapperToIterable is pure, we can safely call `next` here
+              currentItemStack = Some(restartedIterators.map(_.next) ++ currentItemStack.get)
+              currentIteratorStack = restartedIterators ++ currentIteratorStack
+
+              boundary.break()
             }
           }
 
         // we have exhausted the bottom iterator, so we are done
-        if (currentIteratorStack.isEmpty) currentItemStack = null
+        if (currentIteratorStack.isEmpty) currentItemStack = None
       }
 
       override def next: List[R] = {
@@ -84,9 +75,4 @@ object ListExtensions {
       }
     }
   }
-
-  def productMappedCollectionsToSets[I, R](
-    items: Set[I], /* pure */ mapperToIterable: I => Iterable[R]
-  ): Iterator[Set[R]] =
-    productMappedCollectionsToLists(items.toList, mapperToIterable(_)).map(_.toSet)
 }

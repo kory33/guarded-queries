@@ -67,10 +67,10 @@ object NaiveDPTableSEEnumeration {
         }
 
         val allInstancesOverLocalNameSet =
-          ListExtensions.productMappedCollectionsToSets(
-            predicates,
+          ListExtensions.productMappedIterablesToLists(
+            predicates.toList,
             allLocalInstancesOverThePredicate
-          ).map(FormalInstance.unionAll(_))
+          ).map(FormalInstance.unionAll)
 
         allInstancesOverLocalNameSet.filter(
           _.getActiveTermsIn[LocalName].size == localNameSet.size

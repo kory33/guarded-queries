@@ -13,10 +13,12 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallListOfSmallInts: Gen[List[Int]] =
     Gen.chooseNum(0, 8).flatMap(Gen.listOfN(_, smallInt))
 
-  "result of .productMappedCollectionsToSets" should "have the size equal to the product of size of input family" in {
+  given Shrink[List[Int]] = Shrink.shrinkAny
+
+  "result of .productMappedIterablesToLists" should "have the size equal to the product of size of input family" in {
     forAll(smallListOfSmallInts, minSuccessful(1000)) { xs =>
-      val result = ListExtensions.productMappedCollectionsToSets(
-        xs.indices.toSet,
+      val result = ListExtensions.productMappedIterablesToLists(
+        xs.indices.toList,
         index => (1 to xs(index)).toSet
       )
 
@@ -26,17 +28,17 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     }
   }
 
-  "every n-th element in the every reversed output of .productMappedCollectionsToStacks" should
+  "every n-th element in the every output of .productMappedIterablesToLists" should
     "be in the collection obtained by applying n-th element in the input list to the input function" in {
       forAll(smallListOfSmallInts, minSuccessful(1000)) { xs =>
-        val result = ListExtensions.productMappedCollectionsToSets(
-          xs.indices.toSet,
+        val result = ListExtensions.productMappedIterablesToLists(
+          xs.indices.toList,
           index => (1 to xs(index)).toSet
         )
 
         assert {
           result.forall { stack =>
-            stack.toList.reverse.zipWithIndex.forall {
+            stack.toList.zipWithIndex.forall {
               case (element, index) =>
                 (1 to xs(index)).contains(element)
             }
