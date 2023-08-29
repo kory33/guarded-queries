@@ -56,5 +56,5 @@ import io.github.kory33.guardedqueries.core.fol.NormalGTGD
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
             boundVariableConnectedQuery: ConjunctiveQuery
-  ): Stream[SubqueryEntailmentInstance]
+  ): IterableOnce[SubqueryEntailmentInstance]
 }

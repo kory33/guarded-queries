@@ -50,7 +50,6 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         SingleAtomMatching
           .allMatches(query, instance, c => c)
           .materializeFunctionFreeAtom(query, c => c)
-          .asScala
           .foreach { fact => assert(fact.predicate.equals(query.getPredicate)) }
     }
   }
@@ -61,7 +60,6 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         SingleAtomMatching
           .allMatches(query, instance, c => c)
           .materializeFunctionFreeAtom(query, c => c)
-          .asScala
           .foreach { fact => assert(instance.facts.contains(fact)) }
     }
   }
@@ -77,7 +75,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
           .allMatches(query, FormalInstance(firstMatch), c => c)
           .materializeFunctionFreeAtom(query, c => c)
 
-        assert(firstMatch.asScala.toSet == secondMatch.asScala.toSet)
+        assert(firstMatch.toSet == secondMatch.toSet)
     }
   }
 

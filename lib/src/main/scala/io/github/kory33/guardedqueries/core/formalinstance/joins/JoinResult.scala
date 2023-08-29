@@ -28,9 +28,9 @@ class JoinResult[Term](
   // invariant: a single instance of List<Variable> variableOrdering is shared among
   //            all HomomorphicMapping objects
   final var allHomomorphisms: List[HomomorphicMapping[Term]] =
-    List.copyOf(orderedMappingsOfAllHomomorphisms.stream.map((homomorphism: List[Term]) =>
-      new HomomorphicMapping[Term](variableOrdering, homomorphism)
-    ).iterator)
+    orderedMappingsOfAllHomomorphisms.map((homomorphism: List[Term]) =>
+      HomomorphicMapping[Term](variableOrdering, homomorphism)
+    )
 
   /**
    * Materialize the given atom by replacing the variables in the atom with the values in this
@@ -46,9 +46,9 @@ class JoinResult[Term](
   def materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult: Atom,
                                   constantInclusion: Constant => Term
   ): List[FormalFact[Term]] =
-    List.copyOf(this.allHomomorphisms.stream.map((h: HomomorphicMapping[Term]) =>
+    allHomomorphisms.map((h: HomomorphicMapping[Term]) =>
       h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion)
-    ).iterator)
+    )
 
   /**
    * Extend the join result by adjoining a constant homomorphism. <p> For instance, suppose that
@@ -65,33 +65,24 @@ class JoinResult[Term](
    * @throws IllegalArgumentException
    *   if the given homomorphism maps a variable in {@code variableOrdering}
    */
-  def extendWithConstantHomomorphism(constantHomomorphism: util.Map[Variable, Term])
+  def extendWithConstantHomomorphism(constantHomomorphism: Map[Variable, Term])
     : JoinResult[Term] = {
     if (allHomomorphisms.isEmpty) {
-// then this join result contains no information and there is nothing to extend
+      // then this join result contains no information and there is nothing to extend
       return this
     }
-    val variableOrdering = allHomomorphisms.get(0).variableOrdering
-    if (variableOrdering.stream.anyMatch(constantHomomorphism.containsKey))
-      throw new IllegalArgumentException(
+    val variableOrdering = allHomomorphisms(0).variableOrdering
+    if (variableOrdering.exists(constantHomomorphism.contains))
+      throw IllegalArgumentException(
         "The given constant homomorphism has a conflicting variable mapping"
       )
-    val extensionVariableOrdering = List.copyOf(constantHomomorphism.keySet)
-    val extensionMapping = List.copyOf(
-      extensionVariableOrdering.stream.map(constantHomomorphism.get).iterator
-    )
-    val extendedVariableOrdering = List.builder[Variable].addAll(
-      variableOrdering
-    ).addAll(extensionVariableOrdering).build
-    val extendedHomomorphisms = allHomomorphisms.stream.map(
-      (homomorphism: HomomorphicMapping[Term]) =>
-        List.builder[Term].addAll(homomorphism.orderedMapping).addAll(
-          extensionMapping
-        ).build
-    )
-    new JoinResult[Term](
-      extendedVariableOrdering,
-      List.copyOf(extendedHomomorphisms.iterator)
-    )
+
+    val extensionVariableOrdering = constantHomomorphism.keySet.toList
+    val extensionMapping = extensionVariableOrdering.map(constantHomomorphism)
+
+    val extendedVariableOrdering = variableOrdering ++ extensionVariableOrdering
+    val extendedHomomorphisms = allHomomorphisms.map(_.orderedMapping ++ extensionMapping)
+
+    JoinResult[Term](extendedVariableOrdering, extendedHomomorphisms)
   }
 }

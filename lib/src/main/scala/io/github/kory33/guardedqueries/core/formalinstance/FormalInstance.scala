@@ -7,74 +7,43 @@ import uk.ac.ox.cs.pdq.fol.Term
 
 import java.util
 import java.util.Objects
+import scala.reflect.TypeTest
+import scala.collection.mutable
 
 case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
-  private lazy val activeTerms: Set[TermAlphabet] =
-    Set.copyOf(this.facts.stream.flatMap((fact: FormalFact[TermAlphabet]) =>
-      fact.appliedTerms.stream
-    ).iterator)
+  lazy val activeTerms: Set[TermAlphabet] = facts.flatMap(_.appliedTerms)
 
-  def getActiveTerms: Set[TermAlphabet] = {
-    // TODO remove this getter
-    this.activeTerms
-  }
-
-  def getActiveTermsInClass[T <: TermAlphabet](clazz: Class[T]): Set[T] =
-    Set.copyOf(StreamExtensions.filterSubtype(
-      this.getActiveTerms.stream,
-      clazz
-    ).iterator)
+  def getActiveTermsIn[T <: TermAlphabet](using tt: TypeTest[TermAlphabet, T]): Set[T] =
+    activeTerms.collect { case tt(subtypeTerm) => subtypeTerm }
 
   def map[T](mapper: TermAlphabet => T): FormalInstance[T] =
-    FormalInstance.fromIterator(this.facts.stream.map((fact: FormalFact[TermAlphabet]) =>
-      fact.map(mapper)
-    ).iterator)
+    FormalInstance(facts.map(_.map(mapper)))
 
   def restrictToAlphabetsWith(predicate: TermAlphabet => Boolean)
     : FormalInstance[TermAlphabet] =
-    FormalInstance.fromIterator(this.facts.stream.filter((fact: FormalFact[TermAlphabet]) =>
-      fact.appliedTerms.stream.allMatch(predicate(_))
-    ).iterator)
+    FormalInstance(facts.filter(_.appliedTerms.forall(predicate)))
 
   def restrictToSignature(signature: FunctionFreeSignature): FormalInstance[TermAlphabet] =
-    FormalInstance.fromIterator(this.facts.stream.filter((fact: FormalFact[TermAlphabet]) =>
-      signature.predicates.contains(fact.predicate)
-    ).iterator)
+    FormalInstance(facts.filter(fact => signature.predicates.contains(fact.predicate)))
 
-  def containsFact(fact: FormalFact[TermAlphabet]): Boolean = this.facts.contains(fact)
+  def containsFact(fact: FormalFact[TermAlphabet]): Boolean = facts.contains(fact)
 
   def isSuperInstanceOf(other: FormalInstance[TermAlphabet]): Boolean =
-    other.facts.stream.allMatch(this.containsFact)
+    facts.subsetOf(other.facts)
+
+  def asAtoms(using TermAlphabet =:= Term): Set[Atom] = facts.map(_.asAtom)
 }
 
 object FormalInstance {
-  def apply[TA](fact: util.Iterator[FormalFact[TA]]): FormalInstance[TA] =
-    FormalInstance(Set.copyOf(fact))
 
-  def apply[TA](facts: util.Collection[FormalFact[TA]]): FormalInstance[TA] =
-    FormalInstance(Set.copyOf(facts))
-
-  def apply[TA](facts: Set[FormalFact[TA]]): FormalInstance[TA] =
-    import scala.jdk.CollectionConverters._
-    FormalInstance(facts.asJava)
-
-  def asAtoms(instance: FormalInstance[Term]): List[Atom] =
-    List.copyOf(instance.facts.stream.map(FormalFact.asAtom).iterator)
-
-  def fromIterator[TermAlphabet](facts: util.Iterator[FormalFact[TermAlphabet]]) =
-    new FormalInstance[TermAlphabet](Set.copyOf(facts))
-
-  def unionAll[TermAlphabet](instances: java.lang.Iterable[FormalInstance[TermAlphabet]])
+  def unionAll[TermAlphabet](instances: Iterable[FormalInstance[TermAlphabet]])
     : FormalInstance[TermAlphabet] = {
-    val factSetBuilder = Set.builder[FormalFact[TermAlphabet]]
-    instances.forEach((instance: FormalInstance[TermAlphabet]) =>
-      factSetBuilder.addAll(instance.facts)
-    )
-    new FormalInstance[TermAlphabet](factSetBuilder.build)
+    var facts = mutable.HashSet.empty[FormalFact[TermAlphabet]]
+    for (instance <- instances) { facts ++= instance.facts }
+    FormalInstance(facts.toSet)
   }
 
-  def empty[TermAlphabet] = new FormalInstance[TermAlphabet](Set.of)
+  def empty[TermAlphabet]: FormalInstance[TermAlphabet] = FormalInstance(Set.empty)
 
-  def of[TermAlphabet](facts: FormalFact[TermAlphabet]*) =
-    new FormalInstance[TermAlphabet](Set.copyOf(facts.toArray))
+  def of[TermAlphabet](facts: FormalFact[TermAlphabet]*) = FormalInstance(facts.toSet)
 }

@@ -56,7 +56,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
         val joinAlgorithm = new FilterNestedLoopJoin(c => c)
         joinAlgorithm
           .join(query, instance)
-          .allHomomorphisms.asScala
+          .allHomomorphisms
           .foreach { homomorphism =>
             val materializedInstance =
               homomorphism.materializeFunctionFreeAtoms(query.getAtoms.toList.asJava, c => c)
@@ -82,7 +82,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
                                 h2: HomomorphicMapping[Constant]
   ): Boolean = {
     def asMap(h: HomomorphicMapping[Constant]): Map[Variable, Constant] =
-      h.variableOrdering.asScala.zip(h.orderedMapping.asScala).toMap
+      h.variableOrdering.zip(h.orderedMapping).toMap
 
     asMap(h1) == asMap(h2)
   }
@@ -97,7 +97,6 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
           new FilterNestedLoopJoin(c => c)
             .join(query, materializedInstance)
             .allHomomorphisms
-            .asScala
             .exists(equivalentAsHomomorphisms(_, originalHomomorphism))
         }
     }

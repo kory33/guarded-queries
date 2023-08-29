@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import uk.ac.ox.cs.pdq.fol.TGD
-import java.util
+import scala.collection.mutable
 
 /**
  * A partial implementation of [[MaximallySubsumingTGDSet]] that does not use any index to
@@ -14,17 +14,18 @@ abstract class IndexlessMaximallySubsumingTGDSet[F <: TGD] extends MaximallySubs
    * subsumption relation.
    */
   protected def firstRuleSubsumesSecond(first: F, second: F): Boolean
-  final private val rulesKnownToBeMaximalSoFar = new util.HashSet[F]
-  private def isSubsumedByExistingRule(rule: F) = rulesKnownToBeMaximalSoFar.stream.anyMatch(
-    (existingRule: F) => firstRuleSubsumesSecond(existingRule, rule)
-  )
+
+  final private val rulesKnownToBeMaximalSoFar = mutable.HashSet.empty[F]
+
+  private def isSubsumedByExistingRule(rule: F) =
+    rulesKnownToBeMaximalSoFar.exists(firstRuleSubsumesSecond(_, rule))
+
   override final def addRule(rule: F): Unit = {
     if (!isSubsumedByExistingRule(rule)) {
-      rulesKnownToBeMaximalSoFar.removeIf((existingRule: F) =>
-        firstRuleSubsumesSecond(rule, existingRule)
-      )
+      rulesKnownToBeMaximalSoFar.filterInPlace(!firstRuleSubsumesSecond(rule, _))
       rulesKnownToBeMaximalSoFar.add(rule)
     }
   }
-  override final def getRules: Set[F] = Set.copyOf(rulesKnownToBeMaximalSoFar)
+
+  override final def getRules: Set[F] = rulesKnownToBeMaximalSoFar.toSet
 }

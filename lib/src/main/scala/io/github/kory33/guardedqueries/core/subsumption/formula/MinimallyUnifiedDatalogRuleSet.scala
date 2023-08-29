@@ -36,15 +36,14 @@ final class MinimallyUnifiedDatalogRuleSet
     first: DatalogRule,
     second: DatalogRule
   ): Boolean = {
-    val joinAlgorithm =
-      new FilterNestedLoopJoin(VariableOrConstant.Constant(_))
+    val joinAlgorithm = new FilterNestedLoopJoin(VariableOrConstant.Constant(_))
 
     joinAlgorithm.join(
       TGDExtensions.bodyAsCQ(first),
       MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getBodyAtoms)
-    ).allHomomorphisms.stream.anyMatch(homomorphism => {
+    ).allHomomorphisms.exists(homomorphism => {
       val substitutedFirstHead = homomorphism.materializeFunctionFreeAtoms(
-        util.Arrays.asList(first.getHeadAtoms: _*),
+        first.getHeadAtoms.toSet,
         MinimallyUnifiedDatalogRuleSet.VariableOrConstant.Constant(_)
       )
       val secondHead =
@@ -70,15 +69,13 @@ object MinimallyUnifiedDatalogRuleSet {
           throw new IllegalArgumentException("Either a constant or a variable is expected")
   }
 
-  private def atomIntoFormalFact(atom: Atom) = {
-    val appliedTerms = List.copyOf(
-      util.Arrays.stream(atom.getTerms).map(VariableOrConstant.of).iterator
+  private def atomIntoFormalFact(atom: Atom) =
+    FormalFact(
+      atom.getPredicate,
+      atom.getTerms.map(VariableOrConstant.of).toList
     )
 
-    FormalFact(atom.getPredicate, appliedTerms)
-  }
-
-  private def atomArrayIntoFormalInstance(atoms: Array[Atom]) = FormalInstance.fromIterator(
-    util.Arrays.stream(atoms).map(MinimallyUnifiedDatalogRuleSet.atomIntoFormalFact).iterator
+  private def atomArrayIntoFormalInstance(atoms: Array[Atom]) = FormalInstance(
+    atoms.map(atomIntoFormalFact).toSet
   )
 }

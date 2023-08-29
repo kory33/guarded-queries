@@ -37,7 +37,7 @@ object InstanceGeneration {
       (0 until signature.maxArity * 4).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
 
     val allFactsOverSignature = signature.predicates.flatMap(p =>
-      allFactsOver(p, constantsToUse).facts.asScala
+      allFactsOver(p, constantsToUse).facts
     )
 
     /**

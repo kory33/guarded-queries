@@ -136,7 +136,7 @@ object App {
         currentState.registeredRules.foreach(rule => log("  " + formatGTGD(rule)))
 
         val rewrittenRules =
-          GSat.getInstance().run(currentState.registeredRulesAsDependencies.asJava).asScala
+          GSat.getInstance().run(currentState.registeredRulesAsDependencies.asJava)
         log("Done computing atomic rewriting of registered rules")
         log("Rewritten rules:")
         rewrittenRules.foreach(rule => log("  " + formatGTGD(rule)))

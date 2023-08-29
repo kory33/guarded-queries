@@ -48,9 +48,8 @@ object NormalizingDPTableSEEnumeration {
                                           ruleConstants: Set[Constant]
   ) = {
     val maxArityOfExtensionalSignature = extensionalSignature.maxArity
-    val ruleConstantsAsLocalTerms = Set.copyOf(
-      ruleConstants.stream.map(LocalInstanceTerm.RuleConstant(_)).iterator
-    )
+    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant(_))
+
     // We need to consider sufficiently large collection of set of active local names.
     // As it is sufficient to check subquery entailments for all guarded instance
     // over the extensional signature, and the extensional signature has
@@ -65,65 +64,60 @@ object NormalizingDPTableSEEnumeration {
     //  Moreover, by symmetry of instance we can demand that the set of active
     //  names to be contiguous and starting from 0, i.e. {0, ..., n} for some n < maxArityOfExtensionalSignature.
     // )
-    val localNames = Set.copyOf(IntStream.range(
-      0,
-      maxArityOfExtensionalSignature
-    ).mapToObj(LocalInstanceTerm.LocalName(_)).iterator)
+    val localNames = (0 until maxArityOfExtensionalSignature)
+      .map(LocalInstanceTerm.LocalName(_))
+      .toSet
 
-    val allLocalInstanceTerms = SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms)
-    val predicateList = extensionalSignature.predicates.toList
+    val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
+    val predicates = extensionalSignature.predicates.toSet
+
     val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
-      val predicateParameterIndices = IntStream.range(0, predicate.getArity).boxed.toList
-      val allFormalFactsOverThePredicate = List.copyOf(allTotalFunctionsBetween(
+      val predicateParameterIndices = (0 until predicate.getArity).toSet
+
+      val allFormalFactsOverThePredicate = allTotalFunctionsBetween(
         predicateParameterIndices,
         allLocalInstanceTerms
       ).map(parameterMap => {
-        val parameterList = List.copyOf(IntStream.range(
-          0,
-          predicate.getArity
-        ).mapToObj(parameterMap.get).iterator)
+        FormalFact(
+          predicate,
+          (0 until predicate.getArity).map(parameterMap(_)).toList
+        )
+      })
 
-        FormalFact(predicate, parameterList)
-      }).iterator)
-
-      (
-        () =>
-          SetLikeExtensions.powerset(allFormalFactsOverThePredicate).map(
-            FormalInstance(_)
-          ).iterator
-      ): java.lang.Iterable[FormalInstance[LocalInstanceTerm]]
+      SetLikeExtensions
+        .powerset(allFormalFactsOverThePredicate.toSet)
+        .map(FormalInstance(_))
     }
 
-    val allInstancesOverLocalNameSet = IteratorExtensions.mapInto(
-      ListExtensions.productMappedCollectionsToSets(
-        predicateList.asJava,
-        allLocalInstancesOverThePredicate
-      ).iterator,
-      FormalInstance.unionAll
-    )
+    val allInstancesOverLocalNameSet = ListExtensions.productMappedCollectionsToSets(
+      predicates,
+      allLocalInstancesOverThePredicate
+    ).map(FormalInstance.unionAll)
 
-    IteratorExtensions.intoStream(allInstancesOverLocalNameSet).filter(instance =>
-      isZeroStartingContiguousLocalNameSet(instance.getActiveTermsInClass(classOf[LocalName]))
+    allInstancesOverLocalNameSet.filter(instance =>
+      isZeroStartingContiguousLocalNameSet(instance.getActiveTermsIn[LocalName])
     )
   }
+
   private def allWellFormedNormalizedSubqueryEntailmentInstancesFor(
     extensionalSignature: FunctionFreeSignature,
     ruleConstants: Set[Constant],
     conjunctiveQuery: ConjunctiveQuery
   ) = {
-    val queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery)
-    val queryExistentialVariables = Set.copyOf(conjunctiveQuery.getBoundVariables)
-    allPartialFunctionsBetween(queryVariables.asJava, ruleConstants).flatMap(
+    val queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery).toSet
+    val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
+
+    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
       (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
 
         val allCoexistentialVariableSets =
-          SetLikeExtensions.powerset(queryExistentialVariables).filter(
-            (variableSet: Set[Variable]) => !variableSet.isEmpty
-          ).filter((variableSet: Set[Variable]) =>
-            SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet)
-          ).filter((variableSet: Set[Variable]) =>
-            ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.asScala.toSet)
-          )
+          SetLikeExtensions
+            .powerset(queryExistentialVariables)
+            .filter(_.nonEmpty)
+            .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
+            .filter((variableSet: Set[Variable]) =>
+              ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.toSet)
+            )
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(
@@ -131,38 +125,37 @@ object NormalizingDPTableSEEnumeration {
               // As coexistentialVariables is a nonempty subset of queryVariables,
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
-              val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                coexistentialVariables.asScala.toSet
-              )(
-                conjunctiveQuery
-              ).get
+              val relevantSubquery = ConjunctiveQueryExtensions
+                .subqueryRelevantToVariables(coexistentialVariables.toSet)(conjunctiveQuery)
+                .get
 
               val nonConstantNeighbourhood =
                 ConjunctiveQueryExtensions.neighbourhoodVariables(
                   conjunctiveQuery,
-                  coexistentialVariables.asScala.toSet
-                ) -- ruleConstantWitnessGuess.keySet.asScala
+                  coexistentialVariables.toSet
+                ) -- ruleConstantWitnessGuess.keySet
 
               val allLocalWitnessGuesses = allTotalFunctionsBetween(
-                nonConstantNeighbourhood.asJava,
-                localInstance.getActiveTermsInClass(classOf[LocalName]).stream.filter(
-                  (localName) => localName.value < nonConstantNeighbourhood.size
-                ).toList
+                nonConstantNeighbourhood,
+                localInstance
+                  .getActiveTermsIn[LocalName]
+                  .filter(_.value < nonConstantNeighbourhood.size)
+                  .toSet
               )
+
               allLocalWitnessGuesses.flatMap(localWitnessGuess => {
                 val subqueryConstants =
-                  ConjunctiveQueryExtensions.constantsIn(
-                    relevantSubquery
-                  ) -- ruleConstants.asScala
+                  ConjunctiveQueryExtensions.constantsIn(relevantSubquery) -- ruleConstants
 
-                val nonWitnessingActiveLocalNames = SetLikeExtensions.difference(
-                  localInstance.getActiveTermsInClass(classOf[LocalName]),
-                  localWitnessGuess.values
-                )
+                val nonWitnessingActiveLocalNames =
+                  localInstance.getActiveTermsIn[LocalName] --
+                    localWitnessGuess.values
+
                 val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
-                  subqueryConstants.asJava,
+                  subqueryConstants,
                   nonWitnessingActiveLocalNames
                 )
+
                 allQueryConstantEmbeddings.map(queryConstantEmbedding =>
                   new SubqueryEntailmentInstance(
                     ruleConstantWitnessGuess,
@@ -172,13 +165,10 @@ object NormalizingDPTableSEEnumeration {
                     queryConstantEmbedding
                   )
                 )
-
               })
-
             }
           )
         )
-
       }
     )
   }
@@ -226,9 +216,9 @@ final class NormalizingDPTableSEEnumeration(
               val headAtom = existentialRule.getHeadAtoms()(0)
 
               // A set of existential variables in the existential rule
-              val existentialVariables =
-                Set.copyOf(existentialRule.getHead.getBoundVariables)
-              val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
+              val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
+
+              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm](
                 LocalInstanceTerm.RuleConstant(_)
               ).join(
                 TGDExtensions.bodyAsCQ(existentialRule),
@@ -240,9 +230,9 @@ final class NormalizingDPTableSEEnumeration(
               // (i.e. local names to which existential variables are mapped depend on
               //  how frontier variables are mapped to local names, as those are the
               //  local names that get inherited to the child instance)
-              bodyJoinResult.allHomomorphisms.stream.flatMap((bodyHomomorphism) => {
+              bodyJoinResult.allHomomorphisms.flatMap((bodyHomomorphism) => {
                 def foo(bodyHomomorphism: HomomorphicMapping[LocalInstanceTerm])
-                  : Stream[FormalInstance[LocalInstanceTerm]] = {
+                  : IterableOnce[FormalInstance[LocalInstanceTerm]] = {
 
                   // The set of local names that are inherited from the parent instance
                   // to the child instance.
@@ -259,13 +249,13 @@ final class NormalizingDPTableSEEnumeration(
                       .toVector
 
                   val headVariableHomomorphism =
-                    existentialVariables.asScala
+                    existentialVariables
                       .zipWithIndex
                       .map { (variable, index) => (variable, namesToReuseInChild(index)) }
                       .toMap
 
                   val extendedHomomorphism =
-                    bodyHomomorphism.extendWithMapping(headVariableHomomorphism.asJava)
+                    bodyHomomorphism.extendWithMapping(headVariableHomomorphism)
 
                   // The instance containing only the head atom produced by the existential rule.
                   // This should be a singleton instance because the existential rule is normal.
@@ -276,10 +266,8 @@ final class NormalizingDPTableSEEnumeration(
                     ))
 
                   // if names are not preserved, we reject this homomorphism
-                  if (
-                    !namesToBePreservedDuringChase.asScala.toSet.subsetOf(inheritedLocalNames)
-                  )
-                    return Stream.empty
+                  if (!namesToBePreservedDuringChase.toSet.subsetOf(inheritedLocalNames))
+                    return Set.empty
 
                   // The set of facts in the parent instance that are
                   // "guarded" by the head of the existential rule.
@@ -303,7 +291,7 @@ final class NormalizingDPTableSEEnumeration(
                     )
 
                   // we only need to keep chasing with extensional signature
-                  Stream.of(childInstance.restrictToSignature(extensionalSignature))
+                  Set(childInstance.restrictToSignature(extensionalSignature))
                 }
                 foo(bodyHomomorphism)
               })
@@ -311,17 +299,16 @@ final class NormalizingDPTableSEEnumeration(
             foo(existentialRule)
           }
 
-          val children =
-            saturatedRuleSet.existentialRules.stream.flatMap(allChasesWithRule(_))
-
-          List.copyOf(children.iterator)
+          val children = saturatedRuleSet.existentialRules.flatMap(allChasesWithRule(_))
+          children.toSet
         }
+
         foo(instance)
       }
 
       // we keep chasing until we reach a fixpoint
       SetLikeExtensions.generateFromElementsUntilFixpoint(
-        util.List.of(datalogSaturationEngine.saturateInstance(
+        Set(datalogSaturationEngine.saturateInstance(
           datalogSaturation,
           localInstance,
           LocalInstanceTerm.RuleConstant(_)
@@ -339,7 +326,7 @@ final class NormalizingDPTableSEEnumeration(
       // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
       // noinspection OptionalGetWithoutIsPresent
       val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-        instance.coexistentialVariables.asScala.toSet
+        instance.coexistentialVariables.toSet
       )(connectedConjunctiveQuery).get
 
       val instancesWithGuessedVariablesPreserved = chaseLocalInstance(
@@ -347,22 +334,16 @@ final class NormalizingDPTableSEEnumeration(
         // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
-        SetLikeExtensions.union(
-          instance.localWitnessGuess.values,
-          instance.queryConstantEmbedding.values
-        )
+        instance.localWitnessGuess.values.toSet ++ instance.queryConstantEmbedding.values.asScala
       )
 
-      for (chasedInstance <- instancesWithGuessedVariablesPreserved.asScala) {
+      for (chasedInstance <- instancesWithGuessedVariablesPreserved) {
         val localWitnessGuessExtensions = allPartialFunctionsBetween(
           instance.coexistentialVariables,
-          chasedInstance.getActiveTermsInClass(classOf[LocalName])
+          chasedInstance.getActiveTermsIn[LocalName]
         )
 
-        for (
-          localWitnessGuessExtension <-
-            StreamExtensions.intoIterableOnce(localWitnessGuessExtensions).asScala
-        ) {
+        for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
           import scala.util.boundary
 
           boundary:
@@ -374,11 +355,11 @@ final class NormalizingDPTableSEEnumeration(
             }
             val newlyCoveredVariables = localWitnessGuessExtension.keySet
             val extendedLocalWitnessGuess =
-              instance.localWitnessGuess.asScala.toMap ++ localWitnessGuessExtension.asScala
+              instance.localWitnessGuess.toMap ++ localWitnessGuessExtension
 
             val newlyCoveredAtomsOccurInChasedInstance = {
               val extendedGuess =
-                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms.asScala
+                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms
               val coveredVariables = extendedGuess.keySet
               val newlyCoveredAtoms =
                 util.Arrays.stream(relevantSubquery.getAtoms).filter((atom: Atom) => {
@@ -406,7 +387,7 @@ final class NormalizingDPTableSEEnumeration(
               val splitCoexistentialVariables =
                 ConjunctiveQueryExtensions.connectedComponents(
                   relevantSubquery,
-                  instance.coexistentialVariables.asScala.toSet -- newlyCoveredVariables.asScala
+                  instance.coexistentialVariables.toSet -- newlyCoveredVariables
                 )
 
               splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
@@ -414,7 +395,7 @@ final class NormalizingDPTableSEEnumeration(
                   ConjunctiveQueryExtensions.neighbourhoodVariables(
                     relevantSubquery,
                     splitCoexistentialVariablesComponent
-                  ) -- instance.ruleConstantWitnessGuess.keySet.asScala
+                  ) -- instance.ruleConstantWitnessGuess.keySet
 
                 // For the same reason as .get() call in the beginning of the method,
                 // this .get() call succeeds.
@@ -426,15 +407,12 @@ final class NormalizingDPTableSEEnumeration(
 
                 val inducedInstance = new SubqueryEntailmentInstance(
                   instance.ruleConstantWitnessGuess,
-                  Set.copyOf(splitCoexistentialVariablesComponent.asJava),
+                  splitCoexistentialVariablesComponent,
                   chasedInstance,
-                  MapExtensions.restrictToKeys(
-                    extendedLocalWitnessGuess.asJava,
-                    newNeighbourhood.asJava
-                  ),
+                  MapExtensions.restrictToKeys(extendedLocalWitnessGuess, newNeighbourhood),
                   MapExtensions.restrictToKeys(
                     instance.queryConstantEmbedding,
-                    ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery).asJava
+                    ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery)
                   )
                 )
 
@@ -454,17 +432,17 @@ final class NormalizingDPTableSEEnumeration(
       this.table.put(instance, false)
     }
 
-    def getKnownYesInstances: Stream[SubqueryEntailmentInstance] =
-      this.table.entrySet.stream.filter(_.getValue).map(_.getKey)
+    def getKnownYesInstances: IterableOnce[SubqueryEntailmentInstance] =
+      this.table.entrySet.asScala.filter(_.getValue).map(_.getKey)
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
-  ): Stream[SubqueryEntailmentInstance] = {
+  ): IterableOnce[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants
     val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules.asScala.toSet,
+      saturatedRuleSet.allRules.toSet,
       connectedConjunctiveQuery
     ).maxArity
 
@@ -479,7 +457,7 @@ final class NormalizingDPTableSEEnumeration(
       extensionalSignature,
       ruleConstants,
       connectedConjunctiveQuery
-    ).forEach(dpTable.fillTableUpto(_))
+    ).foreach(dpTable.fillTableUpto(_))
 
     dpTable.getKnownYesInstances
   }

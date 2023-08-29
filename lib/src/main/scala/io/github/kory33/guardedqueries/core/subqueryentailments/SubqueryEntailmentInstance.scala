@@ -15,10 +15,9 @@ case class SubqueryEntailmentInstance(
 ) {
   def ruleConstantWitnessGuessAsMapToInstanceTerms
     : Map[Variable, LocalInstanceTerm.RuleConstant] =
-    MapExtensions.composeWithFunction(
-      this.ruleConstantWitnessGuess,
-      LocalInstanceTerm.RuleConstant(_)
-    )
+    ruleConstantWitnessGuess
+      .view.mapValues(LocalInstanceTerm.RuleConstant(_))
+      .toMap
 
   def withLocalInstance(newLocalInstance: FormalInstance[LocalInstanceTerm]) =
     this.copy(localInstance =

@@ -7,40 +7,39 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 import java.util
 import java.util.Optional
+import scala.collection.mutable.ArrayBuffer
 
 object SingleAtomMatching {
   private def tryMatch[TA](atomicQuery: Atom,
                            orderedQueryVariables: List[Variable],
                            appliedTerms: List[TA],
                            includeConstantsToTA: Constant => TA
-  ): Optional[List[TA]] = {
-    val homomorphism = new util.ArrayList[Optional[TA]](orderedQueryVariables.size)
-
-    for (i <- 0 until orderedQueryVariables.size) { homomorphism.add(Optional.empty) }
+  ): Option[List[TA]] = {
+    val homomorphism = ArrayBuffer.fill[Option[TA]](orderedQueryVariables.size)(None)
 
     for (appliedTermIndex <- 0 until appliedTerms.size) {
       val termToMatch = atomicQuery.getTerms()(appliedTermIndex)
-      val appliedTerm = appliedTerms.get(appliedTermIndex)
+      val appliedTerm = appliedTerms(appliedTermIndex)
 
       termToMatch match {
         case constant: Constant =>
           // if the term is a constant, we just check if that constant (considered as TA) has been applied
           if (!(includeConstantsToTA.apply(constant) == appliedTerm)) {
             // and fail if not
-            return Optional.empty
+            return None
           }
         case variable: Variable =>
           val variableIndex = orderedQueryVariables.indexOf(termToMatch)
-          val alreadyAssignedConstant = homomorphism.get(variableIndex)
-          if (alreadyAssignedConstant.isPresent) {
+          val alreadyAssignedConstant = homomorphism(variableIndex)
+          if (alreadyAssignedConstant.isDefined) {
             // if the variable has already been assigned a constant, we check if the constant is the same
             if (!(alreadyAssignedConstant.get == appliedTerm)) {
               // and fail if not
-              return Optional.empty
+              return None
             }
           } else {
             // if the variable has not already been assigned a constant, we assign it
-            homomorphism.set(variableIndex, Optional.of(appliedTerm))
+            homomorphism(variableIndex) = Some(appliedTerm)
           }
         case _ =>
       }
@@ -48,9 +47,7 @@ object SingleAtomMatching {
 
     // if we have reached this point, we have successfully matched all variables in the query
     // to constants applied to the fact, so return the homomorphism
-    val unwrappedHomomorphism =
-      List.copyOf(homomorphism.stream.map(_.get).iterator)
-    Optional.of(unwrappedHomomorphism)
+    Some(homomorphism.map(_.get).toList)
   }
 
   /**
@@ -64,13 +61,12 @@ object SingleAtomMatching {
                      instance: FormalInstance[TA],
                      includeConstantsToTA: Constant => TA
   ): JoinResult[TA] = {
-    val orderedQueryVariables =
-      List.copyOf(Set.copyOf(atomicQuery.getVariables))
+    val orderedQueryVariables = atomicQuery.getVariables.toSet.toList
     val queryPredicate = atomicQuery.getPredicate
-    val homomorphisms = List.builder[List[TA]]
+    val homomorphisms = ArrayBuffer.empty[List[TA]]
 
     import scala.jdk.CollectionConverters._
-    for (fact <- instance.facts.asScala) {
+    for (fact <- instance.facts) {
       if (fact.predicate == queryPredicate) {
         // compute a homomorphism and add to the builder, or continue to the next fact if we cannot do so
         tryMatch(
@@ -78,11 +74,11 @@ object SingleAtomMatching {
           orderedQueryVariables,
           fact.appliedTerms,
           includeConstantsToTA
-        ).ifPresent(homomorphisms.add)
+        ).foreach(homomorphisms.append)
       }
     }
 
-    new JoinResult[TA](orderedQueryVariables, homomorphisms.build)
+    new JoinResult[TA](orderedQueryVariables, homomorphisms.toList)
   }
 }
 class SingleAtomMatching private {}

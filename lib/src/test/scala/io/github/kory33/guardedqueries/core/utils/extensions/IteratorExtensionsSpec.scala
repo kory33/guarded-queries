@@ -14,7 +14,6 @@ class IteratorExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       assert {
         IteratorExtensions
           .mapInto(xs.asJava.iterator(), (x: Int) => x * 2)
-          .asScala
           .toList == xs.map(_ * 2)
       }
     }

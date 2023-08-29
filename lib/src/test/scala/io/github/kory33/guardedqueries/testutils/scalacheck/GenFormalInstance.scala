@@ -37,16 +37,14 @@ object GenFormalInstance {
     import TraverseListGen.traverse
     predicates.toList
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
-      .map { instanceList =>
-        FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava)
-      }
+      .map { instanceList => FormalInstance[Constant](instanceList.flatMap(_.facts).asJava) }
   }
 }
 
 object ShrinkFormalInstance {
   given Shrink[FormalInstance[Constant]] = Shrink { instance =>
     ShrinkSet.intoSubsets[FormalFact[Constant]]
-      .shrink(instance.facts.asScala.toSet)
+      .shrink(instance.facts.toSet)
       .map(factSet => FormalInstance[Constant](factSet.asJava))
   }
 }

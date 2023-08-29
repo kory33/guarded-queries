@@ -6,6 +6,7 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 import java.util
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * A mapping from variables to terms, which is part of a homomorphism mapping a query to an
@@ -37,7 +38,7 @@ case class HomomorphicMapping[Term](
   override def apply(variable: Variable) = {
     val index = variableOrdering.indexOf(variable)
     if (index == -1) throw new IllegalArgumentException("variable is not in variableOrdering")
-    orderedMapping.get(index)
+    orderedMapping(index)
   }
 
   /**
@@ -71,11 +72,11 @@ case class HomomorphicMapping[Term](
    *   a function that maps a constant in the input instance to a term
    */
   def materializeFunctionFreeAtoms(
-    atomsWhoseVariablesAreInThisResult: util.Collection[Atom],
+    atomsWhoseVariablesAreInThisResult: Set[Atom],
     constantInclusion: Constant => Term
-  ) = FormalInstance.fromIterator(atomsWhoseVariablesAreInThisResult.stream.map((atom: Atom) =>
-    this.materializeFunctionFreeAtom(atom, constantInclusion)
-  ).iterator)
+  ) = FormalInstance(
+    atomsWhoseVariablesAreInThisResult.map(materializeFunctionFreeAtom(_, constantInclusion))
+  )
 
   /**
    * Extend the homomorphism with the given mapping.
@@ -83,29 +84,25 @@ case class HomomorphicMapping[Term](
    * @throws IllegalArgumentException
    *   if the given homomorphism maps a variable in {@code variableOrdering}
    */
-  def extendWithMapping(
-    additionalMapping: util.Map[Variable, Term]
-  ): HomomorphicMapping[Term] = {
+  def extendWithMapping(additionalMapping: Map[Variable, Term]): HomomorphicMapping[Term] = {
     if (additionalMapping.isEmpty) {
       // there is nothing to extend
       return this
     }
 
-    if (variableOrdering.stream.anyMatch(additionalMapping.containsKey))
+    if (variableOrdering.exists(additionalMapping.contains))
       throw new IllegalArgumentException(
         s"additionalMapping $additionalMapping contains a variable in variableOrdering $variableOrdering"
       )
 
-    val newVariableOrdering = List.builder[Variable].addAll(variableOrdering).addAll(
-      additionalMapping.keySet
-    ).build
+    val newVariableOrdering = variableOrdering.toList ++ additionalMapping.keySet
 
     val newMappingSize = newVariableOrdering.size
-    val newOrderedMapping = List.builder[Term]
+    val newOrderedMapping = ArrayBuffer.empty[Term]
     for (index <- 0 until newMappingSize) {
-      if (index < orderedMapping.size) newOrderedMapping.add(orderedMapping.get(index))
-      else newOrderedMapping.add(additionalMapping.get(newVariableOrdering.get(index)))
+      if (index < orderedMapping.size) newOrderedMapping.append(orderedMapping(index))
+      else newOrderedMapping.append(additionalMapping(newVariableOrdering(index)))
     }
-    new HomomorphicMapping[Term](newVariableOrdering, newOrderedMapping.build)
+    new HomomorphicMapping[Term](newVariableOrdering, newOrderedMapping.toList)
   }
 }

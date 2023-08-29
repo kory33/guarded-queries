@@ -14,7 +14,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       assert {
         MapExtensions.consumeAndCopy(
           map.asJava.entrySet().iterator()
-        ).asScala.toMap == map
+        ).toMap == map
       }
     }
   }

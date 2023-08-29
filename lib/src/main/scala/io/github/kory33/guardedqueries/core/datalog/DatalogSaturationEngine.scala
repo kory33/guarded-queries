@@ -11,7 +11,7 @@ trait DatalogSaturationEngine {
                            includeConstantsToTA: Constant => TA
   ): FormalInstance[TA] = this.saturateUnionOfSaturatedAndUnsaturatedInstance(
     program,
-    FormalInstance[TA](util.Set.of[FormalFact[TA]]()),
+    FormalInstance.empty,
     instance,
     includeConstantsToTA
   )

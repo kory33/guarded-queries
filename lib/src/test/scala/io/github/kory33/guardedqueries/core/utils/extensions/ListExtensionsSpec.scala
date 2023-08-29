@@ -22,7 +22,7 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
       // as a special case, the empty collection should result in an iterable containing a single empty stack
       // but this actually conforms to the specification
-      assert(result.asScala.size == xs.product)
+      assert(result.size == xs.product)
     }
   }
 
@@ -35,8 +35,8 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         )
 
         assert {
-          result.asScala.forall { stack =>
-            stack.asScala.toList.reverse.zipWithIndex.forall {
+          result.forall { stack =>
+            stack.toList.reverse.zipWithIndex.forall {
               case (element, index) =>
                 (1 to xs(index)).contains(element)
             }

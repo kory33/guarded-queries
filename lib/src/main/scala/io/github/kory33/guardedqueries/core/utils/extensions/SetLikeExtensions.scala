@@ -1,84 +1,34 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
 import org.apache.commons.lang3.tuple.Pair
-import java.math.BigInteger
 import java.util
 import java.util.Optional
 import java.util.stream.IntStream
 import java.util.stream.Stream
 import scala.annotation.tailrec
 
+import scala.collection.IterableOnce
+import scala.collection.mutable
+
 object SetLikeExtensions {
-
-  /**
-   * Union of elements from two collections.
-   */
-  def union[T](collection1: util.Collection[_ <: T],
-               collection2: util.Collection[_ <: T]
-  ): Set[T] = Set.builder[T].addAll(collection1).addAll(collection2).build
-
-  /**
-   * Intersection of elements from two collections.
-   */
-  def intersection[T](collection1: util.Collection[_ <: T],
-                      collection2: util.Collection[_ <: T]
-  ): Set[T] = {
-    val set2 = Set.copyOf(collection2)
-    Set.copyOf(collection1.stream.filter(set2.contains).iterator)
-  }
-
-  /**
-   * Check if two collections have any common elements.
-   */
-  def nontriviallyIntersects(collection1: util.Collection[_],
-                             collection2: util.Collection[_]
-  ): Boolean = {
-    val set2 = Set.copyOf(collection2)
-    collection1.stream.anyMatch(set2.contains)
-  }
-
-  /**
-   * Check if two collections have no common elements.
-   */
-  def disjoint(collection1: util.Collection[_], collection2: util.Collection[_]): Boolean =
-    !nontriviallyIntersects(collection1, collection2)
-
-  /**
-   * Set difference of elements from two collections.
-   */
-  def difference[T](collection1: util.Collection[_ <: T],
-                    collection2: util.Collection[_ <: T]
-  ): Set[T] = {
-    val set2 = Set.copyOf(collection2)
-    Set.copyOf(collection1.stream.filter((e) => !set2.contains(e)).iterator)
-  }
 
   /**
    * Powerset of a set of elements from the given collection, lazily streamed.
    */
-  def powerset[T](collection: util.Collection[_ <: T]): Stream[Set[T]] = {
-    import scala.jdk.CollectionConverters._
-
-    // deduplicated ArrayList of elements
-    val arrayList = collection.asScala.toSet.toList
-    val setSize = arrayList.size
+  def powerset[T](set: Set[T]): Iterable[Set[T]] = {
+    val orderedSet = set.toList
 
     // every non-negative BigInteger less than this value represents a unique subset of the given collection
-    val upperLimit = BigInteger.ONE.shiftLeft(setSize)
+    val upperLimit = BigInt(1) << set.size
 
-    StreamExtensions.unfold(
-      BigInteger.ZERO,
-      (currentIndex: BigInteger) => {
-        // currentIndex < upperLimit
-        if (currentIndex.compareTo(upperLimit) < 0) {
-          val subset = Set.copyOf[T](IntStream.range(0, setSize).filter(
-            currentIndex.testBit
-          ).mapToObj(arrayList(_)).iterator)
-          Optional.of(Pair.of(subset, currentIndex.add(BigInteger.ONE)))
-        } else Optional.empty
-
+    Iterable.unfold(BigInt(0))((currentIndex: BigInt) => {
+      if (currentIndex < upperLimit) {
+        val subset = (0 until set.size).filter(currentIndex.testBit).map(orderedSet(_))
+        Some((subset.toSet, currentIndex + 1))
+      } else {
+        None
       }
-    )
+    })
   }
 
   /**
@@ -90,33 +40,29 @@ object SetLikeExtensions {
    * {@code S}</li> </ol>
    */
   def generateFromElementsUntilFixpoint[T](
-    initialCollection: util.Collection[_ <: T],
-    generator: T => util.Collection[_ <: T]
+    initialCollection: Set[T],
+    generator: T => Set[T]
   ): Set[T] = {
-    val hashSet = new util.HashSet[T](initialCollection)
-    var elementsAddedInPreviousIteration = Set.copyOf(hashSet)
-    while (!elementsAddedInPreviousIteration.isEmpty) {
-      val newlyGeneratedElements: Set[T] = {
-        val builder = Set.builder[T]
+    val hashSet = mutable.HashSet.from(initialCollection)
+    var elementsAddedInPreviousIteration = hashSet.toSet
 
+    while (!elementsAddedInPreviousIteration.isEmpty) {
+      val newlyGeneratedElements: Set[T] =
         // assuming that the generator function is pure,
         // it is only meaningful to generate new elements
         // from elements that have been newly added to the set
         // in the previous iteration
-        elementsAddedInPreviousIteration.forEach((newElementToConsider: T) => {
-          import scala.jdk.CollectionConverters._
-          for (generatedElement <- generator.apply(newElementToConsider).asScala) {
-            // we only add elements that are not already in the set
-            if (!hashSet.contains(generatedElement)) builder.add(generatedElement)
-          }
-        })
-        builder.build
-      }
+        for {
+          newElementToConsider <- elementsAddedInPreviousIteration
+          generatedElement <- generator.apply(newElementToConsider)
+          if !hashSet.contains(generatedElement)
+        } yield generatedElement
 
-      hashSet.addAll(newlyGeneratedElements)
+      hashSet ++= newlyGeneratedElements
       elementsAddedInPreviousIteration = newlyGeneratedElements
     }
-    Set.copyOf(hashSet)
+
+    hashSet.toSet
   }
 
   /**
@@ -127,26 +73,19 @@ object SetLikeExtensions {
    * collection</li> <li>{@code generator.apply(S)} is contained in {@code S}</li> </ol>
    */
   def generateFromSetUntilFixpoint[T](
-    initialCollection: util.Collection[_ <: T],
-    generator: Set[T] => util.Collection[_ <: T]
+    initialCollection: Set[T],
+    generator: Set[T] => Set[T]
   ): Set[T] = {
-    val hashSet = new util.HashSet[T](initialCollection)
-
-    @tailrec def recurse(): Set[T] = {
-      val elementsGeneratedSoFar = Set.copyOf(hashSet)
-      val elementsGeneratedInThisIteration =
-        Set.copyOf[T](generator.apply(elementsGeneratedSoFar))
-
-      if (hashSet.containsAll(elementsGeneratedInThisIteration)) {
+    @tailrec def recurse(elementsGeneratedSoFar: Set[T]): Set[T] = {
+      val newlyGenerated = generator(elementsGeneratedSoFar)
+      if (newlyGenerated.subsetOf(elementsGeneratedSoFar)) {
         // we have reached the least fixpoint above initialCollection
-        Set.copyOf(hashSet)
+        elementsGeneratedSoFar
       } else {
-        hashSet.addAll(elementsGeneratedInThisIteration)
-        recurse()
+        recurse(elementsGeneratedSoFar ++ newlyGenerated)
       }
     }
 
-    recurse()
+    recurse(initialCollection)
   }
 }
-class SetLikeExtensions private {}

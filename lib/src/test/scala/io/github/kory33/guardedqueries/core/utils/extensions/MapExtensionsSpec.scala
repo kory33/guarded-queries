@@ -15,7 +15,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         MapExtensions.composeWithFunction(
           xs.asJava,
           (x: Int) => x * 3
-        ).asScala == xs.view.mapValues(_ * 3).toMap
+        ) == xs.view.mapValues(_ * 3).toMap
       }
     }
   }
@@ -23,9 +23,9 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   "every entry in .preimages(map, ys)" should "have a value all of whose elements are mapped to the key by map" in {
     forAll(minSuccessful(1000)) { (map: Map[String, Int], ys: Set[Int]) =>
       assert {
-        MapExtensions.preimages(map.asJava, ys.asJava).asScala.forall {
+        MapExtensions.preimages(map.asJava, ys.asJava).forall {
           case (key, value) =>
-            value.asScala.forall(map(_) == key)
+            value.forall(map(_) == key)
         }
       }
     }
@@ -33,7 +33,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   "every value mapped by map to some value in the range ys" should "appear in some value in preimages(map, ys)" in {
     forAll(minSuccessful(1000)) { (map: Map[String, Int], ys: Set[Int]) =>
-      val preimageMap = MapExtensions.preimages(map.asJava, ys.asJava).asScala
+      val preimageMap = MapExtensions.preimages(map.asJava, ys.asJava)
 
       assert {
         map.keySet
@@ -41,7 +41,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
           .forall { value =>
             preimageMap.exists {
               case (_, values) =>
-                values.asScala.contains(value)
+                values.contains(value)
             }
           }
       }
@@ -51,7 +51,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".restrictToKeys" should "be equivalent to Scala's filterKeys(contains).toMap" in {
     forAll(minSuccessful(1000)) { (xs: Map[Int, String], ys: Set[Int]) =>
       assert {
-        MapExtensions.restrictToKeys(xs.asJava, ys.asJava).asScala == xs.view.filterKeys(
+        MapExtensions.restrictToKeys(xs.asJava, ys.asJava) == xs.view.filterKeys(
           ys.contains
         ).toMap
       }

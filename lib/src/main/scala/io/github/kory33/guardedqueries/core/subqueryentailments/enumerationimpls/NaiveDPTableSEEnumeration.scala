@@ -34,9 +34,7 @@ object NaiveDPTableSEEnumeration {
                                 ruleConstants: Set[Constant]
   ) = {
     val maxArityOfExtensionalSignature = extensionalSignature.maxArity
-    val ruleConstantsAsLocalTerms = Set.copyOf(
-      ruleConstants.stream.map(LocalInstanceTerm.RuleConstant(_)).iterator
-    )
+    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant(_))
 
     // We need to consider sufficiently large collection of set of active local names.
     // As it is sufficient to check subquery entailments for all guarded instance
@@ -44,54 +42,41 @@ object NaiveDPTableSEEnumeration {
     // maxArityOfExtensionalSignature as the maximal arity, we only need to
     // consider a powerset of {0, ..., 2 * maxArityOfExtensionalSignature - 1}
     // with size at most maxArityOfExtensionalSignature.
-    val allActiveLocalNames = SetLikeExtensions.powerset(IntStream.range(
-      0,
-      maxArityOfExtensionalSignature * 2
-    ).boxed.toList).filter((localNameSet: Set[Integer]) =>
-      localNameSet.size <= maxArityOfExtensionalSignature
-    )
+    val allActiveLocalNames = SetLikeExtensions.powerset(
+      (0 until maxArityOfExtensionalSignature * 2).toSet
+    ).filter(_.size <= maxArityOfExtensionalSignature)
 
-    allActiveLocalNames.flatMap((localNameSet: Set[Integer]) => {
-      def foo(localNameSet: Set[Integer]) = {
-        val localNames = Set.copyOf(
-          localNameSet.stream.map(LocalInstanceTerm.LocalName(_)).iterator
-        )
-        val allLocalInstanceTerms =
-          SetLikeExtensions.union(localNames, ruleConstantsAsLocalTerms)
-        val predicateList = extensionalSignature.predicates.toList
+    allActiveLocalNames.flatMap((localNameSet: Set[Int]) => {
+      def foo(localNameSet: Set[Int]) = {
+        val localNames = localNameSet.map(LocalInstanceTerm.LocalName(_))
+
+        val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
+        val predicates = extensionalSignature.predicates.toSet
         val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
-          val predicateParameterIndices = IntStream.range(0, predicate.getArity).boxed.toList
-          val allFormalFactsOverThePredicate = List.copyOf(allTotalFunctionsBetween(
-            predicateParameterIndices,
-            allLocalInstanceTerms
-          ).map(parameterMap => {
-            val parameterList = List.copyOf(IntStream.range(
-              0,
-              predicate.getArity
-            ).mapToObj(parameterMap.get).iterator)
+          val predicateParameterIndices = (0 until predicate.getArity).toSet
 
-            new FormalFact[LocalInstanceTerm](predicate, parameterList)
-          }).iterator)
-          (
-            () =>
-              SetLikeExtensions.powerset(allFormalFactsOverThePredicate).map(
-                FormalInstance(_)
-              ).iterator
-          ): java.lang.Iterable[FormalInstance[LocalInstanceTerm]]
+          val allFormalFactsOverThePredicate =
+            allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(
+              parameterMap => {
+                val parameterList = (0 until predicate.getArity).map(parameterMap(_))
+                FormalFact[LocalInstanceTerm](predicate, parameterList.toList)
+              }
+            ).toSet
+
+          SetLikeExtensions.powerset(allFormalFactsOverThePredicate).map(FormalInstance(_))
         }
 
-        val allInstancesOverLocalNameSet = IteratorExtensions.mapInto(
+        val allInstancesOverLocalNameSet =
           ListExtensions.productMappedCollectionsToSets(
-            predicateList.asJava,
+            predicates,
             allLocalInstancesOverThePredicate
-          ).iterator,
-          FormalInstance.unionAll
+          ).map(FormalInstance.unionAll(_))
+
+        allInstancesOverLocalNameSet.filter(
+          _.getActiveTermsIn[LocalName].size == localNameSet.size
         )
-        IteratorExtensions.intoStream(allInstancesOverLocalNameSet).filter(instance => {
-          val activeLocalNames = instance.getActiveTermsInClass(classOf[LocalName])
-          activeLocalNames.size == localNameSet.size
-        })
       }
+
       foo(localNameSet)
     })
   }
@@ -102,17 +87,18 @@ object NaiveDPTableSEEnumeration {
     conjunctiveQuery: ConjunctiveQuery
   ) = {
     val queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery)
-    val queryExistentialVariables = Set.copyOf(conjunctiveQuery.getBoundVariables)
-    allPartialFunctionsBetween(queryVariables.asJava, ruleConstants).flatMap(
+    val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
+
+    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
       (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
         val allCoexistentialVariableSets =
-          SetLikeExtensions.powerset(queryExistentialVariables).filter(
-            (variableSet: Set[Variable]) => !variableSet.isEmpty
-          ).filter((variableSet: Set[Variable]) =>
-            SetLikeExtensions.disjoint(variableSet, ruleConstantWitnessGuess.keySet)
-          ).filter((variableSet: Set[Variable]) =>
-            ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.asScala.toSet)
-          )
+          SetLikeExtensions.powerset(queryExistentialVariables)
+            .filter(_.nonEmpty)
+            .filter(_.exists(ruleConstantWitnessGuess.keySet.contains))
+            .filter((variableSet: Set[Variable]) =>
+              ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.toSet)
+            )
+
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allLocalInstances(extensionalSignature, ruleConstants).flatMap(
             (localInstance: FormalInstance[LocalInstanceTerm]) => {
@@ -120,32 +106,31 @@ object NaiveDPTableSEEnumeration {
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
               val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                coexistentialVariables.asScala.toSet
+                coexistentialVariables.toSet
               )(conjunctiveQuery).get
               val nonConstantNeighbourhood =
                 ConjunctiveQueryExtensions.neighbourhoodVariables(
                   conjunctiveQuery,
-                  coexistentialVariables.asScala.toSet
-                ) -- ruleConstantWitnessGuess.keySet.asScala
+                  coexistentialVariables.toSet
+                ) -- ruleConstantWitnessGuess.keySet
 
               val allLocalWitnessGuesses = allTotalFunctionsBetween(
-                nonConstantNeighbourhood.asJava,
-                localInstance.getActiveTermsInClass(classOf[LocalName])
+                nonConstantNeighbourhood,
+                localInstance.getActiveTermsIn[LocalName]
               )
+
               allLocalWitnessGuesses.flatMap(localWitnessGuess => {
                 val subqueryConstants =
-                  ConjunctiveQueryExtensions.constantsIn(
-                    relevantSubquery
-                  ) -- ruleConstants.asScala
+                  ConjunctiveQueryExtensions.constantsIn(relevantSubquery) -- ruleConstants
 
-                val nonWitnessingActiveLocalNames = SetLikeExtensions.difference(
-                  localInstance.getActiveTermsInClass(classOf[LocalName]),
-                  localWitnessGuess.values
-                )
+                val nonWitnessingActiveLocalNames =
+                  localInstance.getActiveTermsIn[LocalName] -- localWitnessGuess.values
+
                 val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
-                  subqueryConstants.asJava,
+                  subqueryConstants,
                   nonWitnessingActiveLocalNames
                 )
+
                 allQueryConstantEmbeddings.map(queryConstantEmbedding =>
                   new SubqueryEntailmentInstance(
                     ruleConstantWitnessGuess,
@@ -155,17 +140,15 @@ object NaiveDPTableSEEnumeration {
                     queryConstantEmbedding
                   )
                 )
-
               })
-
             }
           )
         )
-
       }
     )
   }
 }
+
 final class NaiveDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
@@ -188,12 +171,11 @@ final class NaiveDPTableSEEnumeration(
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
       val shortcutChaseOneStep = (instance: FormalInstance[LocalInstanceTerm]) => {
         def foo(instance: FormalInstance[LocalInstanceTerm]) = {
-          val localNamesUsableInChildren = SetLikeExtensions.difference(
-            IntStream.range(0, maxArityOfAllPredicatesUsedInRules * 2).mapToObj(
-              LocalInstanceTerm.LocalName(_)
-            ).toList,
-            instance.getActiveTermsInClass(classOf[LocalName])
-          ).asList
+          val localNamesUsableInChildren = {
+            (0 until maxArityOfAllPredicatesUsedInRules * 2)
+              .map(LocalInstanceTerm.LocalName(_))
+              .toSet -- instance.getActiveTermsIn[LocalName]
+          }.toList
 
           // We need to chase the instance with all existential rules
           // while preserving all names in namesToBePreservedDuringChase.
@@ -209,16 +191,13 @@ final class NaiveDPTableSEEnumeration(
               val headAtom = existentialRule.getHeadAtoms()(0)
 
               // A set of existential variables in the existential rule
-              val existentialVariables =
-                Set.copyOf(existentialRule.getHead.getBoundVariables)
+              val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
               // An assignment existential variables into "fresh" local names not used in the parent
               val headVariableHomomorphism =
-                existentialVariables.asScala
+                existentialVariables
                   .zipWithIndex
-                  .map { (variable, index) =>
-                    (variable, localNamesUsableInChildren.get(index))
-                  }
+                  .map { (variable, index) => (variable, localNamesUsableInChildren(index)) }
                   .toMap
 
               val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
@@ -228,25 +207,26 @@ final class NaiveDPTableSEEnumeration(
                 instance
               )
               val extendedJoinResult =
-                bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism.asJava)
+                bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism)
 
               val allSubstitutedHeadAtoms = extendedJoinResult.materializeFunctionFreeAtom(
                 headAtom,
                 LocalInstanceTerm.RuleConstant(_)
               )
-              allSubstitutedHeadAtoms.stream.flatMap(
+
+              allSubstitutedHeadAtoms.flatMap(
                 (substitutedHead: FormalFact[LocalInstanceTerm]) => {
                   def foo(substitutedHead: FormalFact[LocalInstanceTerm])
-                    : Stream[FormalInstance[LocalInstanceTerm]] = {
+                    : IterableOnce[FormalInstance[LocalInstanceTerm]] = {
                     // The instance containing only the head atom produced by the existential rule.
                     // This should be a singleton instance because the existential rule is normal.
                     val headInstance = FormalInstance.of(substitutedHead)
                     val localNamesInHead =
-                      headInstance.getActiveTermsInClass(classOf[LocalName])
+                      headInstance.getActiveTermsIn[LocalName]
 
                     // if names are not preserved, we reject this homomorphism
-                    if (!localNamesInHead.containsAll(namesToBePreservedDuringChase))
-                      return Stream.empty
+                    if (!namesToBePreservedDuringChase.subsetOf(localNamesInHead))
+                      return Set.empty
 
                     // the set of facts in the parent instance that are
                     // "guarded" by the head of the existential rule
@@ -267,7 +247,7 @@ final class NaiveDPTableSEEnumeration(
                       )
 
                     // we only need to keep chasing with extensional signature
-                    Stream.of(childInstance.restrictToSignature(extensionalSignature))
+                    Set(childInstance.restrictToSignature(extensionalSignature))
                   }
                   foo(substitutedHead)
                 }
@@ -275,16 +255,19 @@ final class NaiveDPTableSEEnumeration(
             }
             foo(existentialRule)
           }
+
           val children =
-            saturatedRuleSet.existentialRules.stream.flatMap(allChasesWithRule(_))
-          List.copyOf(children.iterator)
+            saturatedRuleSet.existentialRules.flatMap(allChasesWithRule(_))
+
+          children.toSet
         }
+
         foo(instance)
       }
 
       // we keep chasing until we reach a fixpoint
       SetLikeExtensions.generateFromElementsUntilFixpoint(
-        util.List.of(datalogSaturationEngine.saturateInstance(
+        Set(datalogSaturationEngine.saturateInstance(
           datalogSaturation,
           localInstance,
           LocalInstanceTerm.RuleConstant(_)
@@ -302,29 +285,25 @@ final class NaiveDPTableSEEnumeration(
       // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
       // noinspection OptionalGetWithoutIsPresent
       val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-        instance.coexistentialVariables.asScala.toSet
+        instance.coexistentialVariables.toSet
       )(connectedConjunctiveQuery).get
+
       val instancesWithGuessedVariablesPreserved = chaseLocalInstance(
         instance.localInstance,
         // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
-        SetLikeExtensions.union(
-          instance.localWitnessGuess.values,
-          instance.queryConstantEmbedding.values
-        )
+        instance.localWitnessGuess.values.toSet ++
+          instance.queryConstantEmbedding.values.asScala
       )
 
-      for (chasedInstance <- instancesWithGuessedVariablesPreserved.asScala) {
+      for (chasedInstance <- instancesWithGuessedVariablesPreserved) {
         val localWitnessGuessExtensions = allPartialFunctionsBetween(
           instance.coexistentialVariables,
-          chasedInstance.getActiveTermsInClass(classOf[LocalName])
+          chasedInstance.getActiveTermsIn[LocalName]
         )
 
-        for (
-          localWitnessGuessExtension <-
-            StreamExtensions.intoIterableOnce(localWitnessGuessExtensions).asScala
-        ) {
+        for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
           import scala.util.boundary
 
           boundary:
@@ -337,11 +316,11 @@ final class NaiveDPTableSEEnumeration(
 
             val newlyCoveredVariables = localWitnessGuessExtension.keySet
             val extendedLocalWitnessGuess =
-              instance.localWitnessGuess.asScala.toMap ++ localWitnessGuessExtension.asScala
+              instance.localWitnessGuess.toMap ++ localWitnessGuessExtension
 
             val newlyCoveredAtomsOccurInChasedInstance = {
               val extendedGuess =
-                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms.asScala
+                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms
 
               val newlyCoveredAtoms =
                 util.Arrays.stream(relevantSubquery.getAtoms).filter((atom: Atom) => {
@@ -369,7 +348,7 @@ final class NaiveDPTableSEEnumeration(
               val splitCoexistentialVariables =
                 ConjunctiveQueryExtensions.connectedComponents(
                   relevantSubquery,
-                  instance.coexistentialVariables.asScala.toSet -- newlyCoveredVariables.asScala
+                  instance.coexistentialVariables.toSet -- newlyCoveredVariables
                 )
 
               splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
@@ -377,7 +356,7 @@ final class NaiveDPTableSEEnumeration(
                   ConjunctiveQueryExtensions.neighbourhoodVariables(
                     relevantSubquery,
                     splitCoexistentialVariablesComponent
-                  ) -- instance.ruleConstantWitnessGuess.keySet.asScala
+                  ) -- instance.ruleConstantWitnessGuess.keySet
 
                 // For the same reason as .get() call in the beginning of the method,
                 // this .get() call succeeds.
@@ -389,15 +368,12 @@ final class NaiveDPTableSEEnumeration(
 
                 val inducedInstance = new SubqueryEntailmentInstance(
                   instance.ruleConstantWitnessGuess,
-                  Set.copyOf(splitCoexistentialVariablesComponent.asJava),
+                  splitCoexistentialVariablesComponent,
                   chasedInstance,
-                  MapExtensions.restrictToKeys(
-                    extendedLocalWitnessGuess.asJava,
-                    newNeighbourhood.asJava
-                  ),
+                  MapExtensions.restrictToKeys(extendedLocalWitnessGuess, newNeighbourhood),
                   MapExtensions.restrictToKeys(
                     instance.queryConstantEmbedding,
-                    ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery).asJava
+                    ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery)
                   )
                 )
                 isYesInstance(inducedInstance)
@@ -417,17 +393,17 @@ final class NaiveDPTableSEEnumeration(
       this.table.put(instance, false)
     }
 
-    def getKnownYesInstances: Stream[SubqueryEntailmentInstance] =
-      this.table.entrySet.stream.filter(_.getValue).map(_.getKey)
+    def getKnownYesInstances: IterableOnce[SubqueryEntailmentInstance] =
+      this.table.entrySet.asScala.filter(_.getValue).map(_.getKey)
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
-  ): Stream[SubqueryEntailmentInstance] = {
+  ): IterableOnce[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants
     val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules.asScala.toSet,
+      saturatedRuleSet.allRules.toSet,
       connectedConjunctiveQuery
     ).maxArity
     val dpTable = new DPTable(
@@ -488,7 +464,7 @@ final class NaiveDPTableSEEnumeration(
       extensionalSignature,
       ruleConstants,
       connectedConjunctiveQuery
-    ).forEach(dpTable.fillTableUpto)
+    ).foreach(dpTable.fillTableUpto)
     dpTable.getKnownYesInstances
   }
   override def toString: String =
