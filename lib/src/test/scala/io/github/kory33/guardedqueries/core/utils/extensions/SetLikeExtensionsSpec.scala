@@ -9,69 +9,33 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  ".union" should "be equivalent to Scala's union" in {
-    forAll(minSuccessful(1000)) { (xs: Set[Int], ys: Set[Int]) =>
-      assert(SetLikeExtensions.union(xs.asJava, ys.asJava) == xs.union(ys))
-    }
-  }
-
-  ".intersection" should "be equivalent to Scala's intersect" in {
-    forAll(minSuccessful(1000)) { (xs: Set[Int], ys: Set[Int]) =>
-      assert(SetLikeExtensions.intersection(xs.asJava, ys.asJava) == xs.intersect(ys))
-    }
-  }
-
-  ".nontriviallyIntersects" should "be equivalent to Scala's intersect.nonEmpty" in {
-    forAll(minSuccessful(1000)) { (xs: Set[Int], ys: Set[Int]) =>
-      assert(SetLikeExtensions.nontriviallyIntersects(xs.asJava, ys.asJava) == xs.intersect(
-        ys
-      ).nonEmpty)
-    }
-  }
-
-  ".disjoint" should "be equivalent to Scala's intersect.isEmpty" in {
-    forAll(minSuccessful(1000)) { (xs: Set[Int], ys: Set[Int]) =>
-      assert(SetLikeExtensions.disjoint(xs.asJava, ys.asJava) == xs.intersect(ys).isEmpty)
-    }
-  }
-
-  ".difference" should "be equivalent to Scala's diff" in {
-    forAll(minSuccessful(1000)) { (xs: Set[Int], ys: Set[Int]) =>
-      assert(SetLikeExtensions.difference(xs.asJava, ys.asJava) == xs.diff(ys))
-    }
-  }
-
   val smallSet: Gen[Set[Int]] = Gen.chooseNum(0, 12).map(n => (1 to n).toSet)
 
   ".powerset" should "contain 2^|input| sets" in {
     forAll(smallSet) { (xs: Set[Int]) =>
-      assert(SetLikeExtensions.powerset(xs.asJava).iterator().size == Math.pow(
-        2,
-        xs.size
-      ))
+      assert(SetLikeExtensions.powerset(xs).size == Math.pow(2, xs.size))
     }
   }
 
   ".powerset" should "only produce subsets of input set" in {
     forAll(smallSet) { (xs: Set[Int]) =>
       assert {
-        SetLikeExtensions.powerset(xs.asJava).iterator().forall { set => set.subsetOf(xs) }
+        SetLikeExtensions.powerset(xs).forall { set => set.subsetOf(xs) }
       }
     }
   }
 
   // A test function that will be used for fixpoint computation tests
-  val simpleGeneratorFunction: BigInt => java.util.Set[BigInt] = x =>
+  val simpleGeneratorFunction: BigInt => Set[BigInt] = x =>
     Set(x * 2, x * 3)
       // we need to set some termination condition
       // or else the fixpoint will be infinite
       .filter(y => y.abs < 10000)
-      .asJava
 
   ".generateFromElementsUntilFixpoint" should "output a set containing the initial set" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
       val generatedSet = SetLikeExtensions.generateFromElementsUntilFixpoint(
-        xs.asJava,
+        xs,
         simpleGeneratorFunction
       )
       assert(xs.subsetOf(generatedSet))
@@ -81,11 +45,11 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".generateFromElementsUntilFixpoint" should "output a fixpoint of the function" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
       val generatedSet = SetLikeExtensions.generateFromElementsUntilFixpoint(
-        xs.asJava,
+        xs,
         simpleGeneratorFunction
       ).toSet
       assert(generatedSet == (generatedSet union generatedSet.flatMap(
-        simpleGeneratorFunction.apply(_)
+        simpleGeneratorFunction
       )))
     }
   }
@@ -99,24 +63,22 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       }
 
       val generatedSet = SetLikeExtensions.generateFromElementsUntilFixpoint(
-        xs.asJava,
+        xs,
         simpleGeneratorFunction
       )
-      val expected = leastFixedPointNaively(xs, simpleGeneratorFunction.apply(_).toSet)
+      val expected = leastFixedPointNaively(xs, simpleGeneratorFunction(_).toSet)
 
       assert(generatedSet == expected)
     }
   }
 
-  val simpleSetGeneratorFunction: java.util.Collection[BigInt] => java.util.Set[BigInt] = set =>
-    new java.util.HashSet(
-      set.flatMap(simpleGeneratorFunction.apply(_)).asJavaCollection
-    )
+  val simpleSetGeneratorFunction: Set[BigInt] => Set[BigInt] =
+    _.flatMap(simpleGeneratorFunction)
 
   ".generateFromSetUntilFixpoint" should "output a set containing the initial set" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
       val generatedSet = SetLikeExtensions.generateFromSetUntilFixpoint(
-        xs.asJava,
+        xs,
         simpleSetGeneratorFunction
       )
       assert(xs.subsetOf(generatedSet))
@@ -126,12 +88,10 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".generateFromSetUntilFixpoint" should "output a fixpoint of the function" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
       val generatedSet = SetLikeExtensions.generateFromSetUntilFixpoint(
-        xs.asJava,
+        xs,
         simpleSetGeneratorFunction
       ).toSet
-      assert(generatedSet == (generatedSet union simpleSetGeneratorFunction(
-        generatedSet.asJava
-      )))
+      assert(generatedSet == (generatedSet union simpleSetGeneratorFunction(generatedSet)))
     }
   }
 
@@ -144,12 +104,12 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       }
 
       val generatedSet = SetLikeExtensions.generateFromSetUntilFixpoint(
-        xs.asJava,
+        xs,
         simpleSetGeneratorFunction
       )
       val expected = leastFixedPointNaively(
         xs,
-        s => simpleSetGeneratorFunction.apply(s.asJava).toSet
+        s => simpleSetGeneratorFunction(s).toSet
       )
 
       assert(generatedSet == expected)

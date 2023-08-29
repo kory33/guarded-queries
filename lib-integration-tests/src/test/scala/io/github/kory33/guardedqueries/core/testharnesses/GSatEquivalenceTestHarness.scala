@@ -41,7 +41,7 @@ object GSatEquivalenceTestHarness {
       FormalInstance[Constant](new FilterNestedLoopJoin[Constant]((c: Constant) => c).join(
         gsatQuery,
         gsatSaturatedInstance
-      ).materializeFunctionFreeAtom(answerAtom, (c: Constant) => c))
+      ).materializeFunctionFreeAtom(answerAtom, (c: Constant) => c).toSet)
     }
 
     def answersWithOurRewriting(testInstance: FormalInstance[Constant])
@@ -96,22 +96,20 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
 
     val gsatRewritingStart = System.nanoTime
     val gsatRewriting =
-      DatalogProgram.tryFromDependencies(gsatImplementation.run(
-        List.builder[Dependency]
-          .addAll(ruleQuery.guardedRules.asJava)
-          .addAll(ruleQuery.reducibleQuery.reductionRules)
-          .build
-      ))
+      DatalogProgram.tryFromDependencies(
+        gsatImplementation.run(
+          (ruleQuery.guardedRules.toList ++ ruleQuery.reducibleQuery.reductionRules).asJava
+        ).asScala
+      )
+
     GSatEquivalenceTestHarness.logWithTime(
       "Done Gsat rewriting in " + (System.nanoTime - gsatRewritingStart) + " ns"
     )
 
     val ourRewritingStart = System.nanoTime
     val ourRewriting =
-      rewriterToBeTested.rewrite(
-        ruleQuery.guardedRules.asJava,
-        ruleQuery.reducibleQuery.originalQuery
-      )
+      rewriterToBeTested.rewrite(ruleQuery.guardedRules, ruleQuery.reducibleQuery.originalQuery)
+
     GSatEquivalenceTestHarness.logWithTime(
       "Done guarded-query rewriting in " + (System.nanoTime - ourRewritingStart) + " ns"
     )

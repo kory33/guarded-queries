@@ -13,11 +13,11 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallListOfSmallInts: Gen[List[Int]] =
     Gen.chooseNum(0, 8).flatMap(Gen.listOfN(_, smallInt))
 
-  "result of .productMappedCollectionsToStacks" should "have the size equal to the product of size of input family" in {
+  "result of .productMappedCollectionsToSets" should "have the size equal to the product of size of input family" in {
     forAll(smallListOfSmallInts, minSuccessful(1000)) { xs =>
-      val result = ListExtensions.productMappedCollectionsToStacks(
-        xs.indices.asJava,
-        index => (1 to xs(index)).asJava
+      val result = ListExtensions.productMappedCollectionsToSets(
+        xs.indices.toSet,
+        index => (1 to xs(index)).toSet
       )
 
       // as a special case, the empty collection should result in an iterable containing a single empty stack
@@ -29,9 +29,9 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   "every n-th element in the every reversed output of .productMappedCollectionsToStacks" should
     "be in the collection obtained by applying n-th element in the input list to the input function" in {
       forAll(smallListOfSmallInts, minSuccessful(1000)) { xs =>
-        val result = ListExtensions.productMappedCollectionsToStacks(
-          xs.indices.asJava,
-          index => (1 to xs(index)).asJava
+        val result = ListExtensions.productMappedCollectionsToSets(
+          xs.indices.toSet,
+          index => (1 to xs(index)).toSet
         )
 
         assert {

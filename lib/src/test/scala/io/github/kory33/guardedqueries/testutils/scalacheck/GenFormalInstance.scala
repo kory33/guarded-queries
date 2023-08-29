@@ -25,10 +25,8 @@ object GenFormalInstance {
 
     for {
       tupleSet <- GenSet.chooseSubset(buildTuples(Nil).toSet)
-      factSet = tupleSet
-        .map(tuple => List.copyOf(tuple.asJavaCollection))
-        .map(javaTuple => new FormalFact[Constant](predicate, javaTuple))
-    } yield FormalInstance[Constant](factSet.asJava)
+      factSet = tupleSet.map(FormalFact(predicate, _))
+    } yield FormalInstance(factSet)
   }
 
   def genFormalInstanceContainingPredicates(predicates: Set[Predicate],
@@ -37,7 +35,7 @@ object GenFormalInstance {
     import TraverseListGen.traverse
     predicates.toList
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
-      .map { instanceList => FormalInstance[Constant](instanceList.flatMap(_.facts).asJava) }
+      .map { instanceList => FormalInstance(instanceList.flatMap(_.facts).toSet) }
   }
 }
 
@@ -45,6 +43,6 @@ object ShrinkFormalInstance {
   given Shrink[FormalInstance[Constant]] = Shrink { instance =>
     ShrinkSet.intoSubsets[FormalFact[Constant]]
       .shrink(instance.facts.toSet)
-      .map(factSet => FormalInstance[Constant](factSet.asJava))
+      .map(FormalInstance(_))
   }
 }

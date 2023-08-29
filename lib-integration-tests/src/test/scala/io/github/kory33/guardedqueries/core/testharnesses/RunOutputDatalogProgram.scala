@@ -63,7 +63,7 @@ object RunOutputDatalogProgram {
       FilterNestedLoopJoin[TermAlphabet](includeConstantIntoAlphabet).join(
         rewrittenGoalQuery,
         saturatedInstance
-      ).materializeFunctionFreeAtom(answerAtom, includeConstantIntoAlphabet)
+      ).materializeFunctionFreeAtom(answerAtom, includeConstantIntoAlphabet).toSet
     )
   }
 }

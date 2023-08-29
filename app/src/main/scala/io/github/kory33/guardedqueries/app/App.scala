@@ -139,7 +139,7 @@ object App {
           GSat.getInstance().run(currentState.registeredRulesAsDependencies.asJava)
         log("Done computing atomic rewriting of registered rules")
         log("Rewritten rules:")
-        rewrittenRules.foreach(rule => log("  " + formatGTGD(rule)))
+        rewrittenRules.asScala.foreach(rule => log("  " + formatGTGD(rule)))
         currentState
       case AppCommand.Rewrite(query, implChoice) =>
         val rewriter = implChoice match
@@ -151,8 +151,7 @@ object App {
         log("  using " + rewriter + ", with registered rules:")
         currentState.registeredRules.foreach(rule => log("  " + formatGTGD(rule)))
         val beginRewriteNanoTime = System.nanoTime()
-        val rewriteResult =
-          rewriter.rewrite(currentState.registeredRules.asJavaCollection, query)
+        val rewriteResult = rewriter.rewrite(currentState.registeredRules, query)
         val rewriteTimeNanos = System.nanoTime() - beginRewriteNanoTime
         log("Done rewriting query in " + rewriteTimeNanos + " nanoseconds.")
         log("Minimizing the result...")
@@ -166,11 +165,11 @@ object App {
         log("Rewritten query:")
         log("  Goal atom: " + minimizedRewriteResult.goal)
         log("  Atomic rewriting part:")
-        minimizedRewriteResult.inputRuleSaturationRules.rules.forEach(rule =>
+        minimizedRewriteResult.inputRuleSaturationRules.rules.foreach(rule =>
           log("    " + formatDatalogRule(rule))
         )
         log("  Subgoal derivation part:")
-        minimizedRewriteResult.subgoalAndGoalDerivationRules.rules.forEach(rule =>
+        minimizedRewriteResult.subgoalAndGoalDerivationRules.rules.foreach(rule =>
           log("    " + formatDatalogRule(rule))
         )
 

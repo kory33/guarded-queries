@@ -35,7 +35,7 @@ import java.util
  */
 case class GTGDReducibleConjunctiveQuery(
   originalQuery: ConjunctiveQuery,
-  reductionRules: util.Collection[_ <: GTGD],
+  reductionRules: Set[GTGD],
   existentialFreeQuery: ConjunctiveQuery
 ) {
   if (existentialFreeQuery.getBoundVariables.length != 0)

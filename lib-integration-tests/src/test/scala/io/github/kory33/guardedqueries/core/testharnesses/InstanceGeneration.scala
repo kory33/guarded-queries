@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import com.google.common.collect.{List, Map, Set}
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
@@ -16,20 +15,19 @@ object InstanceGeneration {
   def allFactsOver(predicate: Predicate,
                    constantsToUse: Set[Constant]
   ): FormalInstance[Constant] = {
-    val predicateArgIndices =
-      List.copyOf(IntStream.range(0, predicate.getArity).iterator)
+    val predicateArgIndices = (0 until predicate.getArity)
 
     val allFormalFacts = MappingStreams.allTotalFunctionsBetween(
-      predicateArgIndices,
-      constantsToUse.asJava
-    ).map((mapping: Map[Integer, Constant]) =>
+      predicateArgIndices.toSet,
+      constantsToUse
+    ).map(mapping =>
       new FormalFact[Constant](
         predicate,
-        List.copyOf(predicateArgIndices.stream.map(mapping.get).iterator)
+        predicateArgIndices.map(mapping(_)).toList
       )
     )
 
-    FormalInstance[Constant](allFormalFacts.iterator)
+    FormalInstance[Constant](allFormalFacts.toSet)
   }
 
   def randomInstanceOver(signature: FunctionFreeSignature): FormalInstance[Constant] = {

@@ -7,7 +7,6 @@ import uk.ac.ox.cs.pdq.fol.{Constant, Dependency, Formula}
 
 import java.util
 import java.util.stream.Stream
-import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import scala.jdk.CollectionConverters.*
 
 class SaturatedRuleSet[RuleClass <: GTGD](

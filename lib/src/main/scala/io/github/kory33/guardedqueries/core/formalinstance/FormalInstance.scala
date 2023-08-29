@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.formalinstance
 
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
-import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Term
 

@@ -70,6 +70,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         val firstMatch = SingleAtomMatching
           .allMatches(query, instance, c => c)
           .materializeFunctionFreeAtom(query, c => c)
+          .toSet
 
         val secondMatch = SingleAtomMatching
           .allMatches(query, FormalInstance(firstMatch), c => c)
@@ -83,7 +84,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     atom <- genSmallAtom
     variablesInAtom = atom.getVariables.toSet.toList
     homomorphism <- Gen.listOfN(variablesInAtom.size, GenFormula.genConstant(10))
-  } yield (atom, new HomomorphicMapping[Constant](List.copyOf(variablesInAtom.asJava), List.copyOf(homomorphism.asJava)))
+  } yield (atom, HomomorphicMapping(variablesInAtom, homomorphism))
 
   it should "find every valid answer" in {
     // We test that for every pair of query and a homomorphism,
@@ -103,9 +104,12 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       case (atom, homomorphism) =>
         val instanceContainingJustTheMaterializedAtom =
           FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom, c => c))
+
         val matches = SingleAtomMatching
           .allMatches(atom, instanceContainingJustTheMaterializedAtom, c => c)
           .materializeFunctionFreeAtom(atom, c => c)
+          .toSet
+
         val matchInstance = FormalInstance(matches)
 
         assert(matchInstance == instanceContainingJustTheMaterializedAtom)

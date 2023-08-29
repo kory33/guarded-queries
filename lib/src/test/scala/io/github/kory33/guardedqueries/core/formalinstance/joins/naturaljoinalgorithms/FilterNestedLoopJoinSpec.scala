@@ -59,7 +59,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
           .allHomomorphisms
           .foreach { homomorphism =>
             val materializedInstance =
-              homomorphism.materializeFunctionFreeAtoms(query.getAtoms.toList.asJava, c => c)
+              homomorphism.materializeFunctionFreeAtoms(query.getAtoms.toSet, c => c)
             assert(instance.isSuperInstanceOf(materializedInstance))
           }
     }
@@ -71,10 +71,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
     variablesInQuery = query.getFreeVariables.toSet
     homomorphism <-
       Gen.listOfN(variablesInQuery.size, GenFormula.genConstant(15)).map { constants =>
-        new HomomorphicMapping(
-          List.copyOf(variablesInQuery.toList.asJava),
-          List.copyOf(constants.asJava)
-        )
+        HomomorphicMapping(variablesInQuery.toList, constants)
       }
   } yield (query, homomorphism)
 
@@ -91,7 +88,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
     forAll(genQueryAndHomomorphism, minSuccessful(3000)) {
       case (query, originalHomomorphism) =>
         val materializedInstance = originalHomomorphism
-          .materializeFunctionFreeAtoms(query.getAtoms.toList.asJava, c => c)
+          .materializeFunctionFreeAtoms(query.getAtoms.toSet, c => c)
 
         assert {
           new FilterNestedLoopJoin(c => c)

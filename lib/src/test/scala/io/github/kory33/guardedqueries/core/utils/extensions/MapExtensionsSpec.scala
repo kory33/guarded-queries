@@ -9,21 +9,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  ".composeWithFunction" should "be equivalent to Scala's view.mapValues.toMap" in {
-    forAll(minSuccessful(1000)) { (xs: Map[String, Int]) =>
-      assert {
-        MapExtensions.composeWithFunction(
-          xs.asJava,
-          (x: Int) => x * 3
-        ) == xs.view.mapValues(_ * 3).toMap
-      }
-    }
-  }
 
   "every entry in .preimages(map, ys)" should "have a value all of whose elements are mapped to the key by map" in {
     forAll(minSuccessful(1000)) { (map: Map[String, Int], ys: Set[Int]) =>
       assert {
-        MapExtensions.preimages(map.asJava, ys.asJava).forall {
+        MapExtensions.preimages(map, ys).forall {
           case (key, value) =>
             value.forall(map(_) == key)
         }
@@ -33,7 +23,7 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   "every value mapped by map to some value in the range ys" should "appear in some value in preimages(map, ys)" in {
     forAll(minSuccessful(1000)) { (map: Map[String, Int], ys: Set[Int]) =>
-      val preimageMap = MapExtensions.preimages(map.asJava, ys.asJava)
+      val preimageMap = MapExtensions.preimages(map, ys)
 
       assert {
         map.keySet
@@ -44,16 +34,6 @@ class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
                 values.contains(value)
             }
           }
-      }
-    }
-  }
-
-  ".restrictToKeys" should "be equivalent to Scala's filterKeys(contains).toMap" in {
-    forAll(minSuccessful(1000)) { (xs: Map[Int, String], ys: Set[Int]) =>
-      assert {
-        MapExtensions.restrictToKeys(xs.asJava, ys.asJava) == xs.view.filterKeys(
-          ys.contains
-        ).toMap
       }
     }
   }

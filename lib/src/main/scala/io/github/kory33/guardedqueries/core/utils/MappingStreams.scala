@@ -3,7 +3,6 @@ package io.github.kory33.guardedqueries.core.utils
 import com.google.common.collect.ImmutableBiMap
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
-import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
 import org.apache.commons.lang3.tuple.Pair
 import java.util
 import java.util.Optional
