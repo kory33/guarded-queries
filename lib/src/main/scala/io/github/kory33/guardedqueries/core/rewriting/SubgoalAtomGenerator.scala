@@ -1,12 +1,11 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
 import io.github.kory33.guardedqueries.core.utils.CachingFunction
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions
-import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions
 import uk.ac.ox.cs.pdq.fol._
 
 import java.util
 import java.util.concurrent.atomic.AtomicInteger
+import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 
 /**
@@ -58,7 +57,7 @@ class SubgoalAtomGenerator(
         s"${intentionalPredicatePrefix}_${predicateGeneratingCounter.getAndIncrement}"
       val subgoalPredicate = Predicate.create(symbol, neighbourhood.size)
 
-      Atom.create(subgoalPredicate, VariableSetExtensions.sortBySymbol(neighbourhood): _*)
+      Atom.create(subgoalPredicate, neighbourhood.sortBySymbol: _*)
     }
 
   /**

@@ -25,6 +25,8 @@ import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
 /**
  * An implementation of subquery entailment enumeration using a DP table.
@@ -42,9 +44,10 @@ object NaiveDPTableSEEnumeration {
     // maxArityOfExtensionalSignature as the maximal arity, we only need to
     // consider a powerset of {0, ..., 2 * maxArityOfExtensionalSignature - 1}
     // with size at most maxArityOfExtensionalSignature.
-    val allActiveLocalNames = SetLikeExtensions.powerset(
-      (0 until maxArityOfExtensionalSignature * 2).toSet
-    ).filter(_.size <= maxArityOfExtensionalSignature)
+    val allActiveLocalNames = (0 until maxArityOfExtensionalSignature * 2)
+      .toSet
+      .powerset
+      .filter(_.size <= maxArityOfExtensionalSignature)
 
     allActiveLocalNames.flatMap((localNameSet: Set[Int]) => {
       def foo(localNameSet: Set[Int]) = {
@@ -63,7 +66,7 @@ object NaiveDPTableSEEnumeration {
               }
             ).toSet
 
-          SetLikeExtensions.powerset(allFormalFactsOverThePredicate).map(FormalInstance(_))
+          allFormalFactsOverThePredicate.powerset.map(FormalInstance(_))
         }
 
         val allInstancesOverLocalNameSet = predicates.toList
@@ -89,13 +92,10 @@ object NaiveDPTableSEEnumeration {
 
     allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
       (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
-        val allCoexistentialVariableSets =
-          SetLikeExtensions.powerset(queryExistentialVariables)
-            .filter(_.nonEmpty)
-            .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
-            .filter((variableSet: Set[Variable]) =>
-              conjunctiveQuery.connects(variableSet.toSet)
-            )
+        val allCoexistentialVariableSets = queryExistentialVariables.powerset
+          .filter(_.nonEmpty)
+          .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
+          .filter(variableSet => conjunctiveQuery.connects(variableSet.toSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allLocalInstances(extensionalSignature, ruleConstants).flatMap(
@@ -198,10 +198,7 @@ final class NaiveDPTableSEEnumeration(
 
               val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
                 LocalInstanceTerm.RuleConstant(_)
-              ).join(
-                TGDExtensions.bodyAsCQ(existentialRule),
-                instance
-              )
+              ).join(existentialRule.bodyAsCQ, instance)
               val extendedJoinResult =
                 bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism)
 
@@ -262,14 +259,11 @@ final class NaiveDPTableSEEnumeration(
       }
 
       // we keep chasing until we reach a fixpoint
-      SetLikeExtensions.generateFromElementsUntilFixpoint(
-        Set(datalogSaturationEngine.saturateInstance(
-          datalogSaturation,
-          localInstance,
-          LocalInstanceTerm.RuleConstant(_)
-        )),
-        shortcutChaseOneStep.apply(_)
-      )
+      Set(datalogSaturationEngine.saturateInstance(
+        datalogSaturation,
+        localInstance,
+        LocalInstanceTerm.RuleConstant(_)
+      )).generateFromElementsUntilFixpoint(shortcutChaseOneStep.apply(_))
     }
 
     /**

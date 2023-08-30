@@ -1,11 +1,12 @@
 package io.github.kory33.guardedqueries.core.utils
 
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
-import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 
 import java.util
 import java.util.stream.IntStream
 import scala.collection.IterableOnce
+
+import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
 
 object MappingStreams {
   def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] = {
@@ -70,9 +71,7 @@ object MappingStreams {
   }
 
   def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] =
-    SetLikeExtensions
-      .powerset(domain)
-      .flatMap(allTotalFunctionsBetween(_, range).toSet)
+    domain.powerset.flatMap(allTotalFunctionsBetween(_, range))
 
   def allInjectiveTotalFunctionsBetween[K, V](
     domain: Set[K],

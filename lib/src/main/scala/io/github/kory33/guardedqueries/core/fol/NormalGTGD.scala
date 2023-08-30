@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.fol
 
-import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Variable}
 
@@ -74,7 +74,7 @@ object NormalGTGD {
     val splitExistentialRules =
       existentialRules.zipWithIndex.flatMap { (originalRule, index) =>
         val intermediaryPredicateVariables =
-          (TGDExtensions.frontierVariables(originalRule) ++ originalRule.getExistential).toArray
+          (originalRule.frontierVariables ++ originalRule.getExistential).toArray
 
         val intermediaryPredicate: Predicate = {
           val predicateName =

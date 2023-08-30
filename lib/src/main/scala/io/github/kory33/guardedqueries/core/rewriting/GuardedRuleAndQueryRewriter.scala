@@ -10,15 +10,18 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTer
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
-import io.github.kory33.guardedqueries.core.utils.extensions.*
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+
+import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.StringSetExtensions.given
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded
@@ -196,7 +199,7 @@ case class GuardedRuleAndQueryRewriter(
 
       Atom.create(
         goalPredicate,
-        VariableSetExtensions.sortBySymbol(queryFreeVariables.toSet): _*
+        queryFreeVariables.toSet.sortBySymbol: _*
       )
     }
 
@@ -211,45 +214,47 @@ case class GuardedRuleAndQueryRewriter(
       subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms)
     ).toList
 
-    val subgoalGlueingRules = SetLikeExtensions.powerset(
-      boundVariableConnectedQuery.getBoundVariables.toSet
-    ).map(existentialWitnessCandidate => {
+    val subgoalGlueingRules = boundVariableConnectedQuery
+      .getBoundVariables
+      .toSet
+      .powerset
+      .map(existentialWitnessCandidate => {
 
-      // A single existentialWitnessCandidate is a set of variables that the rule
-      // (which we are about to produce) expects to be existentially satisfied.
-      //
-      // We call the complement of existentialWitnessCandidate as baseWitnessVariables,
-      // since we expect (within the rule we are about to produce) those variables to be witnessed
-      // by values in the base instance.
-      //
-      // The rule that we need to produce, therefore, will be of the form
-      //   (subquery of boundVariableConnectedQuery strongly induced by baseWitnessVariables,
-      //    except we turn all existential quantifications to universal quantifications)
-      // ∧ (for each connected component V of existentialWitnessCandidate,
-      //    a subgoal atom corresponding to V)
-      //  → queryGoalAtom
-      //
-      // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
-      // the second conjunct "neighbourhoodsSubgoals".
-      val baseWitnessVariables =
-        boundVariableConnectedQuery.allVariables -- existentialWitnessCandidate
+        // A single existentialWitnessCandidate is a set of variables that the rule
+        // (which we are about to produce) expects to be existentially satisfied.
+        //
+        // We call the complement of existentialWitnessCandidate as baseWitnessVariables,
+        // since we expect (within the rule we are about to produce) those variables to be witnessed
+        // by values in the base instance.
+        //
+        // The rule that we need to produce, therefore, will be of the form
+        //   (subquery of boundVariableConnectedQuery strongly induced by baseWitnessVariables,
+        //    except we turn all existential quantifications to universal quantifications)
+        // ∧ (for each connected component V of existentialWitnessCandidate,
+        //    a subgoal atom corresponding to V)
+        //  → queryGoalAtom
+        //
+        // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
+        // the second conjunct "neighbourhoodsSubgoals".
+        val baseWitnessVariables =
+          boundVariableConnectedQuery.allVariables -- existentialWitnessCandidate
 
-      val baseWitnessJoinConditions =
-        boundVariableConnectedQuery
-          .strictlyInduceSubqueryByVariables(baseWitnessVariables)
-          .map(_.getAtoms)
-          .getOrElse(Array[Atom]())
+        val baseWitnessJoinConditions =
+          boundVariableConnectedQuery
+            .strictlyInduceSubqueryByVariables(baseWitnessVariables)
+            .map(_.getAtoms)
+            .getOrElse(Array[Atom]())
 
-      val neighbourhoodsSubgoals = boundVariableConnectedQuery
-        .connectedComponentsOf(existentialWitnessCandidate.toSet)
-        .map(subgoalAtoms.apply)
+        val neighbourhoodsSubgoals = boundVariableConnectedQuery
+          .connectedComponentsOf(existentialWitnessCandidate.toSet)
+          .map(subgoalAtoms.apply)
 
-      new DatalogRule(
-        baseWitnessJoinConditions ++ neighbourhoodsSubgoals,
-        Array[Atom](queryGoalAtom)
-      )
+        new DatalogRule(
+          baseWitnessJoinConditions ++ neighbourhoodsSubgoals,
+          Array[Atom](queryGoalAtom)
+        )
 
-    }).toList
+      }).toList
 
     GuardedRuleAndQueryRewriter.BoundVariableConnectedComponentRewriteResult(
       queryGoalAtom,
@@ -269,13 +274,15 @@ case class GuardedRuleAndQueryRewriter(
     val extensionalSignature =
       FunctionFreeSignature.encompassingRuleQuery(rules.toSet, query)
 
-    val intentionalPredicatePrefix = StringSetExtensions.freshPrefix(
-      extensionalSignature.predicateNames, // stands for Intentional Predicates
-      "IP"
-    )
+    val intentionalPredicatePrefix = extensionalSignature.predicateNames
+      .freshPrefixStartingWith(
+        // stands for Intentional Predicates
+        "IP"
+      )
 
     val normalizedRules = NormalGTGD.normalize(
-      rules, // stands for Normalization-Intermediate predicates
+      rules,
+      // stands for Normalization-Intermediate predicates
       intentionalPredicatePrefix + "_NI"
     )
 

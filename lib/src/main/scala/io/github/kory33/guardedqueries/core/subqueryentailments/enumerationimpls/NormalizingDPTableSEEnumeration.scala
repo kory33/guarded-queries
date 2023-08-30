@@ -26,6 +26,8 @@ import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
 /**
  * An implementation of subquery entailment enumeration using a DP table plus a simple
@@ -83,9 +85,7 @@ object NormalizingDPTableSEEnumeration {
         )
       })
 
-      SetLikeExtensions
-        .powerset(allFormalFactsOverThePredicate.toSet)
-        .map(FormalInstance(_))
+      allFormalFactsOverThePredicate.toSet.powerset.map(FormalInstance(_))
     }
 
     val allInstancesOverLocalNameSet = predicates.toList
@@ -108,14 +108,10 @@ object NormalizingDPTableSEEnumeration {
     allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
       (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
 
-        val allCoexistentialVariableSets =
-          SetLikeExtensions
-            .powerset(queryExistentialVariables)
-            .filter(_.nonEmpty)
-            .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
-            .filter((variableSet: Set[Variable]) =>
-              conjunctiveQuery.connects(variableSet.toSet)
-            )
+        val allCoexistentialVariableSets = queryExistentialVariables.powerset
+          .filter(_.nonEmpty)
+          .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
+          .filter(variableSet => conjunctiveQuery.connects(variableSet.toSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(
@@ -216,10 +212,7 @@ final class NormalizingDPTableSEEnumeration(
 
               val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm](
                 LocalInstanceTerm.RuleConstant(_)
-              ).join(
-                TGDExtensions.bodyAsCQ(existentialRule),
-                instance
-              )
+              ).join(existentialRule.bodyAsCQ, instance)
 
               // because we are "reusing" local names, we can no longer
               // uniformly extend homomorphisms to existential variables
@@ -233,7 +226,7 @@ final class NormalizingDPTableSEEnumeration(
                   // The set of local names that are inherited from the parent instance
                   // to the child instance.
                   val inheritedLocalNames =
-                    TGDExtensions.frontierVariables(existentialRule).map(bodyHomomorphism.apply)
+                    existentialRule.frontierVariables.map(bodyHomomorphism.apply)
 
                   // Names we can reuse (i.e. assign to existential variables in the rule)
                   // in the child instance. All names in this set should be considered distinct
@@ -303,14 +296,11 @@ final class NormalizingDPTableSEEnumeration(
       }
 
       // we keep chasing until we reach a fixpoint
-      SetLikeExtensions.generateFromElementsUntilFixpoint(
-        Set(datalogSaturationEngine.saturateInstance(
-          datalogSaturation,
-          localInstance,
-          LocalInstanceTerm.RuleConstant(_)
-        )),
-        shortcutChaseOneStep(_)
-      )
+      Set(datalogSaturationEngine.saturateInstance(
+        datalogSaturation,
+        localInstance,
+        LocalInstanceTerm.RuleConstant(_)
+      )).generateFromElementsUntilFixpoint(shortcutChaseOneStep(_))
     }
 
     /**

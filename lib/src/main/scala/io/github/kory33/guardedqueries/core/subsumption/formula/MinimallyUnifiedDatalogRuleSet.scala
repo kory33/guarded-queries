@@ -5,11 +5,12 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet.VariableOrConstant
-import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Term
 import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant}
 import uk.ac.ox.cs.pdq.fol.{Variable => PDQVariable}
+
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
 /**
  * An implementation of {@link MaximallySubsumingTGDSet} that keeps track of a set of datalog
@@ -37,7 +38,7 @@ final class MinimallyUnifiedDatalogRuleSet
     val joinAlgorithm = new FilterNestedLoopJoin(VariableOrConstant.Constant(_))
 
     joinAlgorithm.join(
-      TGDExtensions.bodyAsCQ(first),
+      first.bodyAsCQ,
       MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getBodyAtoms)
     ).allHomomorphisms.exists(homomorphism => {
       val substitutedFirstHead = homomorphism.materializeFunctionFreeAtoms(
