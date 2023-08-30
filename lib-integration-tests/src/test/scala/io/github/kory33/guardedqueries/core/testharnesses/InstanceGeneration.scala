@@ -3,7 +3,7 @@ package io.github.kory33.guardedqueries.core.testharnesses
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import io.github.kory33.guardedqueries.core.utils.MappingStreams
+import io.github.kory33.guardedqueries.core.utils.FunctionSpaces
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
@@ -14,7 +14,7 @@ object InstanceGeneration {
   ): FormalInstance[Constant] = {
     val predicateArgIndices = 0 until predicate.getArity
 
-    val allFormalFacts = MappingStreams.allTotalFunctionsBetween(
+    val allFormalFacts = FunctionSpaces.allTotalFunctionsBetween(
       predicateArgIndices.toSet,
       constantsToUse
     ).map(mapping =>

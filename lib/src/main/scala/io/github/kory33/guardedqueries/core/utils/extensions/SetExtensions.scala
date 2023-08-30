@@ -3,7 +3,7 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-object SetLikeExtensions {
+object SetExtensions {
   given Extension: AnyRef with
     extension [T](set: Set[T])
       /**

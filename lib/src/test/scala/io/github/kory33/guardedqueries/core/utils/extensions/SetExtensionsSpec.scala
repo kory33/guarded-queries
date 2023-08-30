@@ -5,8 +5,8 @@ import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  import SetLikeExtensions.given
+class SetExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  import SetExtensions.given
 
   val smallSet: Gen[Set[Int]] = Gen.chooseNum(0, 12).map(n => (1 to n).toSet)
 

@@ -17,7 +17,7 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.{
 }
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant
-import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
+import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
@@ -30,7 +30,7 @@ import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
-import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
 /**

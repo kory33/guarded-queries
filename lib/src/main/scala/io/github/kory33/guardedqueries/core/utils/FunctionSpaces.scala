@@ -7,9 +7,9 @@ import java.util.stream.IntStream
 import scala.collection.IterableOnce
 import scala.util.boundary
 
-import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 
-object MappingStreams {
+object FunctionSpaces {
   def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] = {
     val orderedDomain = domain.toList
     val orderedRange = range.toList

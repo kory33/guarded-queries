@@ -17,7 +17,7 @@ import uk.ac.ox.cs.pdq.fol.*
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 
-import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
