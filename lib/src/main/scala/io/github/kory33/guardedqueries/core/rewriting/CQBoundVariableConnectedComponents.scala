@@ -5,7 +5,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExt
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Variable
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 
 /**
  * A class of objects representing the decomposition of a conjunctive query into

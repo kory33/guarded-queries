@@ -3,6 +3,7 @@ package io.github.kory33.guardedqueries.core.fol
 import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Formula, Predicate}
+import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions.given
 
 /**
  * An object of this class represents a first-order logic signature with
@@ -12,9 +13,7 @@ import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Formula, Predicate}
  */
 object FunctionFreeSignature {
   def fromFormulas(formulas: Set[Formula]) =
-    new FunctionFreeSignature(formulas.flatMap(
-      FormulaExtensions.predicatesAppearingIn
-    ))
+    new FunctionFreeSignature(formulas.flatMap(_.allPredicates))
 
   def encompassingRuleQuery(rules: Set[GTGD], query: ConjunctiveQuery): FunctionFreeSignature =
     FunctionFreeSignature.fromFormulas(Set(query: Formula) ++ rules)

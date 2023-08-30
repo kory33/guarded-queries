@@ -37,6 +37,13 @@ object BijectiveMap {
 
   given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.toMap
 
+  given Extensions: {} with
+    extension [K, V](bmap: BijectiveMap[K, V])
+      def restrictToKeys(keys: Set[K]): BijectiveMap[K, V] =
+        import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
+        // this call to .get never throws since a restriction of an injective map is again injective
+        BijectiveMap.tryFromInjectiveMap(bmap.toMap.restrictToKeys(keys)).get
+
   /**
    * Construct a bijective map from an injective map. If the given map is not injective, this
    * method returns a `None`.

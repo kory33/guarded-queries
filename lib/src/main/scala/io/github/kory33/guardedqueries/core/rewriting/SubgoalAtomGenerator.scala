@@ -7,8 +7,7 @@ import uk.ac.ox.cs.pdq.fol._
 
 import java.util
 import java.util.concurrent.atomic.AtomicInteger
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictNeighbourhoodOf
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connects
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 
 /**
  * A mapping that sends a set V of connected variables to an atom that asserts that the query

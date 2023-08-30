@@ -11,10 +11,9 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.jdk.CollectionConverters.*
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.filterAtoms
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connectedComponentsOf
 
 class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  import ConjunctiveQueryExtensions.given
   import io.github.kory33.guardedqueries.testutils.scalacheck.ShrinkFormula.given
 
   val largeCQ: Gen[ConjunctiveQuery] = GenFormula.genConjunctiveQuery(50, 10)

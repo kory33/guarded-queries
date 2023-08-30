@@ -23,10 +23,9 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.jdk.CollectionConverters._
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.subqueryRelevantToVariables
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictNeighbourhoodOf
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connects
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connectedComponentsOf
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 
 /**
  * An implementation of subquery entailment enumeration using a DP table together with efficient
@@ -85,10 +84,9 @@ object DFSNormalizingDPTableSEEnumeration {
         .map(FormalInstance(_))
     }
 
-    val allInstancesOverLocalNameSet = ListExtensions.productMappedIterablesToLists(
-      predicates.toList,
-      allLocalInstancesOverThePredicate
-    ).map(FormalInstance.unionAll)
+    val allInstancesOverLocalNameSet = predicates.toList
+      .productMappedIterablesToLists(allLocalInstancesOverThePredicate)
+      .map(FormalInstance.unionAll)
 
     allInstancesOverLocalNameSet.filter(instance =>
       isZeroStartingContiguousLocalNameSet(instance.getActiveTermsIn[LocalName])
@@ -100,7 +98,7 @@ object DFSNormalizingDPTableSEEnumeration {
     ruleConstants: Set[Constant],
     conjunctiveQuery: ConjunctiveQuery
   ) = {
-    val queryVariables = ConjunctiveQueryExtensions.allVariables(conjunctiveQuery)
+    val queryVariables = conjunctiveQuery.allVariables
     val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
 
     allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
@@ -136,10 +134,7 @@ object DFSNormalizingDPTableSEEnumeration {
               )
 
               allLocalWitnessGuesses.flatMap(localWitnessGuess => {
-                val subqueryConstants =
-                  ConjunctiveQueryExtensions.allConstants(
-                    relevantSubquery
-                  ) -- ruleConstants
+                val subqueryConstants = relevantSubquery.allConstants -- ruleConstants
 
                 val nonWitnessingActiveLocalNames =
                   localInstance.getActiveTermsIn[LocalName] --
@@ -378,11 +373,8 @@ final class DFSNormalizingDPTableSEEnumeration(
                 instance.ruleConstantWitnessGuess,
                 splitCoexistentialVariablesComponent,
                 instance.localInstance,
-                MapExtensions.restrictToKeys(extendedLocalWitnessGuess, newNeighbourhood),
-                MapExtensions.restrictToKeys(
-                  instance.queryConstantEmbedding,
-                  ConjunctiveQueryExtensions.allConstants(newRelevantSubquery)
-                )
+                extendedLocalWitnessGuess.restrictToKeys(newNeighbourhood),
+                instance.queryConstantEmbedding.restrictToKeys(newRelevantSubquery.allConstants)
               )
 
               isYesInstance(inducedInstance)

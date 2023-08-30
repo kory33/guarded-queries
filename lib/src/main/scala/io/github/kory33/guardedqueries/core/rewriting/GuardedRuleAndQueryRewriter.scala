@@ -17,8 +17,8 @@ import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connectedComponentsOf
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded
@@ -87,7 +87,7 @@ case class GuardedRuleAndQueryRewriter(
     // Mapping of local names to their preimages in the neighbourhood mapping.
     // Contains all active local names in the key set,
     // and the range of the mapping is a partition of domain of localWitnessGuess.
-    val neighbourhoodPreimages = MapExtensions.preimages(localWitnessGuess, activeLocalNames)
+    val neighbourhoodPreimages = localWitnessGuess.preimages(activeLocalNames)
 
     // unification of variables mapped by localWitnessGuess to fresh variables
     val unification: Map[Variable, Variable] = {
@@ -232,8 +232,7 @@ case class GuardedRuleAndQueryRewriter(
       // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
       // the second conjunct "neighbourhoodsSubgoals".
       val baseWitnessVariables =
-        ConjunctiveQueryExtensions.allVariables(boundVariableConnectedQuery) --
-          existentialWitnessCandidate
+        boundVariableConnectedQuery.allVariables -- existentialWitnessCandidate
 
       val baseWitnessJoinConditions =
         boundVariableConnectedQuery
