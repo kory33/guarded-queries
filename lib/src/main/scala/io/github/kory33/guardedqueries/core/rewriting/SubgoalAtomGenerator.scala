@@ -7,6 +7,8 @@ import uk.ac.ox.cs.pdq.fol._
 
 import java.util
 import java.util.concurrent.atomic.AtomicInteger
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictNeighbourhoodOf
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connects
 
 /**
  * A mapping that sends a set V of connected variables to an atom that asserts that the query
@@ -41,7 +43,7 @@ class SubgoalAtomGenerator(
       // by the contract, we can (and should) reject variable sets that
       //  - are not connected, or
       //  - contain non-bound variables
-      if (!ConjunctiveQueryExtensions.isConnected(boundVariableConnectedQuery, variableSet))
+      if (!boundVariableConnectedQuery.connects(variableSet))
         throw new IllegalArgumentException(
           s"The given set of variables ($variableSet) is not connected in the given query ($boundVariableConnectedQuery)."
         )
@@ -51,10 +53,7 @@ class SubgoalAtomGenerator(
           s"The given set of variables ($variableSet) contains non-bound variables in the given query ($boundVariableConnectedQuery)."
         )
 
-      val neighbourhood = ConjunctiveQueryExtensions.neighbourhoodVariables(
-        boundVariableConnectedQuery,
-        variableSet
-      )
+      val neighbourhood = boundVariableConnectedQuery.strictNeighbourhoodOf(variableSet)
 
       val symbol =
         s"${intentionalPredicatePrefix}_${predicateGeneratingCounter.getAndIncrement}"

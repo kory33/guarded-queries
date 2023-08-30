@@ -17,6 +17,8 @@ import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connectedComponentsOf
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded
@@ -230,18 +232,18 @@ case class GuardedRuleAndQueryRewriter(
       // In the following code, we call the first conjunct of the rule "baseWitnessJoinConditions",
       // the second conjunct "neighbourhoodsSubgoals".
       val baseWitnessVariables =
-        ConjunctiveQueryExtensions.variablesIn(boundVariableConnectedQuery) --
+        ConjunctiveQueryExtensions.allVariables(boundVariableConnectedQuery) --
           existentialWitnessCandidate
 
       val baseWitnessJoinConditions =
-        ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(baseWitnessVariables)(
-          boundVariableConnectedQuery
-        ).map(_.getAtoms).getOrElse(Array[Atom]())
+        boundVariableConnectedQuery
+          .strictlyInduceSubqueryByVariables(baseWitnessVariables)
+          .map(_.getAtoms)
+          .getOrElse(Array[Atom]())
 
-      val neighbourhoodsSubgoals = ConjunctiveQueryExtensions.connectedComponents(
-        boundVariableConnectedQuery,
-        existentialWitnessCandidate.toSet
-      ).map(subgoalAtoms.apply)
+      val neighbourhoodsSubgoals = boundVariableConnectedQuery
+        .connectedComponentsOf(existentialWitnessCandidate.toSet)
+        .map(subgoalAtoms.apply)
 
       new DatalogRule(
         baseWitnessJoinConditions ++ neighbourhoodsSubgoals,

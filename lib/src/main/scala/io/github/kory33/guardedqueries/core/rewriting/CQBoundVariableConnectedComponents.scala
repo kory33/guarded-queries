@@ -5,6 +5,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExt
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Variable
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables
 
 /**
  * A class of objects representing the decomposition of a conjunctive query into
@@ -43,7 +44,7 @@ class CQBoundVariableConnectedComponents(cq: ConjunctiveQuery) {
       // this .get() call succeeds because
       // we are strictly inducing a subquery by
       // a maximally connected component of bound variables
-      ConjunctiveQueryExtensions.strictlyInduceSubqueryByVariables(component)(cq).get
+      cq.strictlyInduceSubqueryByVariables(component).get
     )
   }
 }

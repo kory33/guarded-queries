@@ -23,6 +23,10 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.jdk.CollectionConverters._
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.subqueryRelevantToVariables
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.strictNeighbourhoodOf
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connects
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.connectedComponentsOf
 
 /**
  * An implementation of subquery entailment enumeration using a DP table together with efficient
@@ -96,7 +100,7 @@ object DFSNormalizingDPTableSEEnumeration {
     ruleConstants: Set[Constant],
     conjunctiveQuery: ConjunctiveQuery
   ) = {
-    val queryVariables = ConjunctiveQueryExtensions.variablesIn(conjunctiveQuery)
+    val queryVariables = ConjunctiveQueryExtensions.allVariables(conjunctiveQuery)
     val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
 
     allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
@@ -107,7 +111,7 @@ object DFSNormalizingDPTableSEEnumeration {
           ).filter((variableSet: Set[Variable]) =>
             !variableSet.exists(ruleConstantWitnessGuess.keySet.contains)
           ).filter((variableSet: Set[Variable]) =>
-            ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.toSet)
+            conjunctiveQuery.connects(variableSet.toSet)
           )
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
@@ -116,16 +120,11 @@ object DFSNormalizingDPTableSEEnumeration {
               // As coexistentialVariables is a nonempty subset of queryVariables,
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
-              val relevantSubquery =
-                ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-                  coexistentialVariables.toSet
-                )(
-                  conjunctiveQuery
-                ).get
+              val relevantSubquery = conjunctiveQuery
+                .subqueryRelevantToVariables(coexistentialVariables.toSet).get
 
-              val nonConstantNeighbourhood =
-                ConjunctiveQueryExtensions.neighbourhoodVariables(
-                  conjunctiveQuery,
+              val nonConstantNeighbourhood = conjunctiveQuery
+                .strictNeighbourhoodOf(
                   coexistentialVariables.toSet
                 ) -- ruleConstantWitnessGuess.keySet.toSet
 
@@ -138,7 +137,7 @@ object DFSNormalizingDPTableSEEnumeration {
 
               allLocalWitnessGuesses.flatMap(localWitnessGuess => {
                 val subqueryConstants =
-                  ConjunctiveQueryExtensions.constantsIn(
+                  ConjunctiveQueryExtensions.allConstants(
                     relevantSubquery
                   ) -- ruleConstants
 
@@ -357,15 +356,13 @@ final class DFSNormalizingDPTableSEEnumeration(
 
           val allSplitInstancesAreYesInstances = {
             val splitCoexistentialVariables =
-              ConjunctiveQueryExtensions.connectedComponents(
-                relevantSubquery,
+              relevantSubquery.connectedComponentsOf(
                 instance.coexistentialVariables.toSet -- newlyCoveredVariables
               )
 
             splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
               val newNeighbourhood =
-                ConjunctiveQueryExtensions.neighbourhoodVariables(
-                  relevantSubquery,
+                relevantSubquery.strictNeighbourhoodOf(
                   splitCoexistentialVariablesComponent
                 ) -- instance.ruleConstantWitnessGuess.keySet
 
@@ -373,10 +370,9 @@ final class DFSNormalizingDPTableSEEnumeration(
               // this .get() call succeeds.
               // noinspection OptionalGetWithoutIsPresent
               val newRelevantSubquery =
-                ConjunctiveQueryExtensions
-                  .subqueryRelevantToVariables(splitCoexistentialVariablesComponent)(
-                    relevantSubquery
-                  ).get
+                relevantSubquery
+                  .subqueryRelevantToVariables(splitCoexistentialVariablesComponent)
+                  .get
 
               val inducedInstance = new SubqueryEntailmentInstance(
                 instance.ruleConstantWitnessGuess,
@@ -385,7 +381,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                 MapExtensions.restrictToKeys(extendedLocalWitnessGuess, newNeighbourhood),
                 MapExtensions.restrictToKeys(
                   instance.queryConstantEmbedding,
-                  ConjunctiveQueryExtensions.constantsIn(newRelevantSubquery)
+                  ConjunctiveQueryExtensions.allConstants(newRelevantSubquery)
                 )
               )
 
@@ -417,11 +413,9 @@ final class DFSNormalizingDPTableSEEnumeration(
       // If the instance is well-formed, the variable set is non-empty and connected,
       // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
       // noinspection OptionalGetWithoutIsPresent
-      val relevantSubquery = ConjunctiveQueryExtensions.subqueryRelevantToVariables(
-        saturatedInstance.coexistentialVariables.toSet
-      )(
-        connectedConjunctiveQuery
-      ).get
+      val relevantSubquery = connectedConjunctiveQuery
+        .subqueryRelevantToVariables(saturatedInstance.coexistentialVariables.toSet)
+        .get
 
       // Check if the root instance can be split
       if (canBeSplitIntoYesInstancesWithoutChasing(relevantSubquery, saturatedInstance)) {
