@@ -2,10 +2,6 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 
-import java.util
-import java.util.stream.Stream
-import scala.jdk.CollectionConverters.*
-
 object MapExtensions {
 
   /**

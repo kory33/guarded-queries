@@ -22,8 +22,6 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import java.util
-import java.util.stream.IntStream
-import java.util.stream.Stream
 import scala.jdk.CollectionConverters.*
 
 /**

@@ -4,8 +4,6 @@ import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Term
 
-import java.util
-import java.util.Objects
 import scala.collection.mutable
 import scala.reflect.TypeTest
 

@@ -2,8 +2,6 @@ package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 
-import java.util
-
 /**
  * An implementation of {@link IndexlessMaximallySubsumingTGDSet} that keeps track of a set of
  * datalog rules which are "maximal" with respect to the following subsumption relation: A rule

@@ -1,13 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import org.apache.commons.lang3.tuple.Pair
-
-import java.util
-import java.util.Optional
-import java.util.stream.IntStream
-import java.util.stream.Stream
 import scala.annotation.tailrec
-import scala.collection.IterableOnce
 import scala.collection.mutable
 
 object SetLikeExtensions {

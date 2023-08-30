@@ -11,8 +11,6 @@ import uk.ac.ox.cs.pdq.fol.Term
 import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant}
 import uk.ac.ox.cs.pdq.fol.{Variable => PDQVariable}
 
-import java.util
-
 /**
  * An implementation of {@link MaximallySubsumingTGDSet} that keeps track of a set of datalog
  * rules which are "maximal" with respect to the following subsumption relation: <p> A rule R1

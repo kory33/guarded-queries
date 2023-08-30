@@ -6,7 +6,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalIn
 import io.github.kory33.guardedqueries.core.utils.extensions.{SetLikeExtensions, TGDExtensions}
 import uk.ac.ox.cs.pdq.fol.Constant
 
-import java.util
 import scala.collection.mutable
 
 /**

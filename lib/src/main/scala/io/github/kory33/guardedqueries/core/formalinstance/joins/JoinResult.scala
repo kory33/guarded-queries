@@ -5,8 +5,6 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 
-import java.util
-
 /**
  * A class of objects representing the result of a join operation. <p> We say that a {@code
  * JoinResult} is well-formed if: <ol> <li>the {@code variableOrdering} is a list of distinct

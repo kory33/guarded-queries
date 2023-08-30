@@ -4,9 +4,6 @@ import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Formula, Predicate}
 
-import java.util
-import java.util.stream.Collectors
-
 /**
  * An object of this class represents a first-order logic signature with
  *   - countably-infinitely many constants

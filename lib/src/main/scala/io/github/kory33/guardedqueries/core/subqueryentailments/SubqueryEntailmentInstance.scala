@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.subqueryentailments
 
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 

@@ -4,8 +4,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
 
-import java.util
-import java.util.Optional
 import scala.collection.mutable.ArrayBuffer
 
 object SingleAtomMatching {

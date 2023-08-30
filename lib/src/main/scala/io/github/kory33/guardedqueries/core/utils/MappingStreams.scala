@@ -1,15 +1,10 @@
 package io.github.kory33.guardedqueries.core.utils
 
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
-import org.apache.commons.lang3.tuple.Pair
 
 import java.util
-import java.util.Optional
-import java.util.stream.Collectors
 import java.util.stream.IntStream
-import java.util.stream.Stream
 import scala.collection.IterableOnce
 
 object MappingStreams {
@@ -117,8 +112,6 @@ object MappingStreams {
        */
       def increment(): Unit = {
         val availableIndices: util.HashSet[Integer] = {
-          import scala.jdk.CollectionConverters._
-
           val usedIndices = rangeElementIndices.toSet
           val set = new util.HashSet[Integer]
           (0 until range.size).filter(!usedIndices.contains(_)).foreach(i =>

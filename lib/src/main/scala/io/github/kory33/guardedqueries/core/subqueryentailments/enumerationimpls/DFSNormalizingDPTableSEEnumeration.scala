@@ -16,14 +16,12 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailme
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
-import org.apache.commons.lang3.tuple.Pair
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
-import java.util.stream.Stream
 import scala.jdk.CollectionConverters._
 
 /**

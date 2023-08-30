@@ -67,8 +67,6 @@ object NormalGTGD {
    *   intermediary predicates will have names "I_0", "I_1", etc.
    */
   def normalize(inputRules: Set[GTGD], intermediaryPredicatePrefix: String): Set[NormalGTGD] = {
-    import scala.jdk.CollectionConverters.*
-
     val (fullRules, existentialRules) =
       inputRules.partition(_.getExistential.length == 0)
     val fullGTGDs = fullRules.map(FullGTGD.tryFromGTGD)

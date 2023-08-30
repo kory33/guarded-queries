@@ -6,19 +6,15 @@ import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.fol.LocalVariableContext
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.extensions.*
-import org.apache.commons.lang3.tuple.Pair
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
-import java.util
-import java.util.stream.Stream
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 

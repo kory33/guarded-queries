@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 
 import java.util
 import java.util.NoSuchElementException
-import java.util.stream.IntStream
 import scala.jdk.CollectionConverters._
 import scala.util.boundary
 

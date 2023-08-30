@@ -4,13 +4,9 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.{
   JoinResult,
   NaturalJoinAlgorithm
 }
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.*
 
-import java.util
-import java.util.stream.Collectors
-import java.util.{Comparator, Optional}
 import scala.collection.mutable.ArrayBuffer
 
 /**
