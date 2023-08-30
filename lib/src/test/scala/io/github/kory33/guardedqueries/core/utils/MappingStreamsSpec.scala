@@ -1,8 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils
 
-import com.google.common.collect.ImmutableBiMap
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec

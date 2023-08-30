@@ -3,7 +3,6 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
 import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen.*
 import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -40,7 +39,6 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
       val result = ConjunctiveQueryExtensions.filterAtoms(cq)(applyToPredicateNumber(f))
       val atomsInResult = result.map(_.getAtoms().toList).getOrElse(List.empty)
-      val atomsInInput = cq.getAtoms.toList
 
       assert {
         atomsInResult.forall { atom =>
@@ -72,7 +70,6 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
   ".connectedComponents" should "cover the given set of query variables" in {
     forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
       case (cq, variables) =>
-        val atoms = cq.getAtoms.toList
         val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables)
 
         assert { components.flatten == variables }
@@ -82,7 +79,6 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
   ".connectedComponents" should "partition the given set of query variables" in {
     forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
       case (cq, variables) =>
-        val atoms = cq.getAtoms.toList
         val components = ConjunctiveQueryExtensions.connectedComponents(cq, variables)
 
         assert {
@@ -94,7 +90,6 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
   ".connectedComponents" should "put adjacent variables in the same component" in {
     forAll(largeCQAndItsBoundVariables, minSuccessful(3000)) {
       case (cq, inputVariableSet) =>
-        val atoms = cq.getAtoms.toList
         val components = ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet)
 
         assert {
@@ -131,7 +126,6 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
           else variablesReachableFrom(adjacentVariables)
         }
 
-        val atoms = cq.getAtoms.toList
         val components = ConjunctiveQueryExtensions.connectedComponents(cq, inputVariableSet)
 
         components.foreach { component =>

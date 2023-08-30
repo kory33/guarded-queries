@@ -3,7 +3,6 @@ package io.github.kory33.guardedqueries.testutils.scalacheck
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkList
 import org.scalacheck.*
 import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.Conjunction
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate

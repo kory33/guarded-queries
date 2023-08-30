@@ -1,12 +1,9 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-
-import scala.jdk.CollectionConverters.*
 
 class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallSet: Gen[Set[Int]] = Gen.chooseNum(0, 12).map(n => (1 to n).toSet)

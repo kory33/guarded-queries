@@ -8,9 +8,6 @@ import org.scalacheck.Gen
 import org.scalacheck.Shrink
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
-import uk.ac.ox.cs.pdq.fol.TypedConstant
-
-import scala.jdk.CollectionConverters.*
 
 object GenFormalInstance {
   def genFormalInstanceOver(predicate: Predicate,
