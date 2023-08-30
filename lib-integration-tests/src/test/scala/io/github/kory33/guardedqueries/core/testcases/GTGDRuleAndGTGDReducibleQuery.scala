@@ -4,8 +4,6 @@ import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.Variable
 
-import java.util
-
 /**
  * A test case containing GTGD rules and a GTGD-reducible query.
  */

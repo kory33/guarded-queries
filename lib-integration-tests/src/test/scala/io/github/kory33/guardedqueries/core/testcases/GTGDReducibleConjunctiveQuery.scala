@@ -3,8 +3,6 @@ package io.github.kory33.guardedqueries.core.testcases
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 
-import java.util
-
 /**
  * A conjunctive query that can be "GTGD-reduced" to an atomic query with help of additional
  * GTGD rules.
