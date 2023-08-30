@@ -42,5 +42,6 @@ object FormalInstance {
 
   def empty[TermAlphabet]: FormalInstance[TermAlphabet] = FormalInstance(Set.empty)
 
-  def of[TermAlphabet](facts: FormalFact[TermAlphabet]*): FormalInstance[TermAlphabet] = FormalInstance(facts.toSet)
+  def of[TermAlphabet](facts: FormalFact[TermAlphabet]*): FormalInstance[TermAlphabet] =
+    FormalInstance(facts.toSet)
 }

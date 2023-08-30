@@ -36,7 +36,7 @@ class SubgoalAtomGenerator(
   private val predicateGeneratingCounter = new AtomicInteger(0)
 
   final private val subgoalAtoms
-  : CachingFunction[ /* query-connected */ Set[ /* query-bound */ Variable], Atom] =
+    : CachingFunction[ /* query-connected */ Set[ /* query-bound */ Variable], Atom] =
     CachingFunction { (variableSet: Set[Variable]) =>
       // by the contract, we can (and should) reject variable sets that
       //  - are not connected, or
