@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.datalog
 
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
 import uk.ac.ox.cs.pdq.fol.Constant
 
 import java.util

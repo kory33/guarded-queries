@@ -2,9 +2,7 @@ package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalg
 
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
-import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Variable
+import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
 
 import java.util
 import java.util.Optional
@@ -66,7 +64,7 @@ object SingleAtomMatching {
     val queryPredicate = atomicQuery.getPredicate
     val homomorphisms = ArrayBuffer.empty[List[TA]]
 
-    import scala.jdk.CollectionConverters._
+    import scala.jdk.CollectionConverters.*
     for (fact <- instance.facts) {
       if (fact.predicate == queryPredicate) {
         // compute a homomorphism and add to the builder, or continue to the next fact if we cannot do so

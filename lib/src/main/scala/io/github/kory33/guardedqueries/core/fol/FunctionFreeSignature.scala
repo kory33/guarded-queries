@@ -2,9 +2,7 @@ package io.github.kory33.guardedqueries.core.fol
 
 import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import uk.ac.ox.cs.pdq.fol.Formula
-import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Formula, Predicate}
 
 import java.util
 import java.util.stream.Collectors

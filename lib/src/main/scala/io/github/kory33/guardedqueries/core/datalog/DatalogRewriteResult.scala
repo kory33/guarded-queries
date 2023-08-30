@@ -41,7 +41,7 @@ case class DatalogRewriteResult(
       MaximallySubsumingTGDSet[DatalogRule]
     ]
   ): DatalogRewriteResult = {
-    import scala.jdk.CollectionConverters._
+    import scala.jdk.CollectionConverters.*
 
     val maximalRuleSet = maximalDatalogRuleSetFactory.emptyTGDSet()
     for (rule <- subgoalAndGoalDerivationRules.rules) {

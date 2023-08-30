@@ -435,7 +435,7 @@ final class DFSNormalizingDPTableSEEnumeration(
       // because they are treated as special symbols corresponding to variables and query constants
       // occurring in the subquery.
       val localNamesToPreserveDuringChase =
-      saturatedInstance.localWitnessGuess.values.toSet ++ saturatedInstance.queryConstantEmbedding.values
+        saturatedInstance.localWitnessGuess.values.toSet ++ saturatedInstance.queryConstantEmbedding.values
 
       // Chasing procedure:
       //   We hold a pair of (parent instance, children iterator) to the stack

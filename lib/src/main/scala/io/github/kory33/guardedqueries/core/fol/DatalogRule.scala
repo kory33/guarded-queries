@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.fol
 
-import uk.ac.ox.cs.pdq.fol._
+import uk.ac.ox.cs.pdq.fol.*
 
 /**
  * A class of Datalog rules.

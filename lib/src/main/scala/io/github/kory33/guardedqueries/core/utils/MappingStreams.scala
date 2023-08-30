@@ -82,7 +82,7 @@ object MappingStreams {
   def allInjectiveTotalFunctionsBetween[K, V](
     domain: Set[K],
     range: Set[V]
-                                             ): IterableOnce[BijectiveMap[K, V]] = {
+  ): IterableOnce[BijectiveMap[K, V]] = {
     val orderedDomain = domain.toList
     val orderedRange = range.toList
     if (orderedDomain.size > range.size) return Set.empty
