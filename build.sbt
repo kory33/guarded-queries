@@ -9,6 +9,10 @@ ThisBuild / javacOptions ++= Seq("-encoding", "UTF-8")
 
 ThisBuild / resolvers += "Maven Central" at "https://repo1.maven.org/maven2/"
 
+// for Scalafix
+ThisBuild / semanticdbEnabled := true
+ThisBuild / scalacOptions += "-Wunused:all"
+
 val findMavenCommand = taskKey[String]("Determine the available Maven command")
 val installPdqJar = taskKey[Unit]("Download and install pdq-common to local Maven repository")
 val installKaon2 = taskKey[Unit]("Install kaon2 jar to local Maven repository")
