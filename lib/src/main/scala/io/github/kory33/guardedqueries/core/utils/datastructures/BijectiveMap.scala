@@ -4,17 +4,17 @@ package io.github.kory33.guardedqueries.core.utils.datastructures
  * An object that represents a bijective map between a `Set[K]` and a `Set[V]`.
  *
  * @param forwardMap
- * an injective map from keys to values, i.e. a map such that for all pairs `k1, k2` of values
- * of `K`, `forward.get(k1) == forward.get(k2)` if and only if `k1 == k2`
+ *   an injective map from keys to values, i.e. a map such that for all pairs `k1, k2` of values
+ *   of `K`, `forward.get(k1) == forward.get(k2)` if and only if `k1 == k2`
  * @param inverseMap
- * the inverse of `forward`, i.e. a map satisfying `inverse(forward(k)) == k` and
- * `forward(inverse(v)) == v` for all `k` in the domain of `forward` and `v` in the range of
- * `forward`
+ *   the inverse of `forward`, i.e. a map satisfying `inverse(forward(k)) == k` and
+ *   `forward(inverse(v)) == v` for all `k` in the domain of `forward` and `v` in the range of
+ *   `forward`
  */
 class BijectiveMap[K, V] private /* unchecked constructor */ (
-                                                               private val forwardMap: Map[K, V],
-                                                               inverseMap: Map[V, K]
-                                                             ) {
+  private val forwardMap: Map[K, V],
+  inverseMap: Map[V, K]
+) {
   def inverse: BijectiveMap[V, K] = new BijectiveMap(inverseMap, forwardMap)
 
   // We essentially delegate methods to `forwardMap` by defining `equals`, `hashCode`
@@ -30,7 +30,7 @@ class BijectiveMap[K, V] private /* unchecked constructor */ (
 
 object BijectiveMap {
 
-  given[K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.forwardMap
+  given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.forwardMap
 
   /**
    * Construct a bijective map from an injective map. If the given map is not injective, this
