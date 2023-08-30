@@ -20,7 +20,7 @@ object NormalGTGD {
   /**
    * A single-headed GTGD.
    */
-  class SingleHeadedGTGD(body: Set[Atom], head: Atom)
+  private class SingleHeadedGTGD(body: Set[Atom], head: Atom)
       extends NormalGTGD(body, Set(head)) {}
 
   /**
@@ -35,7 +35,7 @@ object NormalGTGD {
     )
   }
 
-  object FullGTGD {
+  private object FullGTGD {
 
     /**
      * Try constructing the object from a GTGD.

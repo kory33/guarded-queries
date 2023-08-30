@@ -3,7 +3,7 @@ package io.github.kory33.guardedqueries.core.utils
 import scala.collection.mutable
 
 final class CachingFunction[T, R](private val function: T => R) extends (T => R) {
-  private var cache: mutable.HashMap[T, R] = mutable.HashMap.empty
+  private val cache: mutable.HashMap[T, R] = mutable.HashMap.empty
 
   override def apply(t: T): R =
     if (cache.contains(t)) cache(t)

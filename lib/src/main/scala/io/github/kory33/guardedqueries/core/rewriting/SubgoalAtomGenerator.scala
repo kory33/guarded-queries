@@ -25,7 +25,7 @@ class SubgoalAtomGenerator(
       s"The given query ($boundVariableConnectedQuery) is not bound-variable-connected."
     )
 
-  if (!connectedComponents.boundVariableFreeAtoms.isEmpty)
+  if (connectedComponents.boundVariableFreeAtoms.nonEmpty)
     throw new IllegalArgumentException(
       s"The given query ($boundVariableConnectedQuery) contains bound-variable-free atoms."
     )
@@ -35,8 +35,8 @@ class SubgoalAtomGenerator(
 
   private val predicateGeneratingCounter = new AtomicInteger(0)
 
-  final private var subgoalAtoms
-    : CachingFunction[ /* query-connected */ Set[ /* query-bound */ Variable], Atom] =
+  final private val subgoalAtoms
+  : CachingFunction[ /* query-connected */ Set[ /* query-bound */ Variable], Atom] =
     CachingFunction { (variableSet: Set[Variable]) =>
       // by the contract, we can (and should) reject variable sets that
       //  - are not connected, or

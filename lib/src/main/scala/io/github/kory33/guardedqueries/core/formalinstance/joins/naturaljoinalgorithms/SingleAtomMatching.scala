@@ -15,7 +15,7 @@ object SingleAtomMatching {
   ): Option[List[TA]] = boundary {
     val homomorphism = ArrayBuffer.fill[Option[TA]](orderedQueryVariables.size)(None)
 
-    for (appliedTermIndex <- 0 until appliedTerms.size) {
+    for (appliedTermIndex <- appliedTerms.indices) {
       val termToMatch = atomicQuery.getTerms()(appliedTermIndex)
       val appliedTerm = appliedTerms(appliedTermIndex)
 

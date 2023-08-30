@@ -146,7 +146,7 @@ case class GuardedRuleAndQueryRewriter(
 
     val mappedInstance = localInstance.map(t => t.mapLocalNamesToTerm(nameToTermMap(_)))
     val mappedSubgoalAtom: Atom = {
-      val subgoalAtom = subgoalAtoms.apply(coexistentialVariables.toSet)
+      val subgoalAtom = subgoalAtoms.apply(coexistentialVariables)
       val orderedNeighbourhoodVariables = subgoalAtom.getTerms.map((term: Term) =>
         term.asInstanceOf[
           Variable
@@ -219,7 +219,7 @@ case class GuardedRuleAndQueryRewriter(
       extensionalSignature,
       saturatedRules,
       boundVariableConnectedQuery
-    ).map((subqueryEntailment) =>
+    ).map(subqueryEntailment =>
       subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms)
     ).toList
 
@@ -282,7 +282,7 @@ case class GuardedRuleAndQueryRewriter(
     // Any predicate not in this signature can be considered as intentional predicates
     // and may be ignored in certain cases, such as when generating "test" instances.
     val extensionalSignature =
-      FunctionFreeSignature.encompassingRuleQuery(rules.toSet, query)
+      FunctionFreeSignature.encompassingRuleQuery(rules, query)
 
     val intentionalPredicatePrefix = extensionalSignature.predicateNames
       .freshPrefixStartingWith(
@@ -338,7 +338,7 @@ case class GuardedRuleAndQueryRewriter(
     val allDerivationRules =
       bvccRewriteResults.flatMap(_.goalDerivationRules) :+ subgoalBindingRule
 
-    new DatalogRewriteResult(
+    DatalogRewriteResult(
       DatalogProgram.tryFromDependencies(saturatedRuleSet.saturatedRules),
       DatalogProgram.tryFromDependencies(allDerivationRules),
       goalAtom

@@ -40,7 +40,7 @@ object GenFormalInstance {
 object ShrinkFormalInstance {
   given Shrink[FormalInstance[Constant]] = Shrink { instance =>
     ShrinkSet.intoSubsets[FormalFact[Constant]]
-      .shrink(instance.facts.toSet)
+      .shrink(instance.facts)
       .map(FormalInstance(_))
   }
 }

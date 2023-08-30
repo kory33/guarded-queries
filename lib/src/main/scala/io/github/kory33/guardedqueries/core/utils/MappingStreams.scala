@@ -27,7 +27,7 @@ object MappingStreams {
       private var reachedEnd = range.isEmpty || domain.isEmpty
 
       // if we have invoked toMap() after reaching the end of the stream
-      private var _alreadyEmittedLastMap = reachedEnd && !domain.isEmpty
+      private var _alreadyEmittedLastMap = reachedEnd && domain.nonEmpty
 
       /**
        * Increment index array. For example, if the array is [5, 4, 2] and range.size is 6, we
@@ -36,7 +36,7 @@ object MappingStreams {
        * value, no indices are modified and false is returned.
        */
       private def increment(): Unit = boundary {
-        for (i <- 0 until rangeElementIndices.length) {
+        for (i <- rangeElementIndices.indices) {
           if (rangeElementIndices(i) < range.size - 1) {
             rangeElementIndices(i) += 1
             for (j <- i - 1 to 0 by -1) { rangeElementIndices(j) = 0 }
@@ -49,7 +49,7 @@ object MappingStreams {
       def alreadyEmittedLastMap: Boolean = _alreadyEmittedLastMap
 
       private def currentToMap: Map[K, V] =
-        (0 until rangeElementIndices.length)
+        rangeElementIndices.indices
           .map(i => (orderedDomain(i), orderedRange(rangeElementIndices(i))))
           .toMap
 

@@ -40,7 +40,7 @@ object FilterNestedLoopJoin {
       return
     }
 
-    val nextAtomMatchResult = atomToMatches(remainingAtomsToJoin(0))
+    val nextAtomMatchResult = atomToMatches(remainingAtomsToJoin.head)
 
     import scala.util.boundary
     for (homomorphism <- nextAtomMatchResult.allHomomorphisms) {
@@ -48,7 +48,7 @@ object FilterNestedLoopJoin {
         val matchVariableOrdering = homomorphism.variableOrdering
         val homomorphismExtension = partialHomomorphism.toArray
 
-        for (matchVariableIndex <- 0 until matchVariableOrdering.size) {
+        for (matchVariableIndex <- matchVariableOrdering.indices) {
           val nextVariableToCheck = matchVariableOrdering(matchVariableIndex)
           val extensionCandidate = homomorphism.orderedMapping(matchVariableIndex)
           val indexOfVariableInResultOrdering =

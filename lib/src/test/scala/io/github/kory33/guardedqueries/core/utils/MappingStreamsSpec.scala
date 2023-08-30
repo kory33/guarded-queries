@@ -95,7 +95,7 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         .toSet
 
       val allInjectiveTotalFunctions = allTotalFunctions
-        .filter(function => function.keys.size == function.map(_._2).toSet.size)
+        .filter(function => function.keys.size == function.values.toSet.size)
         .map(BijectiveMap.tryFromInjectiveMap(_).get)
 
       assert { enumeratedInjectiveTotalFunctions == allInjectiveTotalFunctions }

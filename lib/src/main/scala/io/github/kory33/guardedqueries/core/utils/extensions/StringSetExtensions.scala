@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 object StringSetExtensions {
   given Extensions: {} with
     extension (strings: Set[String])
-      def someStartsWith(string: String): Boolean = {
+      private def someStartsWith(string: String): Boolean = {
         strings.exists(_.startsWith(string))
       }
 

@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.reflect.TypeTest
 
 case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
-  lazy val activeTerms: Set[TermAlphabet] = facts.flatMap(_.appliedTerms)
+  private lazy val activeTerms: Set[TermAlphabet] = facts.flatMap(_.appliedTerms)
 
   def getActiveTermsIn[T <: TermAlphabet](using tt: TypeTest[TermAlphabet, T]): Set[T] =
     activeTerms.collect { case tt(subtypeTerm) => subtypeTerm }
@@ -35,12 +35,12 @@ object FormalInstance {
 
   def unionAll[TermAlphabet](instances: Iterable[FormalInstance[TermAlphabet]])
     : FormalInstance[TermAlphabet] = {
-    var facts = mutable.HashSet.empty[FormalFact[TermAlphabet]]
+    val facts = mutable.HashSet.empty[FormalFact[TermAlphabet]]
     for (instance <- instances) { facts ++= instance.facts }
     FormalInstance(facts.toSet)
   }
 
   def empty[TermAlphabet]: FormalInstance[TermAlphabet] = FormalInstance(Set.empty)
 
-  def of[TermAlphabet](facts: FormalFact[TermAlphabet]*) = FormalInstance(facts.toSet)
+  def of[TermAlphabet](facts: FormalFact[TermAlphabet]*): FormalInstance[TermAlphabet] = FormalInstance(facts.toSet)
 }

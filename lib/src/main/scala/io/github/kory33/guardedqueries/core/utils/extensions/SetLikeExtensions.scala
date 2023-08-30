@@ -39,7 +39,7 @@ object SetLikeExtensions {
         val hashSet = mutable.HashSet.from(set)
         var elementsAddedInPreviousIteration = hashSet.toSet
 
-        while (!elementsAddedInPreviousIteration.isEmpty) {
+        while (elementsAddedInPreviousIteration.nonEmpty) {
           val newlyGeneratedElements: Set[T] =
             // assuming that the generator function is pure,
             // it is only meaningful to generate new elements
@@ -80,4 +80,6 @@ object SetLikeExtensions {
 
         recurse(set)
       }
+
+      def widen[U >: T]: Set[U] = set.map(t => t)
 }

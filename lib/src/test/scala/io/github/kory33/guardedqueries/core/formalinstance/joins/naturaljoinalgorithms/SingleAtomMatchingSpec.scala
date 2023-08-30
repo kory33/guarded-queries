@@ -80,7 +80,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
           .allMatches(query, FormalInstance(firstMatch), c => c)
           .materializeFunctionFreeAtom(query, c => c)
 
-        assert(firstMatch.toSet == secondMatch.toSet)
+        assert(firstMatch == secondMatch.toSet)
     }
   }
 

@@ -76,7 +76,7 @@ class JoinResult[Term](
       // then this join result contains no information and there is nothing to extend
       return this
     }
-    val variableOrdering = allHomomorphisms(0).variableOrdering
+    val variableOrdering = allHomomorphisms.head.variableOrdering
     if (variableOrdering.exists(constantHomomorphism.contains))
       throw IllegalArgumentException(
         "The given constant homomorphism has a conflicting variable mapping"

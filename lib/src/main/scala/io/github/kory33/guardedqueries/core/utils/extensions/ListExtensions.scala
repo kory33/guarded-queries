@@ -11,11 +11,11 @@ object ListExtensions {
       def productMappedIterablesToLists[R](
         /* pure */ mapperToIterable: I => Iterable[R]
       ): Iterator[List[R]] = {
-        val iterablesToProduct = list.map(mapperToIterable(_)).toList
+        val iterablesToProduct = list.map(mapperToIterable(_))
         val freshIteratorAt = (index: Int) => iterablesToProduct(index).iterator
 
         // we store iterator of the first iterable at the bottom of the stack
-        val initialIteratorStack = (0 until list.size).map(freshIteratorAt).toList
+        val initialIteratorStack = list.indices.map(freshIteratorAt).toList
 
         new Iterator[List[R]] {
           private var currentIteratorStack: List[Iterator[R]] = initialIteratorStack
@@ -41,7 +41,7 @@ object ListExtensions {
             //            after the loop, either the bottom iterator has been exhausted
             //            or all exhausted iterators have been replaced with fresh ones
             boundary:
-              for (droppedIterators <- 0 until list.size) {
+              for (droppedIterators <- list.indices) {
                 // currentIteratorStack is nonempty because it originally had `list.size` iterators
                 val iteratorToAdvance = currentIteratorStack.head
 

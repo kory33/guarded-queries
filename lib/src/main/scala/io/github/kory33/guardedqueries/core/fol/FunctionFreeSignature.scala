@@ -12,7 +12,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions.g
  *   - no function symbols
  */
 object FunctionFreeSignature {
-  def fromFormulas(formulas: Set[Formula]) =
+  private def fromFormulas(formulas: Set[Formula]) =
     new FunctionFreeSignature(formulas.flatMap(_.allPredicates))
 
   def encompassingRuleQuery(rules: Set[GTGD], query: ConjunctiveQuery): FunctionFreeSignature =

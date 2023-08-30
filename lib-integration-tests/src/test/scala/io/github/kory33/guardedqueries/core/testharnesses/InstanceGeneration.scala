@@ -12,7 +12,7 @@ object InstanceGeneration {
   def allFactsOver(predicate: Predicate,
                    constantsToUse: Set[Constant]
   ): FormalInstance[Constant] = {
-    val predicateArgIndices = (0 until predicate.getArity)
+    val predicateArgIndices = 0 until predicate.getArity
 
     val allFormalFacts = MappingStreams.allTotalFunctionsBetween(
       predicateArgIndices.toSet,

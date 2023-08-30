@@ -42,7 +42,7 @@ object DFSNormalizingDPTableSEEnumeration {
    */
   private def isZeroStartingContiguousLocalNameSet(localNames: Set[LocalName]) = {
     var firstElementAfterZeroNotContainedInSet = 0
-    while (localNames.contains(new LocalName(firstElementAfterZeroNotContainedInSet)))
+    while (localNames.contains(LocalName(firstElementAfterZeroNotContainedInSet)))
       firstElementAfterZeroNotContainedInSet += 1
     firstElementAfterZeroNotContainedInSet == localNames.size
   }
@@ -51,7 +51,7 @@ object DFSNormalizingDPTableSEEnumeration {
                                           ruleConstants: Set[Constant]
   ) = {
     val maxArityOfExtensionalSignature = extensionalSignature.maxArity
-    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant(_))
+    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant.apply)
 
     // We need to consider sufficiently large collection of set of active local names.
     // As it is sufficient to check subquery entailments for all guarded instance
@@ -68,22 +68,22 @@ object DFSNormalizingDPTableSEEnumeration {
     //  names to be contiguous and starting from 0, i.e. {0, ..., n} for some n < maxArityOfExtensionalSignature.
     // )
     val localNames = (0 until maxArityOfExtensionalSignature)
-      .map(LocalInstanceTerm.LocalName(_))
+      .map(LocalInstanceTerm.LocalName.apply)
       .toSet
 
     val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
-    val predicates = extensionalSignature.predicates.toSet
+    val predicates = extensionalSignature.predicates
 
     val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
       val allFormalFactsOverThePredicate =
-        val parameterIndices = (0 until predicate.getArity)
+        val parameterIndices = 0 until predicate.getArity
 
         allTotalFunctionsBetween(parameterIndices.toSet, allLocalInstanceTerms)
           .map(parameterMap =>
-            FormalFact(predicate, parameterIndices.map(parameterMap(_)).toList)
+            FormalFact(predicate, parameterIndices.map(parameterMap.apply).toList)
           ).toSet
 
-      allFormalFactsOverThePredicate.powerset.map(FormalInstance(_))
+      allFormalFactsOverThePredicate.powerset.map(FormalInstance.apply)
     }
 
     val allInstancesOverLocalNameSet = predicates.toList
@@ -119,16 +119,16 @@ object DFSNormalizingDPTableSEEnumeration {
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
               val relevantSubquery = conjunctiveQuery
-                .subqueryRelevantToVariables(coexistentialVariables.toSet).get
+                .subqueryRelevantToVariables(coexistentialVariables).get
 
               val nonConstantNeighbourhood = conjunctiveQuery
                 .strictNeighbourhoodOf(
-                  coexistentialVariables.toSet
-                ) -- ruleConstantWitnessGuess.keySet.toSet
+                  coexistentialVariables
+                ) -- ruleConstantWitnessGuess.keySet
 
               val allLocalWitnessGuesses = allTotalFunctionsBetween(
                 nonConstantNeighbourhood,
-                localInstance.getActiveTermsIn[LocalName].filter((localName) =>
+                localInstance.getActiveTermsIn[LocalName].filter(localName =>
                   localName.value < nonConstantNeighbourhood.size
                 )
               )
@@ -188,7 +188,7 @@ final class DFSNormalizingDPTableSEEnumeration(
     private def allNormalizedSaturatedChildrenOf(
       saturatedInstance: FormalInstance[LocalInstanceTerm],
       namesToBePreserved: Set[LocalName]
-    ) = {
+    ): Set[FormalInstance[LocalInstanceTerm]] = {
       // We need to chase the instance with all existential rules
       // while preserving all names in namesToBePreservedDuringChase.
       //
@@ -206,12 +206,12 @@ final class DFSNormalizingDPTableSEEnumeration(
       // "direct equivalence" semantics for implicitly-equality-coded
       // tree codes).
       val allChasesWithRule = (existentialRule: NormalGTGD) => {
-        def foo(existentialRule: NormalGTGD) = {
+        def foo(existentialRule: NormalGTGD): List[FormalInstance[LocalInstanceTerm]] = {
           val headAtom = existentialRule.getHeadAtoms()(0)
           // A set of existential variables in the existential rule
           val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
           val bodyJoinResult =
-            new FilterNestedLoopJoin[LocalInstanceTerm](RuleConstant(_)).join(
+            new FilterNestedLoopJoin[LocalInstanceTerm](RuleConstant.apply).join(
               existentialRule.bodyAsCQ,
               saturatedInstance
             )
@@ -234,7 +234,7 @@ final class DFSNormalizingDPTableSEEnumeration(
               // from the names in the parent instance having the same value, so we
               // are explicitly ignoring the "implicit equality coding" semantics here.
               val namesToReuseInChild =
-                (0 until maxArityOfAllPredicatesUsedInRules).map(LocalName(_))
+                (0 until maxArityOfAllPredicatesUsedInRules).map(LocalName.apply)
                   .toSet.removedAll(inheritedLocalNames)
                   .toList
 
@@ -251,11 +251,11 @@ final class DFSNormalizingDPTableSEEnumeration(
               val headInstance =
                 FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(
                   headAtom,
-                  RuleConstant(_)
+                  RuleConstant.apply
                 ))
 
               // if names are not preserved, we reject this homomorphism
-              if (!namesToBePreserved.toSet.subsetOf(inheritedLocalNames))
+              if (!namesToBePreserved.widen[LocalInstanceTerm].subsetOf(inheritedLocalNames))
                 return Set.empty
 
               // The set of facts in the parent instance that are
@@ -263,7 +263,7 @@ final class DFSNormalizingDPTableSEEnumeration(
               // Those are precisely the facts that have its local names
               // appearing in the head of the existential rule
               // as a homomorphic image of a frontier variable in the rule.
-              val inheritedFactsInstance = saturatedInstance.restrictToAlphabetsWith((term) =>
+              val inheritedFactsInstance = saturatedInstance.restrictToAlphabetsWith(term =>
                 term.isConstantOrSatisfies(inheritedLocalNames.contains)
               )
 
@@ -276,7 +276,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                   // occurring in the child is also saturated.
                   inheritedFactsInstance,
                   headInstance,
-                  RuleConstant(_)
+                  RuleConstant.apply
                 )
 
               // we only need to keep chasing with extensional signature
@@ -287,7 +287,7 @@ final class DFSNormalizingDPTableSEEnumeration(
         }
         foo(existentialRule)
       }
-      saturatedRuleSet.existentialRules.flatMap(allChasesWithRule(_))
+      saturatedRuleSet.existentialRules.flatMap(allChasesWithRule.apply)
     }
 
     /**
@@ -340,7 +340,7 @@ final class DFSNormalizingDPTableSEEnumeration(
 
             newlyCoveredAtoms
               .map(atom =>
-                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess(_))
+                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.apply)
               )
               .forall(instance.localInstance.containsFact)
           }
@@ -350,7 +350,7 @@ final class DFSNormalizingDPTableSEEnumeration(
           val allSplitInstancesAreYesInstances = {
             val splitCoexistentialVariables =
               relevantSubquery.connectedComponentsOf(
-                instance.coexistentialVariables.toSet -- newlyCoveredVariables
+                instance.coexistentialVariables -- newlyCoveredVariables
               )
 
             splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
@@ -367,7 +367,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                   .subqueryRelevantToVariables(splitCoexistentialVariablesComponent)
                   .get
 
-              val inducedInstance = new SubqueryEntailmentInstance(
+              val inducedInstance = SubqueryEntailmentInstance(
                 instance.ruleConstantWitnessGuess,
                 splitCoexistentialVariablesComponent,
                 instance.localInstance,
@@ -395,7 +395,7 @@ final class DFSNormalizingDPTableSEEnumeration(
         instance.withLocalInstance(datalogSaturationEngine.saturateInstance(
           saturatedRuleSet.saturatedRulesAsDatalogProgram,
           instance.localInstance,
-          LocalInstanceTerm.RuleConstant(_)
+          LocalInstanceTerm.RuleConstant.apply
         ))
       if (this.table.containsKey(saturatedInstance)) return
 
@@ -404,7 +404,7 @@ final class DFSNormalizingDPTableSEEnumeration(
       // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
       // noinspection OptionalGetWithoutIsPresent
       val relevantSubquery = connectedConjunctiveQuery
-        .subqueryRelevantToVariables(saturatedInstance.coexistentialVariables.toSet)
+        .subqueryRelevantToVariables(saturatedInstance.coexistentialVariables)
         .get
 
       // Check if the root instance can be split
@@ -520,7 +520,7 @@ final class DFSNormalizingDPTableSEEnumeration(
   ): IterableOnce[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants
     val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules.toSet,
+      saturatedRuleSet.allRules,
       connectedConjunctiveQuery
     ).maxArity
     val dpTable = new DPTable(
@@ -534,7 +534,7 @@ final class DFSNormalizingDPTableSEEnumeration(
       extensionalSignature,
       ruleConstants,
       connectedConjunctiveQuery
-    ).foreach(dpTable.fillTableUpto(_))
+    ).foreach(dpTable.fillTableUpto.apply)
     dpTable.getKnownYesInstances
   }
 

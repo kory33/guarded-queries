@@ -13,12 +13,12 @@ object FormulaExtensions {
       def allPredicates: Set[Predicate] = {
         val children = formula.getChildren[Formula]
 
-        if (children.length == 0) {
+        if (children.isEmpty) {
           formula match
             case atom: Atom => Set(atom.getPredicate)
             case _ =>
               throw new IllegalArgumentException(
-                s"Formula ${formula} is neither an atom nor a composite formula"
+                s"Formula $formula is neither an atom nor a composite formula"
               )
         } else {
           children.toSet.flatMap(_.allPredicates)

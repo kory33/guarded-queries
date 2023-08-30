@@ -84,7 +84,7 @@ class SetLikeExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       }
 
       val generatedSet = xs.generateFromSetUntilFixpoint(simpleSetGeneratorFunction)
-      val expected = leastFixedPointNaively(xs, s => simpleSetGeneratorFunction(s).toSet)
+      val expected = leastFixedPointNaively(xs, s => simpleSetGeneratorFunction(s))
 
       assert(generatedSet == expected)
     }

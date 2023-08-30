@@ -8,6 +8,6 @@ case class DatalogProgram(rules: Set[DatalogRule]) {
 }
 
 object DatalogProgram {
-  def tryFromDependencies(dependencies: Iterable[Dependency]) =
+  def tryFromDependencies(dependencies: Iterable[Dependency]): DatalogProgram =
     DatalogProgram(dependencies.map(DatalogRule.tryFromDependency).toSet)
 }
