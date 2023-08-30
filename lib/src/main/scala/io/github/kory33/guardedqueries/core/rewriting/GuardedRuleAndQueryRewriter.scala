@@ -108,7 +108,7 @@ case class GuardedRuleAndQueryRewriter(
     // Contains all active local names in the key set.
     val nameToTermMap = activeLocalNames.map(localName =>
       localName -> {
-        val preimage = neighbourhoodPreimages(localName)
+        val preimage = neighbourhoodPreimages.get(localName)
         if (preimage.isEmpty) {
           if (queryConstantEmbeddingInverse.containsKey(localName)) {
             // if this local name is bound to a query constant,
@@ -128,7 +128,7 @@ case class GuardedRuleAndQueryRewriter(
           // otherwise unify to the variable corresponding to the preimage
           // e.g. if {x, y} is the preimage of localName and _xy is the variable
           // corresponding to {x, y}, we turn localName into _xy
-          unification(preimage.head)
+          unification(preimage.get.head)
         }
       }
     ).toMap
