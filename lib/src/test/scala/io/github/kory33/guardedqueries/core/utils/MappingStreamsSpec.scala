@@ -86,7 +86,7 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   ".allInjectiveTotalFunctionsBetween" should "enumerate all injections" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
-      val allInjectiveTotalFunctions = MappingStreams
+      val enumeratedInjectiveTotalFunctions = MappingStreams
         .allInjectiveTotalFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
         .toSet
 
@@ -94,15 +94,11 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         .allTotalFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
         .toSet
 
-      assert {
-        allTotalFunctions
-          .filter(function => function.keys.size == function.map(_._2).toSet.size)
-          .forall(function =>
-            allInjectiveTotalFunctions.contains(
-              BijectiveMap.tryFromInjectiveMap(function).get
-            )
-          )
-      }
+      val allInjectiveTotalFunctions = allTotalFunctions
+        .filter(function => function.keys.size == function.map(_._2).toSet.size)
+        .map(BijectiveMap.tryFromInjectiveMap(_).get)
+
+      assert { enumeratedInjectiveTotalFunctions == allInjectiveTotalFunctions }
     }
   }
 }

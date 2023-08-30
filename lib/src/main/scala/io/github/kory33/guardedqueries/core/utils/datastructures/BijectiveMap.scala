@@ -12,25 +12,30 @@ package io.github.kory33.guardedqueries.core.utils.datastructures
  *   `forward`
  */
 class BijectiveMap[K, V] private /* unchecked constructor */ (
-  private val forwardMap: Map[K, V],
+  forwardMap: Map[K, V],
   inverseMap: Map[V, K]
 ) {
   def inverse: BijectiveMap[V, K] = new BijectiveMap(inverseMap, forwardMap)
+
+  def toMap: Map[K, V] = forwardMap
 
   // We essentially delegate methods to `forwardMap` by defining `equals`, `hashCode`
   // and `toString` using `forwardMap`, and by providing a `Conversion`
   // from `BijectiveMap` to `Map` via `forwardMap`.
 
-  override def equals(obj: Any): Boolean = forwardMap == obj
+  override def equals(obj: Any): Boolean = obj match {
+    case that: BijectiveMap[_, _] => this.toMap == that.toMap
+    case _                        => false
+  }
 
-  override def hashCode(): Int = forwardMap.hashCode()
+  override def hashCode(): Int = toMap.hashCode()
 
-  override def toString: String = forwardMap.toString
+  override def toString: String = s"BijectiveMap(${toMap.toString})"
 }
 
 object BijectiveMap {
 
-  given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.forwardMap
+  given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.toMap
 
   /**
    * Construct a bijective map from an injective map. If the given map is not injective, this
