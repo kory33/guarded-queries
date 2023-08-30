@@ -94,7 +94,7 @@ object NaiveDPTableSEEnumeration {
         val allCoexistentialVariableSets =
           SetLikeExtensions.powerset(queryExistentialVariables)
             .filter(_.nonEmpty)
-            .filter(_.exists(ruleConstantWitnessGuess.keySet.contains))
+            .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
             .filter((variableSet: Set[Variable]) =>
               ConjunctiveQueryExtensions.isConnected(conjunctiveQuery, variableSet.toSet)
             )
