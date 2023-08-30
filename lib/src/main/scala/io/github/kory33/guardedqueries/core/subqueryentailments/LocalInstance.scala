@@ -1,8 +1,7 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments
 
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Term
-import uk.ac.ox.cs.pdq.fol.Variable
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
+import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Term, Variable}
 
 sealed trait LocalInstanceTerm {
   def isConstantOrSatisfies(predicate: LocalInstanceTerm.LocalName => Boolean): Boolean =
@@ -33,3 +32,14 @@ object LocalInstanceTerm {
       case variable: Variable => mapper(variable)
       case _                  => throw new IllegalArgumentException("Unsupported term: " + term)
 }
+
+object LocalInstanceTermFact {
+  def fromAtomWithVariableMap(
+    fact: Atom,
+    mapper: Variable => LocalInstanceTerm
+  ): FormalFact[LocalInstanceTerm] = FormalFact.fromAtom(fact).map(term =>
+    LocalInstanceTerm.fromTermWithVariableMap(term, mapper)
+  )
+}
+
+type LocalInstance = FormalInstance[LocalInstanceTerm]

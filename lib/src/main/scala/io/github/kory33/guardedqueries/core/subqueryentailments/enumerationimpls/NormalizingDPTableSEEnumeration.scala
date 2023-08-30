@@ -8,11 +8,14 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstance,
+  LocalInstanceTerm,
+  LocalInstanceTermFact,
+  SubqueryEntailmentEnumeration,
+  SubqueryEntailmentInstance
+}
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
 import uk.ac.ox.cs.pdq.fol.Atom
@@ -22,7 +25,6 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.util.boundary
-
 import java.util
 import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
@@ -117,7 +119,7 @@ object NormalizingDPTableSEEnumeration {
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(
-            (localInstance: FormalInstance[LocalInstanceTerm]) => {
+            (localInstance: LocalInstance) => {
               // As coexistentialVariables is a nonempty subset of queryVariables,
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
@@ -182,13 +184,12 @@ final class NormalizingDPTableSEEnumeration(
       this.table.get(instance)
     }
 
-    private def chaseLocalInstance(localInstance: FormalInstance[LocalInstanceTerm],
+    private def chaseLocalInstance(localInstance: LocalInstance,
                                    namesToBePreservedDuringChase: Set[LocalName]
-    ): Set[FormalInstance[LocalInstanceTerm]] = {
+    ): Set[LocalInstance] = {
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
-      val shortcutChaseOneStep = (instance: FormalInstance[LocalInstanceTerm]) => {
-        def foo(instance: FormalInstance[LocalInstanceTerm])
-          : Set[FormalInstance[LocalInstanceTerm]] = {
+      val shortcutChaseOneStep = (instance: LocalInstance) => {
+        def foo(instance: LocalInstance): Set[LocalInstance] = {
           // We need to chase the instance with all existential rules
           // while preserving all names in namesToBePreservedDuringChase.
           //
@@ -206,7 +207,7 @@ final class NormalizingDPTableSEEnumeration(
           // "direct equivalence" semantics for implicitly-equality-coded
           // tree codes).
           val allChasesWithRule = (existentialRule: NormalGTGD) => {
-            def foo(existentialRule: NormalGTGD): List[FormalInstance[LocalInstanceTerm]] = {
+            def foo(existentialRule: NormalGTGD): List[LocalInstance] = {
               val headAtom = existentialRule.getHeadAtoms()(0)
 
               // A set of existential variables in the existential rule
@@ -223,7 +224,7 @@ final class NormalizingDPTableSEEnumeration(
               //  local names that get inherited to the child instance)
               bodyJoinResult.allHomomorphisms.flatMap(bodyHomomorphism => {
                 def foo(bodyHomomorphism: HomomorphicMapping[LocalInstanceTerm])
-                  : IterableOnce[FormalInstance[LocalInstanceTerm]] = {
+                  : IterableOnce[LocalInstance] = {
 
                   // The set of local names that are inherited from the parent instance
                   // to the child instance.

@@ -7,11 +7,14 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstance,
+  LocalInstanceTerm,
+  LocalInstanceTermFact,
+  SubqueryEntailmentEnumeration,
+  SubqueryEntailmentInstance
+}
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
 import uk.ac.ox.cs.pdq.fol.Atom
@@ -21,7 +24,6 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.util.boundary
-
 import java.util
 import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
@@ -101,7 +103,7 @@ object NaiveDPTableSEEnumeration {
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allLocalInstances(extensionalSignature, ruleConstants).flatMap(
-            (localInstance: FormalInstance[LocalInstanceTerm]) => {
+            (localInstance: LocalInstance) => {
               // As coexistentialVariables is a nonempty subset of queryVariables,
               // we expect to see a non-empty optional.
               // noinspection OptionalGetWithoutIsPresent
@@ -163,13 +165,12 @@ final class NaiveDPTableSEEnumeration(
       this.table.get(instance)
     }
 
-    private def chaseLocalInstance(localInstance: FormalInstance[LocalInstanceTerm],
+    private def chaseLocalInstance(localInstance: LocalInstance,
                                    namesToBePreservedDuringChase: Set[LocalName]
-    ): Set[FormalInstance[LocalInstanceTerm]] = {
+    ): Set[LocalInstance] = {
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
-      val shortcutChaseOneStep = (instance: FormalInstance[LocalInstanceTerm]) => {
-        def foo(instance: FormalInstance[LocalInstanceTerm])
-          : Set[FormalInstance[LocalInstanceTerm]] = {
+      val shortcutChaseOneStep = (instance: LocalInstance) => {
+        def foo(instance: LocalInstance): Set[LocalInstance] = {
           val localNamesUsableInChildren = {
             (0 until maxArityOfAllPredicatesUsedInRules * 2)
               .map(LocalInstanceTerm.LocalName.apply)
@@ -186,7 +187,7 @@ final class NaiveDPTableSEEnumeration(
           // the existential rule to the instance by a join algorithm,
           // and then filter out those that do not preserve the names.
           val allChasesWithRule = (existentialRule: NormalGTGD) => {
-            def foo(existentialRule: NormalGTGD): List[FormalInstance[LocalInstanceTerm]] = {
+            def foo(existentialRule: NormalGTGD): List[LocalInstance] = {
               val headAtom = existentialRule.getHeadAtoms()(0)
 
               // A set of existential variables in the existential rule
@@ -213,7 +214,7 @@ final class NaiveDPTableSEEnumeration(
               allSubstitutedHeadAtoms.flatMap(
                 (substitutedHead: FormalFact[LocalInstanceTerm]) => {
                   def foo(substitutedHead: FormalFact[LocalInstanceTerm])
-                    : IterableOnce[FormalInstance[LocalInstanceTerm]] = {
+                    : IterableOnce[LocalInstance] = {
                     // The instance containing only the head atom produced by the existential rule.
                     // This should be a singleton instance because the existential rule is normal.
                     val headInstance = FormalInstance.of(substitutedHead)
