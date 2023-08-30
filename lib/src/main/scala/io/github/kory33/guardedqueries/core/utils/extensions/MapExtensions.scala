@@ -19,5 +19,5 @@ object MapExtensions {
 
   def restrictToKeys[K, V](map: BijectiveMap[K, V], keys: Set[K]): BijectiveMap[K, V] =
     // this call to .get never throws since a restriction of an injective map is again injective
-    BijectiveMap.tryFromInjectiveMap(restrictToKeys(map, keys)).get
+    BijectiveMap.tryFromInjectiveMap(restrictToKeys(map.toMap, keys)).get
 }
