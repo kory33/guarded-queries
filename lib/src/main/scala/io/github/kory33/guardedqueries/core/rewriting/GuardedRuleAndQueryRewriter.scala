@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import com.google.common.collect.ImmutableCollection
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
@@ -9,6 +8,7 @@ import io.github.kory33.guardedqueries.core.fol.LocalVariableContext
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.extensions.*
@@ -20,7 +20,7 @@ import uk.ac.ox.cs.pdq.fol.*
 import java.util
 import java.util.stream.Stream
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded
@@ -84,7 +84,7 @@ case class GuardedRuleAndQueryRewriter(
     // of generated rule set, because this way we are more likely to
     // generate identical atoms which can be cached.
     val ruleLocalVariableContext = new LocalVariableContext("x_")
-    val activeLocalNames = localInstance.getActiveTermsIn[LocalInstanceTerm]
+    val activeLocalNames = localInstance.getActiveTermsIn[LocalName]
 
     // Mapping of local names to their preimages in the neighbourhood mapping.
     // Contains all active local names in the key set,
@@ -111,10 +111,10 @@ case class GuardedRuleAndQueryRewriter(
       localName -> {
         val preimage = neighbourhoodPreimages.get(localName)
         if (preimage.isEmpty) {
-          if (queryConstantEmbeddingInverse.containsKey(localName)) {
+          if (queryConstantEmbeddingInverse.contains(localName)) {
             // if this local name is bound to a query constant,
             // we assign the query constant to the local name
-            queryConstantEmbeddingInverse.get(localName)
+            queryConstantEmbeddingInverse(localName)
           } else {
             // the local name is bound neither to a query constant nor
             // query-bound variable, so we assign a fresh variable to it
@@ -124,7 +124,7 @@ case class GuardedRuleAndQueryRewriter(
           // the contract of SubqueryEntailmentEnumeration guarantees that
           // local names bound to bound variables should not be bound
           // to a query constant
-          assert(!queryConstantEmbeddingInverse.containsKey(localName))
+          assert(!queryConstantEmbeddingInverse.contains(localName))
 
           // otherwise unify to the variable corresponding to the preimage
           // e.g. if {x, y} is the preimage of localName and _xy is the variable
@@ -134,7 +134,7 @@ case class GuardedRuleAndQueryRewriter(
       }
     ).toMap
 
-    val mappedInstance = localInstance.map((t) => t.mapLocalNamesToTerm(nameToTermMap(_)))
+    val mappedInstance = localInstance.map(t => t.mapLocalNamesToTerm(nameToTermMap(_)))
     val mappedSubgoalAtom: Atom = {
       val subgoalAtom = subgoalAtoms.apply(coexistentialVariables.toSet)
       val orderedNeighbourhoodVariables = subgoalAtom.getTerms.map((term: Term) =>

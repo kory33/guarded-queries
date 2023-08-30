@@ -293,7 +293,7 @@ final class NaiveDPTableSEEnumeration(
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
         instance.localWitnessGuess.values.toSet ++
-          instance.queryConstantEmbedding.values.asScala
+          instance.queryConstantEmbedding.values
       )
 
       for (chasedInstance <- instancesWithGuessedVariablesPreserved) {

@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils
 
-import com.google.common.collect.ImmutableBiMap
+import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 import org.apache.commons.lang3.tuple.Pair
@@ -82,7 +82,7 @@ object MappingStreams {
   def allInjectiveTotalFunctionsBetween[K, V](
     domain: Set[K],
     range: Set[V]
-  ): IterableOnce[ImmutableBiMap[K, V]] = {
+                                             ): IterableOnce[BijectiveMap[K, V]] = {
     val orderedDomain = domain.toList
     val orderedRange = range.toList
     if (orderedDomain.size > range.size) return Set.empty
@@ -150,13 +150,12 @@ object MappingStreams {
         _hasReachedEndAndIncrementAttempted = true
       }
       def hasReachedEndAndIncrementAttempted: Boolean = _hasReachedEndAndIncrementAttempted
-      def toMap: ImmutableBiMap[K, V] = {
-        val builder = ImmutableBiMap.builder[K, V]
-        (0 until rangeElementIndices.length).map(i =>
-          Pair.of(orderedDomain(i), orderedRange(rangeElementIndices(i)))
-        ).foreach(builder.put)
-        builder.build
-      }
+
+      def toMap: BijectiveMap[K, V] = BijectiveMap.tryFromInjectiveMap {
+        (0 until rangeElementIndices.length)
+          .map(i => (orderedDomain(i), orderedRange(rangeElementIndices(i))))
+          .toMap
+      }.get
     }
 
     Iterable.unfold(new RangeIndexArray)(indexArray => {

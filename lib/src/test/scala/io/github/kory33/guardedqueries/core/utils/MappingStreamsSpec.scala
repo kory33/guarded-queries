@@ -1,6 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils
 
 import com.google.common.collect.ImmutableBiMap
+import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 import org.scalacheck.*
@@ -99,7 +100,9 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
         allTotalFunctions
           .filter(function => function.keys.size == function.map(_._2).toSet.size)
           .forall(function =>
-            allInjectiveTotalFunctions.contains(ImmutableBiMap.copyOf(function.asJava))
+            allInjectiveTotalFunctions.contains(
+              BijectiveMap.tryFromInjectiveMap(function).get
+            )
           )
       }
     }

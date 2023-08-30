@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import com.google.common.collect.ImmutableBiMap
+import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 
 import java.util
 import java.util.stream.Stream
@@ -21,8 +21,7 @@ object MapExtensions {
   def restrictToKeys[K, V](map: Map[K, V], keys: Set[K]): Map[K, V] =
     map.view.filterKeys(keys.contains).toMap
 
-  def restrictToKeys[K, V](map: ImmutableBiMap[K, V], keys: Set[K]): ImmutableBiMap[K, V] =
-    // this call to ImmutableBiMap.copyOf never throws since
-    // a restriction of an injective map is again injective
-    ImmutableBiMap.copyOf(restrictToKeys(map.asScala.toMap, keys).asJava)
+  def restrictToKeys[K, V](map: BijectiveMap[K, V], keys: Set[K]): BijectiveMap[K, V] =
+  // this call to .get never throws since a restriction of an injective map is again injective
+    BijectiveMap.tryFromInjectiveMap(restrictToKeys(map, keys)).get
 }

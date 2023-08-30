@@ -332,7 +332,7 @@ final class NormalizingDPTableSEEnumeration(
         // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
-        instance.localWitnessGuess.values.toSet ++ instance.queryConstantEmbedding.values.asScala
+        instance.localWitnessGuess.values.toSet ++ instance.queryConstantEmbedding.values
       )
 
       for (chasedInstance <- instancesWithGuessedVariablesPreserved) {
