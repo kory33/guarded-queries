@@ -26,10 +26,10 @@ object MappingStreams {
       final private[utils] val rangeElementIndices = new Array[Int](orderedDomain.size)
 
       // if we have reached the end of the stream
-      private var reachedEnd = range.size == 0
+      private var reachedEnd = range.isEmpty || domain.isEmpty
 
       // if we have invoked toMap() after reaching the end of the stream
-      private var _alreadyEmittedLastMap = reachedEnd && !orderedDomain.isEmpty
+      private var _alreadyEmittedLastMap = reachedEnd && !domain.isEmpty
 
       /**
        * Increment index array. For example, if the array is [5, 4, 2] and range.size is 6, we
@@ -37,7 +37,7 @@ object MappingStreams {
        * range.size \- 1, and clear all indices to the left). If all indices are at the maximum
        * value, no indices are modified and false is returned.
        */
-      def increment(): Unit = {
+      private def increment(): Unit = {
         for (i <- 0 until rangeElementIndices.length) {
           if (rangeElementIndices(i) < range.size - 1) {
             rangeElementIndices(i) += 1
@@ -50,12 +50,16 @@ object MappingStreams {
 
       def alreadyEmittedLastMap: Boolean = _alreadyEmittedLastMap
 
-      def currentToMap: Map[K, V] = {
-        if (reachedEnd) _alreadyEmittedLastMap = true
-
+      private def currentToMap: Map[K, V] =
         (0 until rangeElementIndices.length)
           .map(i => (orderedDomain(i), orderedRange(rangeElementIndices(i))))
           .toMap
+
+      def currentToMapAndIncrement: Map[K, V] = {
+        val output = currentToMap
+        increment()
+        if (reachedEnd) _alreadyEmittedLastMap = true
+        output
       }
     }
 
@@ -64,9 +68,7 @@ object MappingStreams {
       if (indexArray.alreadyEmittedLastMap) {
         None
       } else {
-        val output = indexArray.currentToMap
-        indexArray.increment()
-        Some((output, indexArray))
+        Some((indexArray.currentToMapAndIncrement, indexArray))
       }
     })
   }
@@ -74,7 +76,7 @@ object MappingStreams {
   def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] =
     SetLikeExtensions
       .powerset(domain)
-      .flatMap(allTotalFunctionsBetween(_, range))
+      .flatMap(allTotalFunctionsBetween(_, range).toSet)
 
   def allInjectiveTotalFunctionsBetween[K, V](
     domain: Set[K],
@@ -167,4 +169,3 @@ object MappingStreams {
     })
   }
 }
-class MappingStreams private {}

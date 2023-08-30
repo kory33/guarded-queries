@@ -42,7 +42,6 @@ class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val allFunctions = MappingStreams
         .allTotalFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
-        .toSet
 
       assert(allFunctions.size == {
         if (codomainSize == 0 && domainSize == 0)
