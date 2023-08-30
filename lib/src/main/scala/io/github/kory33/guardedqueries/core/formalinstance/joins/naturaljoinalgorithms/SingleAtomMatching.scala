@@ -4,6 +4,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
 
+import scala.util.boundary
 import scala.collection.mutable.ArrayBuffer
 
 object SingleAtomMatching {
@@ -11,7 +12,7 @@ object SingleAtomMatching {
                            orderedQueryVariables: List[Variable],
                            appliedTerms: List[TA],
                            includeConstantsToTA: Constant => TA
-  ): Option[List[TA]] = {
+  ): Option[List[TA]] = boundary {
     val homomorphism = ArrayBuffer.fill[Option[TA]](orderedQueryVariables.size)(None)
 
     for (appliedTermIndex <- 0 until appliedTerms.size) {
@@ -23,7 +24,7 @@ object SingleAtomMatching {
           // if the term is a constant, we just check if that constant (considered as TA) has been applied
           if (!(includeConstantsToTA.apply(constant) == appliedTerm)) {
             // and fail if not
-            return None
+            boundary.break(None)
           }
         case variable: Variable =>
           val variableIndex = orderedQueryVariables.indexOf(termToMatch)
@@ -32,7 +33,7 @@ object SingleAtomMatching {
             // if the variable has already been assigned a constant, we check if the constant is the same
             if (!(alreadyAssignedConstant.get == appliedTerm)) {
               // and fail if not
-              return None
+              boundary.break(None)
             }
           } else {
             // if the variable has not already been assigned a constant, we assign it

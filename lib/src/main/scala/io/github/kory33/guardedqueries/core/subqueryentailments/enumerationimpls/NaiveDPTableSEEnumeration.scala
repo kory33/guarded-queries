@@ -20,6 +20,8 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
+import scala.util.boundary
+
 import java.util
 import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
@@ -269,7 +271,7 @@ final class NaiveDPTableSEEnumeration(
     /**
      * Fill the DP table up to the given instance.
      */
-    def fillTableUpto(instance: SubqueryEntailmentInstance): Unit = {
+    def fillTableUpto(instance: SubqueryEntailmentInstance): Unit = boundary { returnMethod ?=>
       // The subquery for which we are trying to decide the entailment problem.
       // If the instance is well-formed, the variable set is non-empty and connected,
       // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
@@ -294,14 +296,12 @@ final class NaiveDPTableSEEnumeration(
         )
 
         for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
-          import scala.util.boundary
-
-          boundary:
+          boundary: continueInnerLoop ?=>
             if (localWitnessGuessExtension.isEmpty) {
               // we do not allow "empty split"; whenever we split (i.e. make some progress
               // in the chase automaton), we must pick a nonempty set of coexistential variables
               // to map to local names in the chased instance.
-              boundary.break()
+              boundary.break()(using continueInnerLoop)
             }
 
             val newlyCoveredVariables = localWitnessGuessExtension.keySet
@@ -332,7 +332,7 @@ final class NaiveDPTableSEEnumeration(
             }
 
             if (!newlyCoveredAtomsOccurInChasedInstance)
-              boundary.break()
+              boundary.break()(using continueInnerLoop)
 
             val allSplitInstancesAreYesInstances = {
               val splitCoexistentialVariables = relevantSubquery.connectedComponentsOf(
@@ -369,7 +369,7 @@ final class NaiveDPTableSEEnumeration(
 
             if (allSplitInstancesAreYesInstances) {
               this.table.put(instance, true)
-              return
+              boundary.break()(using returnMethod)
             }
         }
       }

@@ -22,6 +22,8 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
+import scala.util.boundary
+
 import scala.jdk.CollectionConverters._
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
@@ -299,21 +301,19 @@ final class DFSNormalizingDPTableSEEnumeration(
      */
     private def canBeSplitIntoYesInstancesWithoutChasing(relevantSubquery: ConjunctiveQuery,
                                                          instance: SubqueryEntailmentInstance
-    ): Boolean = {
+    ): Boolean = boundary { returnMethod ?=>
       val localWitnessGuessExtensions = allPartialFunctionsBetween(
         instance.coexistentialVariables,
         instance.localInstance.getActiveTermsIn[LocalName]
       )
 
       for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
-        import scala.util.boundary
-
-        boundary:
+        boundary: continueInnerLoop ?=>
           if (localWitnessGuessExtension.isEmpty) {
             // we do not allow "empty split"; whenever we split (i.e. make some progress
             // in the chase automaton), we must pick a nonempty set of coexistential variables
             // to map to local names in the chased instance.
-            boundary.break()
+            boundary.break()(using continueInnerLoop)
           }
 
           val newlyCoveredVariables = localWitnessGuessExtension.keySet
@@ -345,7 +345,7 @@ final class DFSNormalizingDPTableSEEnumeration(
               .forall(instance.localInstance.containsFact)
           }
 
-          if (!newlyCoveredAtomsOccurInChasedInstance) boundary.break()
+          if (!newlyCoveredAtomsOccurInChasedInstance) boundary.break()(using continueInnerLoop)
 
           val allSplitInstancesAreYesInstances = {
             val splitCoexistentialVariables =
@@ -379,7 +379,7 @@ final class DFSNormalizingDPTableSEEnumeration(
             })
           }
 
-          if (allSplitInstancesAreYesInstances) return true
+          if (allSplitInstancesAreYesInstances) boundary.break(true)(using returnMethod)
       }
 
       // We tried all possible splits, and none of them worked.

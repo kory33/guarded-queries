@@ -5,6 +5,7 @@ import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import java.util
 import java.util.stream.IntStream
 import scala.collection.IterableOnce
+import scala.util.boundary
 
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions.given
 
@@ -34,12 +35,12 @@ object MappingStreams {
        * range.size \- 1, and clear all indices to the left). If all indices are at the maximum
        * value, no indices are modified and false is returned.
        */
-      private def increment(): Unit = {
+      private def increment(): Unit = boundary {
         for (i <- 0 until rangeElementIndices.length) {
           if (rangeElementIndices(i) < range.size - 1) {
             rangeElementIndices(i) += 1
             for (j <- i - 1 to 0 by -1) { rangeElementIndices(j) = 0 }
-            return
+            boundary.break()
           }
         }
         reachedEnd = true
@@ -109,7 +110,7 @@ object MappingStreams {
        * now have [0,5], so we fill the cleared entries with the smallest increasing sequence,
        * which is [1], so we end up with [0,5,1].
        */
-      def increment(): Unit = {
+      def increment(): Unit = boundary {
         val availableIndices: util.HashSet[Integer] = {
           val usedIndices = rangeElementIndices.toSet
           val set = new util.HashSet[Integer]
@@ -133,7 +134,7 @@ object MappingStreams {
             for (j <- i + 1 until rangeElementIndices.length) {
               rangeElementIndices(j) = sortedAvailableIndices.get(j - i - 1)
             }
-            return
+            boundary.break()
           } else {
             // we "drop" the entry and conceptually shorten the array
             availableIndices.add(oldEntry)
