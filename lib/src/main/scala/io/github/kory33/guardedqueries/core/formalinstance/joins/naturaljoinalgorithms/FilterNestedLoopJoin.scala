@@ -1,6 +1,9 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.joins.{JoinResult, NaturalJoinAlgorithm}
+import io.github.kory33.guardedqueries.core.formalinstance.joins.{
+  JoinResult,
+  NaturalJoinAlgorithm
+}
 import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import uk.ac.ox.cs.pdq.fol.*
