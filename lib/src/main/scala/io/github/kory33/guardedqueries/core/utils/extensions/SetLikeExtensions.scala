@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 
 object SetLikeExtensions {
-  given Extension: {} with
+  given Extension: AnyRef with
     extension [T](set: Set[T])
       /**
        * Powerset of a set of elements from the given collection, lazily streamed.

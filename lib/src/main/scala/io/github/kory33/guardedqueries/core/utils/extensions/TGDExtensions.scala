@@ -5,7 +5,7 @@ import uk.ac.ox.cs.pdq.fol.TGD
 import uk.ac.ox.cs.pdq.fol.Variable
 
 object TGDExtensions {
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension (tgd: TGD)
       /**
        * Compute the frontier of a given TGD, that is, the set of variables that appear in both

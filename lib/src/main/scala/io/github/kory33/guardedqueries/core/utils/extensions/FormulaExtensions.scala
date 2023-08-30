@@ -5,7 +5,7 @@ import uk.ac.ox.cs.pdq.fol.Formula
 import uk.ac.ox.cs.pdq.fol.Predicate
 
 object FormulaExtensions {
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension (formula: Formula)
       /**
        * Returns the set of predicates appearing in the formula.

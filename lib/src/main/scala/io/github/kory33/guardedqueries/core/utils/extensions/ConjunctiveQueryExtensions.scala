@@ -9,7 +9,7 @@ import uk.ac.ox.cs.pdq.fol.Variable
 object ConjunctiveQueryExtensions {
   // We enclose the extension methods in the given instance; see
   // https://github.com/lampepfl/dotty/issues/14777#issuecomment-1078995983 for details
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension (conjunctiveQuery: ConjunctiveQuery)
       /**
        * Computes a subquery of a given {@code ConjunctiveQuery} that includes only the atoms

@@ -3,7 +3,7 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 import scala.annotation.tailrec
 
 object StringSetExtensions {
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension (strings: Set[String])
       private def someStartsWith(string: String): Boolean = {
         strings.exists(_.startsWith(string))

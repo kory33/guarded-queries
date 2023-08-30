@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
 object MapExtensions {
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension [K, V](map: Map[K, V])
       /**
        * Computes a map that maps each value in {@code values} to its preimage in {@code map}.

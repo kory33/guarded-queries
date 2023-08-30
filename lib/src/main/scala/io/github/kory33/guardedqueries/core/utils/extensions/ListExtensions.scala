@@ -6,7 +6,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.boundary
 
 object ListExtensions {
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension [I](list: List[I])
       def productMappedIterablesToLists[R](
         /* pure */ mapperToIterable: I => Iterable[R]

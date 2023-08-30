@@ -37,7 +37,7 @@ object BijectiveMap {
 
   given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.toMap
 
-  given Extensions: {} with
+  given Extensions: AnyRef with
     extension [K, V](bmap: BijectiveMap[K, V])
       def restrictToKeys(keys: Set[K]): BijectiveMap[K, V] =
         import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
