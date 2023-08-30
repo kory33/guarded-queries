@@ -3,7 +3,6 @@ package io.github.kory33.guardedqueries.core.rewriting
 import io.github.kory33.guardedqueries.core.utils.CachingFunction
 import uk.ac.ox.cs.pdq.fol._
 
-import java.util
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given

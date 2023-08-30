@@ -1,8 +1,5 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import java.util
-import java.util.NoSuchElementException
-import scala.jdk.CollectionConverters._
 import scala.util.boundary
 
 object ListExtensions {
@@ -71,7 +68,7 @@ object ListExtensions {
           }
 
           override def next: List[R] = {
-            if (!hasNext) throw new NoSuchElementException
+            if (!hasNext) throw new NoSuchElementException()
             val toReturn = currentItemStack.get
             advanceState()
             toReturn

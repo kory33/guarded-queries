@@ -26,12 +26,13 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.util.boundary
-import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
+
+import scala.collection.mutable
 
 /**
  * An implementation of subquery entailment enumeration using a DP table together with efficient
@@ -177,10 +178,10 @@ final class DFSNormalizingDPTableSEEnumeration(
                               private val maxArityOfAllPredicatesUsedInRules: Int,
                               private val connectedConjunctiveQuery: ConjunctiveQuery
   ) {
-    final private val table = new java.util.HashMap[SubqueryEntailmentInstance, Boolean]()
+    final private val table = mutable.HashMap[SubqueryEntailmentInstance, Boolean]()
     private def isYesInstance(instance: SubqueryEntailmentInstance) = {
       fillTableUpto(instance)
-      this.table.get(instance)
+      this.table(instance)
     }
 
     /**
@@ -392,14 +393,14 @@ final class DFSNormalizingDPTableSEEnumeration(
      * Fill the DP table up to the given instance by chasing local instance when necessary.
      */
     def fillTableUpto(instance: SubqueryEntailmentInstance): Unit = {
-      if (this.table.containsKey(instance)) return
+      if (this.table.contains(instance)) return
       val saturatedInstance =
         instance.withLocalInstance(datalogSaturationEngine.saturateInstance(
           saturatedRuleSet.saturatedRulesAsDatalogProgram,
           instance.localInstance,
           LocalInstanceTerm.RuleConstant.apply
         ))
-      if (this.table.containsKey(saturatedInstance)) return
+      if (this.table.contains(saturatedInstance)) return
 
       // The subquery for which we are trying to decide the entailment problem.
       // If the instance is well-formed, the variable set is non-empty and connected,
@@ -429,15 +430,11 @@ final class DFSNormalizingDPTableSEEnumeration(
       //   at any one node, we mark the node as NO and move back to the parent.
       //   Every time we chase, we add the chased local instance to localInstancesAlreadySeen
       //   to prevent ourselves from chasing the same instance twice.
-      val stack =
-        new java.util.ArrayDeque[(
-          SubqueryEntailmentInstance,
-          Iterator[LocalInstance]
-        )]
-      val localInstancesAlreadySeen = new java.util.HashSet[LocalInstance]
+      var stack = List[(SubqueryEntailmentInstance, Iterator[LocalInstance])]()
+      val localInstancesAlreadySeen = mutable.HashSet[LocalInstance]()
 
       // We begin DFS with the root saturated instance.
-      stack.add((
+      stack ::= ((
         saturatedInstance,
         allNormalizedSaturatedChildrenOf(
           saturatedInstance.localInstance,
@@ -446,19 +443,20 @@ final class DFSNormalizingDPTableSEEnumeration(
       ))
       localInstancesAlreadySeen.add(saturatedInstance.localInstance)
 
-      while (!stack.isEmpty) {
+      while (stack.nonEmpty) {
         import scala.util.boundary
 
         boundary:
-          if (!stack.peekFirst._2.hasNext) {
+          val (nextInstance, nextChildrenIterator) = stack.head
+          if (!nextChildrenIterator.hasNext) {
             // if we have exhausted the children, we mark the current instance as NO
-            val currentInstance = stack.pop._1
-            this.table.put(currentInstance, false)
+            stack = stack.tail
+            this.table.put(nextInstance, false)
             boundary.break()
           }
 
           // next instance that we wish to decide the entailment problem for
-          val nextChasedInstance = stack.peekFirst._2.next // stack is non-empty here
+          val nextChasedInstance = nextChildrenIterator.next
 
           // if we have already seen this instance, we do not need to test for entailment
           // (we already know that it is a NO instance)
@@ -469,12 +467,10 @@ final class DFSNormalizingDPTableSEEnumeration(
             saturatedInstance.withLocalInstance(nextChasedInstance)
 
           val weAlreadyVisitedNextInstance =
-            this.table.containsKey(chasedSubqueryEntailmentInstance)
+            this.table.contains(chasedSubqueryEntailmentInstance)
 
           // if this is an instance we have already seen, we do not need to chase any further
-          if (
-            weAlreadyVisitedNextInstance && !this.table.get(chasedSubqueryEntailmentInstance)
-          ) {
+          if (weAlreadyVisitedNextInstance && !this.table(chasedSubqueryEntailmentInstance)) {
             // otherwise we proceed to the next sibling, so continue without modifying the stack
             boundary.break()
           }
@@ -483,22 +479,23 @@ final class DFSNormalizingDPTableSEEnumeration(
           // or we can split the current instance into YES instances without chasing,
           // we mark all ancestors of the current instance as YES and exit
           if (
-            (weAlreadyVisitedNextInstance && this.table.get(
+            (weAlreadyVisitedNextInstance && this.table(
               chasedSubqueryEntailmentInstance
             )) || canBeSplitIntoYesInstancesWithoutChasing(
               relevantSubquery,
               chasedSubqueryEntailmentInstance
             )
           ) {
-            for (ancestor <- stack.asScala) { this.table.put(ancestor._1, true) }
+            stack.foreach((ancestor, _) => this.table.put(ancestor, true))
             // we also put the original (unsaturated) instance into the table
             this.table.put(instance, true)
             return
           }
+
           // It turned out that we cannot split the current instance into YES instances.
           // At this point, we need to chase further down the shortcut chase tree.
           // So we push the chased instance onto the stack and keep on.
-          stack.push((
+          stack ::= ((
             chasedSubqueryEntailmentInstance,
             allNormalizedSaturatedChildrenOf(
               nextChasedInstance,
@@ -513,7 +510,7 @@ final class DFSNormalizingDPTableSEEnumeration(
     }
 
     def getKnownYesInstances: IterableOnce[SubqueryEntailmentInstance] =
-      this.table.entrySet.asScala.filter(_.getValue).map(_.getKey)
+      this.table.filter(_._2).keys
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,

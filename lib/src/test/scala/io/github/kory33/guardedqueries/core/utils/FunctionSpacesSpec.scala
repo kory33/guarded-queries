@@ -6,8 +6,6 @@ import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import scala.jdk.CollectionConverters.*
-
 class FunctionSpacesSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallSetSize: Gen[Int] = Gen.chooseNum(0, 5)
   def setOfSize(size: Int): Set[Int] = (1 to size).toSet
@@ -18,13 +16,6 @@ class FunctionSpacesSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     codomain: Set[Int]
   ): Boolean =
     map.keys.forall(domain.contains) && map.values.forall(codomain.contains)
-
-  def respectsDomainAndCodomain(
-    javaMap: java.util.Map[Int, Int],
-    domain: Set[Int],
-    codomain: Set[Int]
-  ): Boolean =
-    respectsDomainAndCodomain(javaMap.asScala.toMap, domain, codomain)
 
   ".allTotalFunctionsBetween" should "produce maps that respect domain and codomain" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>

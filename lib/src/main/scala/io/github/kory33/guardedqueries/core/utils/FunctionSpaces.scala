@@ -2,8 +2,6 @@ package io.github.kory33.guardedqueries.core.utils
 
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 
-import java.util
-import java.util.stream.IntStream
 import scala.collection.IterableOnce
 import scala.util.boundary
 
@@ -90,12 +88,12 @@ object FunctionSpaces {
      */
     class RangeIndexArray {
       // [0,1,...,orderedDomain.size()-1] is the first injective mapping in the lexicographical order
-      final private val rangeElementIndices = IntStream.range(0, orderedDomain.size).toArray
+      final private val rangeElementIndices: Array[Int] = orderedDomain.indices.toArray
 
       // boolean indicating whether we have called increment() after
       // reaching the maximum rangeElementIndices, which is
       // [range.size-1, range.size-2, ..., range.size - orderedDomain.size()]
-      private var _hasReachedEndAndIncrementAttempted = false
+      private var _hasReachedEndAndIncrementAttempted: Boolean = false
 
       /**
        * Increment index array.
@@ -114,33 +112,28 @@ object FunctionSpaces {
        * which is [1], so we end up with [0,5,1].
        */
       def increment(): Unit = boundary {
-        val availableIndices: util.HashSet[Integer] = {
+        var availableIndices: Set[Int] = {
           val usedIndices = rangeElementIndices.toSet
-          val set = new util.HashSet[Integer]
-          (0 until range.size).filter(!usedIndices.contains(_)).foreach(i =>
-            set.add(new Integer(i))
-          )
-          set
+          (0 until range.size).filter(!usedIndices.contains(_)).toSet
         }
 
         for (i <- rangeElementIndices.length - 1 to 0 by -1) {
           val oldEntry = rangeElementIndices(i)
-          val incrementableTo =
-            availableIndices.stream.filter((index: Integer) => index > oldEntry).findFirst
-          if (incrementableTo.isPresent) {
+          val incrementableTo = availableIndices.find(_ > oldEntry)
+
+          if (incrementableTo.isDefined) {
             val newEntry = incrementableTo.get
             rangeElementIndices(i) = newEntry
-            availableIndices.add(oldEntry)
-            availableIndices.remove(newEntry)
-            val sortedAvailableIndices = new util.ArrayList[Integer](availableIndices)
-            sortedAvailableIndices.sort((a, b) => a.compareTo(b))
+            availableIndices = availableIndices + oldEntry - newEntry
+
+            val sortedAvailableIndices = availableIndices.toArray.sorted
             for (j <- i + 1 until rangeElementIndices.length) {
-              rangeElementIndices(j) = sortedAvailableIndices.get(j - i - 1)
+              rangeElementIndices(j) = sortedAvailableIndices(j - i - 1)
             }
             boundary.break()
           } else {
             // we "drop" the entry and conceptually shorten the array
-            availableIndices.add(oldEntry)
+            availableIndices += oldEntry
           }
         }
         _hasReachedEndAndIncrementAttempted = true
@@ -148,8 +141,10 @@ object FunctionSpaces {
       def hasReachedEndAndIncrementAttempted: Boolean = _hasReachedEndAndIncrementAttempted
 
       def toMap: BijectiveMap[K, V] = BijectiveMap.tryFromInjectiveMap {
-        (0 until rangeElementIndices.length)
-          .map(i => (orderedDomain(i), orderedRange(rangeElementIndices(i))))
+        rangeElementIndices.zipWithIndex
+          .map((rangeIndex, domainIndex) =>
+            (orderedDomain(domainIndex), orderedRange(rangeIndex))
+          )
           .toMap
       }.get
     }

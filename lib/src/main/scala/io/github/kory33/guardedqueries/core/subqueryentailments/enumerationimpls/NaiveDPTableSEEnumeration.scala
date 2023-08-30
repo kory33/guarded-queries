@@ -24,13 +24,13 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.util.boundary
-import java.util
-import scala.jdk.CollectionConverters.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
+
+import scala.collection.mutable
 
 /**
  * An implementation of subquery entailment enumeration using a DP table.
@@ -158,11 +158,11 @@ final class NaiveDPTableSEEnumeration(
                               private val connectedConjunctiveQuery: ConjunctiveQuery
   ) {
 
-    final private val table = new util.HashMap[SubqueryEntailmentInstance, Boolean]
+    final private val table = mutable.HashMap[SubqueryEntailmentInstance, Boolean]()
 
     private def isYesInstance(instance: SubqueryEntailmentInstance) = {
-      if (!this.table.containsKey(instance)) fillTableUpto(instance)
-      this.table.get(instance)
+      if (!this.table.contains(instance)) fillTableUpto(instance)
+      this.table(instance)
     }
 
     private def chaseLocalInstance(localInstance: LocalInstance,
@@ -314,23 +314,22 @@ final class NaiveDPTableSEEnumeration(
               val extendedGuess =
                 extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms
 
-              val newlyCoveredAtoms =
-                util.Arrays.stream(relevantSubquery.getAtoms).filter((atom: Atom) => {
-                  val atomVariables = atom.getVariables.toSet
-                  val allVariablesAreCovered = atomVariables.subsetOf(extendedGuess.keySet)
+              val newlyCoveredAtoms = relevantSubquery.getAtoms.filter((atom: Atom) => {
+                val atomVariables = atom.getVariables.toSet
+                val allVariablesAreCovered = atomVariables.subsetOf(extendedGuess.keySet)
 
-                  // we no longer care about the part of the query
-                  // which entirely lies in the neighborhood of coexistential variables
-                  // of the instance
-                  val someVariableIsNewlyCovered =
-                    atomVariables.exists(newlyCoveredVariables.contains)
+                // we no longer care about the part of the query
+                // which entirely lies in the neighborhood of coexistential variables
+                // of the instance
+                val someVariableIsNewlyCovered =
+                  atomVariables.exists(newlyCoveredVariables.contains)
 
-                  allVariablesAreCovered && someVariableIsNewlyCovered
-                })
+                allVariablesAreCovered && someVariableIsNewlyCovered
+              })
 
               newlyCoveredAtoms.map((atom: Atom) =>
                 LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.apply)
-              ).allMatch(chasedInstance.containsFact)
+              ).forall(chasedInstance.containsFact)
             }
 
             if (!newlyCoveredAtomsOccurInChasedInstance)
@@ -382,7 +381,7 @@ final class NaiveDPTableSEEnumeration(
     }
 
     def getKnownYesInstances: IterableOnce[SubqueryEntailmentInstance] =
-      this.table.entrySet.asScala.filter(_.getValue).map(_.getKey)
+      this.table.filter(_._2).keys
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
