@@ -99,7 +99,7 @@ object NaiveDPTableSEEnumeration {
         val allCoexistentialVariableSets = queryExistentialVariables.powerset
           .filter(_.nonEmpty)
           .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
-          .filter(variableSet => conjunctiveQuery.connects(variableSet.toSet))
+          .filter(variableSet => conjunctiveQuery.connects(variableSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allLocalInstances(extensionalSignature, ruleConstants).flatMap(
@@ -132,7 +132,7 @@ object NaiveDPTableSEEnumeration {
                 )
 
                 allQueryConstantEmbeddings.map(queryConstantEmbedding =>
-                  new SubqueryEntailmentInstance(
+                  SubqueryEntailmentInstance(
                     ruleConstantWitnessGuess,
                     coexistentialVariables,
                     localInstance,

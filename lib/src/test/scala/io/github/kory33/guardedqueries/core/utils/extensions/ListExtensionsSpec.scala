@@ -33,7 +33,7 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
         assert {
           result.forall { stack =>
-            stack.toList.zipWithIndex.forall {
+            stack.zipWithIndex.forall {
               case (element, index) =>
                 (1 to xs(index)).contains(element)
             }

@@ -112,7 +112,7 @@ object DFSNormalizingDPTableSEEnumeration {
             .powerset
             .filter(_.nonEmpty)
             .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
-            .filter(variableSet => conjunctiveQuery.connects(variableSet.toSet))
+            .filter(variableSet => conjunctiveQuery.connects(variableSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(

@@ -36,7 +36,7 @@ class SetExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   ".generateFromElementsUntilFixpoint" should "output a fixpoint of the function" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
-      val generatedSet = xs.generateFromElementsUntilFixpoint(simpleGeneratorFunction).toSet
+      val generatedSet = xs.generateFromElementsUntilFixpoint(simpleGeneratorFunction)
       assert(generatedSet == (generatedSet union generatedSet.flatMap(
         simpleGeneratorFunction
       )))
@@ -70,7 +70,7 @@ class SetExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   ".generateFromSetUntilFixpoint" should "output a fixpoint of the function" in {
     forAll(minSuccessful(1000)) { (xs: Set[BigInt]) =>
-      val generatedSet = xs.generateFromSetUntilFixpoint(simpleSetGeneratorFunction).toSet
+      val generatedSet = xs.generateFromSetUntilFixpoint(simpleSetGeneratorFunction)
       assert(generatedSet == (generatedSet union simpleSetGeneratorFunction(generatedSet)))
     }
   }

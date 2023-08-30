@@ -255,7 +255,7 @@ case class GuardedRuleAndQueryRewriter(
             .getOrElse(Array[Atom]())
 
         val neighbourhoodsSubgoals = boundVariableConnectedQuery
-          .connectedComponentsOf(existentialWitnessCandidate.toSet)
+          .connectedComponentsOf(existentialWitnessCandidate)
           .map(subgoalAtoms.apply)
 
         new DatalogRule(

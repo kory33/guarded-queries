@@ -39,7 +39,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
   ".filterAtom" should "contain all and only atoms that satisfy the predicate" in {
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
       val result = cq.filterAtoms(applyToPredicateNumber(f))
-      val atomsInResult = result.map(_.getAtoms().toList).getOrElse(List.empty)
+      val atomsInResult = result.map(_.getAtoms.toList).getOrElse(List.empty)
 
       assert {
         atomsInResult.forall { atom =>
@@ -52,7 +52,7 @@ class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckProperty
   ".filterAtom" should "not change variable boundedness" in {
     forAll(largeCQ, arbitrary[Int => Boolean], minSuccessful(3000)) { (cq, f) =>
       val result = cq.filterAtoms(applyToPredicateNumber(f))
-      val atomsInResult = result.map(_.getAtoms().toList).getOrElse(List.empty)
+      val atomsInResult = result.map(_.getAtoms.toList).getOrElse(List.empty)
       val variablesInResult = atomsInResult.flatMap(_.getVariables.toList)
 
       assert {

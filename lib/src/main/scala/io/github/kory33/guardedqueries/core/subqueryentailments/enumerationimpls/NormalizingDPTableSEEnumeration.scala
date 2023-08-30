@@ -106,7 +106,7 @@ object NormalizingDPTableSEEnumeration {
     ruleConstants: Set[Constant],
     conjunctiveQuery: ConjunctiveQuery
   ) = {
-    val queryVariables = conjunctiveQuery.allVariables.toSet
+    val queryVariables = conjunctiveQuery.allVariables
     val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
 
     allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
@@ -115,7 +115,7 @@ object NormalizingDPTableSEEnumeration {
         val allCoexistentialVariableSets = queryExistentialVariables.powerset
           .filter(_.nonEmpty)
           .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
-          .filter(variableSet => conjunctiveQuery.connects(variableSet.toSet))
+          .filter(variableSet => conjunctiveQuery.connects(variableSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
           allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(
@@ -152,7 +152,7 @@ object NormalizingDPTableSEEnumeration {
                 )
 
                 allQueryConstantEmbeddings.map(queryConstantEmbedding =>
-                  new SubqueryEntailmentInstance(
+                  SubqueryEntailmentInstance(
                     ruleConstantWitnessGuess,
                     coexistentialVariables,
                     localInstance,
