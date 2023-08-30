@@ -1,9 +1,10 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import scala.jdk.CollectionConverters.*
 import com.google.common.collect.ImmutableBiMap
+
 import java.util
 import java.util.stream.Stream
+import scala.jdk.CollectionConverters.*
 
 object MapExtensions {
 

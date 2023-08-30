@@ -2,7 +2,9 @@ package io.github.kory33.guardedqueries.core.fol
 
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Variable}
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.jdk.CollectionConverters.*
 

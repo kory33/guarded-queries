@@ -4,6 +4,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
+
 import java.util
 
 /**

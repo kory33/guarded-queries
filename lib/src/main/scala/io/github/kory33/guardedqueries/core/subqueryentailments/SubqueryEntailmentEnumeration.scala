@@ -1,10 +1,11 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments
 
-import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import java.util.stream.Stream
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD
+import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+
+import java.util.stream.Stream
 
 /**
  * The interface to objects that can compute subquery entailment relations. <p> An object

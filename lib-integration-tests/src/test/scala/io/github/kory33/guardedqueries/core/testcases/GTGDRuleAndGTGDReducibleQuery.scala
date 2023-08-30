@@ -3,6 +3,7 @@ package io.github.kory33.guardedqueries.core.testcases
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.Variable
+
 import java.util
 
 /**

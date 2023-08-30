@@ -1,23 +1,22 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormalInstance
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
+import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import io.github.kory33.guardedqueries.testutils.scalacheck.{
-  GenFormalInstance,
-  GenFormula,
-  GenSet
-}
-import org.scalacheck.Gen
-import uk.ac.ox.cs.pdq.fol.Predicate
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Atom
-import scala.jdk.CollectionConverters._
-import uk.ac.ox.cs.pdq.fol.Variable
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
+import uk.ac.ox.cs.pdq.fol.Variable
+
+import scala.jdk.CollectionConverters._
 
 class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallPredicateSet: Gen[Set[Predicate]] = for {

@@ -6,8 +6,8 @@ import uk.ac.ox.cs.pdq.fol.Term
 
 import java.util
 import java.util.Objects
-import scala.reflect.TypeTest
 import scala.collection.mutable
+import scala.reflect.TypeTest
 
 case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
   lazy val activeTerms: Set[TermAlphabet] = facts.flatMap(_.appliedTerms)

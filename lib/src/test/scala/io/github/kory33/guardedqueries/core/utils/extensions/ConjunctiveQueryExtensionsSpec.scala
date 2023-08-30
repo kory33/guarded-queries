@@ -1,17 +1,17 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import org.scalacheck.*
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
-
-import scala.jdk.CollectionConverters.*
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
+import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.ac.ox.cs.pdq.fol.Atom
-import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Variable
+
+import scala.jdk.CollectionConverters.*
 
 class ConjunctiveQueryExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   import io.github.kory33.guardedqueries.testutils.scalacheck.ShrinkFormula.given

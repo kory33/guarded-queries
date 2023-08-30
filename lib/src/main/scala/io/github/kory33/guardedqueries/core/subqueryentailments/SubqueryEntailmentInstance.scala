@@ -2,9 +2,9 @@ package io.github.kory33.guardedqueries.core.subqueryentailments
 
 import com.google.common.collect.ImmutableBiMap
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
 
 case class SubqueryEntailmentInstance(
   ruleConstantWitnessGuess: Map[Variable, Constant],

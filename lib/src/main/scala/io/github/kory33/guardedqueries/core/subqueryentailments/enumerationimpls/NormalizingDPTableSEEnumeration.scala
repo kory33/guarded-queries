@@ -1,18 +1,21 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls
 
-import scala.jdk.CollectionConverters.*
-
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
-import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
+import io.github.kory33.guardedqueries.core.fol.NormalGTGD
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
+import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.{
-  LocalInstanceTerm,
-  SubqueryEntailmentEnumeration,
-  SubqueryEntailmentInstance
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
+import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
+import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
@@ -21,12 +24,7 @@ import uk.ac.ox.cs.pdq.fol.Variable
 import java.util
 import java.util.stream.IntStream
 import java.util.stream.Stream
-import io.github.kory33.guardedqueries.core.utils.MappingStreams.*
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
-import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
-import uk.ac.ox.cs.pdq.fol.Atom
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
+import scala.jdk.CollectionConverters.*
 
 /**
  * An implementation of subquery entailment enumeration using a DP table plus a simple

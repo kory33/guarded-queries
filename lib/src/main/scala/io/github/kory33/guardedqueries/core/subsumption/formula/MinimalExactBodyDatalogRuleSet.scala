@@ -1,7 +1,8 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
-import java.util
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
+
+import java.util
 
 /**
  * An implementation of {@link IndexlessMaximallySubsumingTGDSet} that keeps track of a set of

@@ -1,13 +1,13 @@
 package io.github.kory33.guardedqueries.core.utils
 
-import org.scalacheck.*
+import com.google.common.collect.ImmutableBiMap
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
-
-import scala.jdk.CollectionConverters.*
-import com.google.common.collect.ImmutableBiMap
+import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import scala.jdk.CollectionConverters.*
 
 class MappingStreamsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallSetSize: Gen[Int] = Gen.chooseNum(0, 5)

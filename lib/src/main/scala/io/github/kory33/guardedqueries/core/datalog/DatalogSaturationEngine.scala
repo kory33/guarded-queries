@@ -1,9 +1,10 @@
 package io.github.kory33.guardedqueries.core.datalog
 
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.Constant
+
 import java.util
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 
 trait DatalogSaturationEngine {
   def saturateInstance[TA](program: DatalogProgram,

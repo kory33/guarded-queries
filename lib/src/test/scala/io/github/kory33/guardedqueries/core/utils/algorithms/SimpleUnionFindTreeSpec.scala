@@ -1,14 +1,13 @@
 package io.github.kory33.guardedqueries.core.utils.algorithms
 
+import com.hp.hpl.jena.sparql.function.library.e
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
 import io.github.kory33.guardedqueries.testutils.scalacheck.GenSet
-import org.scalacheck.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
-
+import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import com.hp.hpl.jena.sparql.function.library.e
 
 /**
  * An input for union-find algorithm;

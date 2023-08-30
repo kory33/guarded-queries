@@ -1,12 +1,12 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import org.scalacheck.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
+import org.scalacheck.*
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.jdk.CollectionConverters.*
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import org.scalatest.flatspec.AnyFlatSpec
 
 class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val smallInt: Gen[Int] = Gen.chooseNum(0, 8)

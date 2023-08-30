@@ -1,6 +1,7 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import uk.ac.ox.cs.pdq.fol.TGD
+
 import scala.collection.mutable
 
 /**

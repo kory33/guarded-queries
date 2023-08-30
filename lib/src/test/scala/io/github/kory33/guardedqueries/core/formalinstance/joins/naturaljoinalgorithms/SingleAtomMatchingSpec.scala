@@ -2,14 +2,18 @@ package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalg
 
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
-import io.github.kory33.guardedqueries.testutils.scalacheck.{GenFormalInstance, GenFormula}
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormalInstance
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
+import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate}
-import org.scalacheck.Gen
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
-import scala.jdk.CollectionConverters._
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
+
+import scala.jdk.CollectionConverters._
 
 class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallAtom: Gen[Atom] = GenFormula.genAtom(

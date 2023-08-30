@@ -1,12 +1,12 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import org.scalacheck.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
-
-import scala.jdk.CollectionConverters.*
+import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import scala.jdk.CollectionConverters.*
 
 class MapExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 

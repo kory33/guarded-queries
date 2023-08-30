@@ -1,13 +1,13 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.Variable
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-
-import java.util
-import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions
+import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Variable
+
+import java.util
 
 /**
  * A class of objects representing the decomposition of a conjunctive query into

@@ -9,15 +9,14 @@ import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewrite
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQuery
+import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
-import scala.jdk.CollectionConverters._
-
 import java.time.Instant
 import java.util.Date
-import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
+import scala.jdk.CollectionConverters._
 
 object GSatEquivalenceTestHarness {
   private def logWithTime(message: String): Unit = {

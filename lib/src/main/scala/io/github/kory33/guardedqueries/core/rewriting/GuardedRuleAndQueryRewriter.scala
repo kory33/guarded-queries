@@ -1,25 +1,26 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
 import com.google.common.collect.ImmutableCollection
-import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
+import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
+import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
-import io.github.kory33.guardedqueries.core.fol.NormalGTGD
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
+import io.github.kory33.guardedqueries.core.fol.LocalVariableContext
+import io.github.kory33.guardedqueries.core.fol.NormalGTGD
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.extensions.*
 import org.apache.commons.lang3.tuple.Pair
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
-import scala.jdk.CollectionConverters._
-import scala.collection.mutable
 
 import java.util
 import java.util.stream.Stream
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
-import io.github.kory33.guardedqueries.core.fol.LocalVariableContext
+import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded

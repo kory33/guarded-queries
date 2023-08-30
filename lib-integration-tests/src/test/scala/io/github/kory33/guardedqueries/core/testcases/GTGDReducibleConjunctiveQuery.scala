@@ -2,6 +2,7 @@ package io.github.kory33.guardedqueries.core.testcases
 
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+
 import java.util
 
 /**

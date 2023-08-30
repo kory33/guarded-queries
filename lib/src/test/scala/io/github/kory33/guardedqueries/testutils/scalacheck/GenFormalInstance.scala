@@ -1,15 +1,16 @@
 package io.github.kory33.guardedqueries.testutils.scalacheck
 
-import scala.jdk.CollectionConverters.*
-import uk.ac.ox.cs.pdq.fol.Predicate
-import uk.ac.ox.cs.pdq.fol.Constant
-import org.scalacheck.Gen
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen
-import uk.ac.ox.cs.pdq.fol.TypedConstant
-import org.scalacheck.Shrink
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkSet
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen
+import org.scalacheck.Gen
+import org.scalacheck.Shrink
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.TypedConstant
+
+import scala.jdk.CollectionConverters.*
 
 object GenFormalInstance {
   def genFormalInstanceOver(predicate: Predicate,

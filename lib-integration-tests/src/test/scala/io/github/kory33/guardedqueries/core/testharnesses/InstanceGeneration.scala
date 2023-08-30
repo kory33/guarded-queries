@@ -8,8 +8,8 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
-import scala.jdk.CollectionConverters._
 import java.util.stream.IntStream
+import scala.jdk.CollectionConverters._
 
 object InstanceGeneration {
   def allFactsOver(predicate: Predicate,

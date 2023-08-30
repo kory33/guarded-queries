@@ -1,11 +1,12 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import uk.ac.ox.cs.pdq.fol._
-import java.util
-import java.util.concurrent.atomic.AtomicInteger
 import io.github.kory33.guardedqueries.core.utils.CachingFunction
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions
+import uk.ac.ox.cs.pdq.fol._
+
+import java.util
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * A mapping that sends a set V of connected variables to an atom that asserts that the query

@@ -8,6 +8,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
 import io.github.kory33.guardedqueries.core.utils.extensions.SetLikeExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
 import uk.ac.ox.cs.pdq.fol.Constant
+
 import java.util
 import scala.collection.mutable
 
