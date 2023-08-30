@@ -98,15 +98,18 @@ object MappingStreams {
       private var _hasReachedEndAndIncrementAttempted = false
 
       /**
-       * Increment index array. <p> We scan the index array from the end, and we try to
-       * increment the entry (while maintaining injectivity) as early as possible. If we cannot
-       * increment a particular entry, we drop it (conceptually, without actually resizing the
-       * array) and try to increment the previous entry. After having incremented an entry, we
-       * clear all entries to the right of it, and then we fill the cleared entries with the
-       * smallest increasing sequence of integers that is not already used by previous entries.
-       * <p> For example, if the array is [0,4,5] and range.size is 6, we first look at 5 and
-       * try to increment it. Since 5 is not at the maximum value, we now consider the array to
-       * be [0,4] and continue the process. Since 4 can be incremented, we increment it to 5. We
+       * Increment index array.
+       *
+       * We scan the index array from the end, and we try to increment the entry (while
+       * maintaining injectivity) as early as possible. If we cannot increment a particular
+       * entry, we drop it (conceptually, without actually resizing the array) and try to
+       * increment the previous entry. After having incremented an entry, we clear all entries
+       * to the right of it, and then we fill the cleared entries with the smallest increasing
+       * sequence of integers that is not already used by previous entries.
+       *
+       * For example, if the array is [0,4,5] and range.size is 6, we first look at 5 and try to
+       * increment it. Since 5 is not at the maximum value, we now consider the array to be
+       * [0,4] and continue the process. Since 4 can be incremented, we increment it to 5. We
        * now have [0,5], so we fill the cleared entries with the smallest increasing sequence,
        * which is [1], so we end up with [0,5,1].
        */

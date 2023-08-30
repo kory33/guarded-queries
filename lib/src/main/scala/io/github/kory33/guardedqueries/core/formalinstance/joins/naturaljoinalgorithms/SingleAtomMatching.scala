@@ -49,8 +49,9 @@ object SingleAtomMatching {
   }
 
   /**
-   * Finds all answers to the given atomic query in the given instance. <p> The returned join
-   * result is well-formed.
+   * Finds all answers to the given atomic query in the given instance.
+   *
+   * The returned join result is well-formed.
    *
    * @throws IllegalArgumentException
    *   if the given query contains a term that is neither a variable nor a constant
@@ -79,4 +80,3 @@ object SingleAtomMatching {
     new JoinResult[TA](orderedQueryVariables, homomorphisms.toList)
   }
 }
-class SingleAtomMatching private {}

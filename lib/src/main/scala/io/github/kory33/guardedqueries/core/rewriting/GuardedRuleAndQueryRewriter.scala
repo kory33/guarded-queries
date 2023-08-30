@@ -25,17 +25,21 @@ import io.github.kory33.guardedqueries.core.utils.extensions.StringSetExtensions
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded
- * rules and the given conjunctive query. <p> Each object of this class makes use of a {@link
- * AbstractSaturation} from Guarded-Saturation and a {@link SubqueryEntailmentEnumeration}
- * object. The former is used to compute the guarded saturation of the given guarded rules, and
- * the latter is used to compute the entailment relation of "small test instances" to subqueries
- * of the given query. <p> We convert each outcome of {@link SubqueryEntailmentEnumeration} into
- * a Datalog rule deriving a "subgoal", which is then combined into the final goal predicate
- * using what we call the "subgoal binding rule". <p> Depending on the implementation of the
- * {@link SubqueryEntailmentEnumeration} used, the outcome of the rewriting could be huge, so it
- * is highly recommended to "minimize" the outcome using {@link
- * DatalogRewriteResult#minimizeSubgoalDerivationRulesUsing} before running the output program
- * on a database instance.
+ * rules and the given conjunctive query.
+ *
+ * Each object of this class makes use of a {@link AbstractSaturation} from Guarded-Saturation
+ * and a {@link SubqueryEntailmentEnumeration} object. The former is used to compute the guarded
+ * saturation of the given guarded rules, and the latter is used to compute the entailment
+ * relation of "small test instances" to subqueries of the given query.
+ *
+ * We convert each outcome of {@link SubqueryEntailmentEnumeration} into a Datalog rule deriving
+ * a "subgoal", which is then combined into the final goal predicate using what we call the
+ * "subgoal binding rule".
+ *
+ * Depending on the implementation of the {@link SubqueryEntailmentEnumeration} used, the
+ * outcome of the rewriting could be huge, so it is highly recommended to "minimize" the outcome
+ * using {@link DatalogRewriteResult#minimizeSubgoalDerivationRulesUsing} before running the
+ * output program on a database instance.
  */
 object GuardedRuleAndQueryRewriter {
 
@@ -55,20 +59,25 @@ case class GuardedRuleAndQueryRewriter(
 ) {
 
   /**
-   * Transforms a subquery entailment into a rule to derive a subgoal. <p> The instance {@code
-   * subqueryEntailment} must be a subquery entailment associated to some rule-set (which we
-   * will not make use of in this method) and the query {@code subgoalAtoms.query()}. <p> For
-   * example, suppose that the subquery entailment instance <pre><{ x ↦ a }, {z, w}, { y ↦ 2 },
-   * { { R(2,1,3), U(1), P(2,c) } }></pre> where c is a constant from the rule-set, entails the
-   * subquery of {@code subgoalAtoms.query()} relevant to {z, w}. Then we must add a rule of the
-   * form <pre>R(y,_f1,_f3) ∧ U(_f1) ∧ P(y,c) → SGL_{z,w}(a,y)</pre> where {@code _f1} and
+   * Transforms a subquery entailment into a rule to derive a subgoal.
+   *
+   * The instance {@code subqueryEntailment} must be a subquery entailment associated to some
+   * rule-set (which we will not make use of in this method) and the query {@code
+   * subgoalAtoms.query()}.
+   *
+   * For example, suppose that the subquery entailment instance <pre><{ x ↦ a }, {z, w}, { y ↦ 2
+   * }, { { R(2,1,3), U(1), P(2,c) } }></pre> where c is a constant from the rule-set, entails
+   * the subquery of {@code subgoalAtoms.query()} relevant to {z, w}. Then we must add a rule of
+   * the form <pre>R(y,_f1,_f3) ∧ U(_f1) ∧ P(y,c) → SGL_{z,w}(a,y)</pre> where {@code _f1} and
    * {@code _f3} are fresh variables and {@code SGL_{z,w}(x,y)} is the subgoal atom provided by
-   * subgoalAtoms object. <p> In general, for each subquery entailment instance {@code <C, V, L,
-   * I>}, we need to produce a rule of the form <pre> (I with each local name pulled back and
-   * unified by L, except that local names outside the range of L are consistently replaced by
-   * fresh variables) → (the subgoal atom corresponding to V, except that the same unification
-   * (by L) done to the premise is performed and the variables in C are replaced by their
-   * preimages (hence some constant) in C) </pre>
+   * subgoalAtoms object.
+   *
+   * In general, for each subquery entailment instance {@code <C, V, L, I>}, we need to produce
+   * a rule of the form <pre> (I with each local name pulled back and unified by L, except that
+   * local names outside the range of L are consistently replaced by fresh variables) → (the
+   * subgoal atom corresponding to V, except that the same unification (by L) done to the
+   * premise is performed and the variables in C are replaced by their preimages (hence some
+   * constant) in C) </pre>
    */
   private def subqueryEntailmentRecordToSubgoalRule(
     subqueryEntailment: SubqueryEntailmentInstance,
@@ -263,7 +272,8 @@ case class GuardedRuleAndQueryRewriter(
   }
 
   /**
-   * Compute a Datalog rewriting of a finite set of GTGD rules and a conjunctive query. <p>
+   * Compute a Datalog rewriting of a finite set of GTGD rules and a conjunctive query.
+   *
    * Variables in the goal atom of the returned {@link DatalogRewriteResult} do correspond to
    * the free variables of the input query.
    */

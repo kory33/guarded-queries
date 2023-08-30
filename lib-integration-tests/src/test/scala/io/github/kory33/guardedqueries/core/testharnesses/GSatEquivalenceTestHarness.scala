@@ -130,9 +130,10 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
 
   /**
    * Test that [[gsatImplementation]] and [[rewriterToBeTested]] produce the equivalent Datalog
-   * rewritings on the given [[GTGDRuleAndGTGDReducibleQuery]]. <p> The test is repeatedly
-   * performed on randomly generated database instances (with the number of test rounds being
-   * specified by <pre>instanceGenerationRoundCount</pre>).
+   * rewritings on the given [[GTGDRuleAndGTGDReducibleQuery]].
+   *
+   * The test is repeatedly performed on randomly generated database instances (with the number
+   * of test rounds being specified by <pre>instanceGenerationRoundCount</pre>).
    */
   def checkThatGSatAndTheRewriterAgreeOn(
     ruleQuery: GTGDRuleAndGTGDReducibleQuery,

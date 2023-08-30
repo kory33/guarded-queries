@@ -10,12 +10,15 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
  * A mapping from variables to terms, which is part of a homomorphism mapping a query to an
- * instance. <p> {@code variableOrdering} must be an ordered list of variables to be mapped, and
- * this must not contain any duplicate variables (no runtime check is enforced for this). The
- * {@code i}-th element of {@code orderedMapping} specifies to which term the {@code i}-th
- * variable in {@code variableOrdering} is mapped. <p> For instance, suppose that {@code
- * variableOrdering = [x, y, z]} and {@code orderedMapping = [a, a, b]}. Then the mapping this
- * object represents is {@code x -> a, y -> a, z -> b}.
+ * instance.
+ *
+ * {@code variableOrdering} must be an ordered list of variables to be mapped, and this must not
+ * contain any duplicate variables (no runtime check is enforced for this). The {@code i}-th
+ * element of {@code orderedMapping} specifies to which term the {@code i}-th variable in {@code
+ * variableOrdering} is mapped.
+ *
+ * For instance, suppose that {@code variableOrdering = [x, y, z]} and {@code orderedMapping =
+ * [a, a, b]}. Then the mapping this object represents is {@code x -> a, y -> a, z -> b}.
  */
 case class HomomorphicMapping[Term](
   variableOrdering: List[Variable],

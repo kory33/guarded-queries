@@ -17,11 +17,14 @@ object FilterNestedLoopJoin {
 
   /**
    * Recursively nest matching loops to extend the given partial homomorphism, in the order
-   * specified by {@code remainingAtomsToJoin}. <p> Each result of the successful join is passed
-   * to {@code visitEachCompleteHomomorphism}. <p> As a successful join uniquely determines the
-   * sequence of tuples in join results corresponding to the sequence of query atoms, as long as
-   * each {@code JoinResult} in {@code atomToMatches} does not contain duplicate tuples, no
-   * duplicate tuples will be passed to {@code visitEachCompleteHomomorphism}.
+   * specified by {@code remainingAtomsToJoin}.
+   *
+   * Each result of the successful join is passed to {@code visitEachCompleteHomomorphism}.
+   *
+   * As a successful join uniquely determines the sequence of tuples in join results
+   * corresponding to the sequence of query atoms, as long as each {@code JoinResult} in {@code
+   * atomToMatches} does not contain duplicate tuples, no duplicate tuples will be passed to
+   * {@code visitEachCompleteHomomorphism}.
    */
   private def visitAllJoinResults[TA](remainingAtomsToJoin: List[Atom],
                                       atomToMatches: Map[Atom, JoinResult[TA]],
