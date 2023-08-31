@@ -201,7 +201,7 @@ final class NaiveDPTableSEEnumeration(
                   .map { (variable, index) => (variable, localNamesUsableInChildren(index)) }
                   .toMap
 
-              val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm]().join(
+              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm].join(
                 existentialRule.bodyAsCQ,
                 instance
               )

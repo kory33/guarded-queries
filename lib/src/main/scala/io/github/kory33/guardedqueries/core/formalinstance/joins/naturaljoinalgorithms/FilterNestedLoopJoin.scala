@@ -4,7 +4,10 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.{
   JoinResult,
   NaturalJoinAlgorithm
 }
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalInstance, IncludesFolConstants}
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalInstance,
+  IncludesFolConstants
+}
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable.ArrayBuffer

@@ -215,7 +215,7 @@ final class DFSNormalizingDPTableSEEnumeration(
           // A set of existential variables in the existential rule
           val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
           val bodyJoinResult =
-            new FilterNestedLoopJoin[LocalInstanceTerm].join(
+            FilterNestedLoopJoin[LocalInstanceTerm].join(
               existentialRule.bodyAsCQ,
               saturatedInstance
             )

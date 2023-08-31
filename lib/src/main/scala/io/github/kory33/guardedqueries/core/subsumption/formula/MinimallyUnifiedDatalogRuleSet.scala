@@ -36,7 +36,7 @@ final class MinimallyUnifiedDatalogRuleSet
     first: DatalogRule,
     second: DatalogRule
   ): Boolean = {
-    new FilterNestedLoopJoin[VariableOrConstant]().join(
+    FilterNestedLoopJoin[VariableOrConstant].join(
       first.bodyAsCQ,
       MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getBodyAtoms)
     ).allHomomorphisms.exists(homomorphism => {

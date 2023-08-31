@@ -214,7 +214,7 @@ final class NormalizingDPTableSEEnumeration(
               // A set of existential variables in the existential rule
               val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
-              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm]()
+              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm]
                 .join(existentialRule.bodyAsCQ, instance)
 
               // because we are "reusing" local names, we can no longer
