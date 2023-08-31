@@ -26,6 +26,7 @@ import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.util.boundary
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
@@ -112,7 +113,7 @@ object DFSNormalizingDPTableSEEnumeration {
           queryExistentialVariables
             .powerset
             .filter(_.nonEmpty)
-            .filter(!_.exists(ruleConstantWitnessGuess.keySet.contains))
+            .filter(!_.intersects(ruleConstantWitnessGuess.keySet))
             .filter(variableSet => conjunctiveQuery.connects(variableSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
@@ -335,7 +336,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                 // which entirely lies in the neighborhood of coexistential variables
                 // of the instance
                 val someVariableIsNewlyCovered =
-                  atomVariables.exists(newlyCoveredVariables.contains)
+                  atomVariables.intersects(newlyCoveredVariables)
 
                 allVariablesAreCovered && someVariableIsNewlyCovered
               })

@@ -5,6 +5,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -93,7 +94,7 @@ case class HomomorphicMapping[Term](
       return this
     }
 
-    if (variableOrdering.exists(additionalMapping.contains))
+    if (variableOrdering.toSet.intersects(additionalMapping.keySet))
       throw new IllegalArgumentException(
         s"additionalMapping $additionalMapping contains a variable in variableOrdering $variableOrdering"
       )

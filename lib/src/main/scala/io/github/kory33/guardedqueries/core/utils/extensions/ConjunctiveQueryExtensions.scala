@@ -1,5 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
@@ -79,7 +80,7 @@ object ConjunctiveQueryExtensions {
         conjunctiveQuery.filterAtoms(atom => {
           // variables in the atom that are bound in the CQ
           val atomBoundVariables = atom.getVariables.toSet.intersect(queryBoundVariables)
-          atomBoundVariables.exists(variables.contains)
+          atomBoundVariables.intersects(variables)
         })
       }
 

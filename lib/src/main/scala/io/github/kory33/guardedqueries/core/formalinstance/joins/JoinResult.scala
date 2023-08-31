@@ -1,5 +1,6 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
@@ -90,7 +91,7 @@ class JoinResult[Term](
       return this
     }
     val variableOrdering = allHomomorphisms.head.variableOrdering
-    if (variableOrdering.exists(constantHomomorphism.contains))
+    if (variableOrdering.intersects(constantHomomorphism.keySet))
       throw IllegalArgumentException(
         "The given constant homomorphism has a conflicting variable mapping"
       )

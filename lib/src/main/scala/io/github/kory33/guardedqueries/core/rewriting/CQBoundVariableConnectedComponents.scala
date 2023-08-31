@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
