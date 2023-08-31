@@ -115,7 +115,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                   .toMap
 
               val extendedHomomorphism =
-                bodyHomomorphism.extendWithMapping(headVariableHomomorphism)
+                bodyHomomorphism.extendWithMap(headVariableHomomorphism)
                 // The instance containing only the head atom produced by the existential rule.
                 // This should be a singleton instance because the existential rule is normal.
               val headInstance =

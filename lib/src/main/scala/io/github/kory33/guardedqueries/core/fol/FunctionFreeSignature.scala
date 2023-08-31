@@ -15,7 +15,7 @@ import uk.ac.ox.cs.pdq.fol.Predicate
  */
 case class FunctionFreeSignature(predicates: Set[Predicate]) {
   def predicateNames: Set[String] = predicates.map(_.getName)
-  
+
   def maxArity: Int = predicates.map(_.getArity).maxOption.getOrElse(0)
 }
 

@@ -8,8 +8,6 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
  * A mapping from variables to terms, which is part of a homomorphism mapping a query to an
  * instance.
@@ -89,25 +87,16 @@ case class HomomorphicMapping[Term](
    * @throws IllegalArgumentException
    *   if the given homomorphism maps a variable in `variableOrdering`
    */
-  def extendWithMapping(additionalMapping: Map[Variable, Term]): HomomorphicMapping[Term] = {
-    if (additionalMapping.isEmpty) {
-      // there is nothing to extend
-      return this
-    }
-
-    if (variableOrdering.toSet.intersects(additionalMapping.keySet))
+  def extendWithMap(extensionMap: Map[Variable, Term]): HomomorphicMapping[Term] = {
+    if (variableOrdering.toSet.intersects(extensionMap.keySet))
       throw new IllegalArgumentException(
-        s"additionalMapping $additionalMapping contains a variable in variableOrdering $variableOrdering"
+        s"additionalMapping $extensionMap contains a variable in variableOrdering $variableOrdering"
       )
 
-    val newVariableOrdering = variableOrdering.toList ++ additionalMapping.keySet
-
-    val newMappingSize = newVariableOrdering.size
-    val newOrderedMapping = ArrayBuffer.empty[Term]
-    for (index <- 0 until newMappingSize) {
-      if (index < orderedMapping.size) newOrderedMapping.append(orderedMapping(index))
-      else newOrderedMapping.append(additionalMapping(newVariableOrdering(index)))
-    }
-    new HomomorphicMapping[Term](newVariableOrdering, newOrderedMapping.toList)
+    val (extensionVariables, extensionTerms) = extensionMap.unzip
+    HomomorphicMapping(
+      variableOrdering ++ extensionVariables,
+      orderedMapping ++ extensionTerms
+    )
   }
 }

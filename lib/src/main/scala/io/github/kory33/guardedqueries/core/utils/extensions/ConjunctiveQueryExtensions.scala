@@ -2,7 +2,11 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
-import uk.ac.ox.cs.pdq.fol.{Atom, ConjunctiveQuery, Constant, Predicate, Variable}
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.Variable
 
 object ConjunctiveQueryExtensions {
   // We enclose the extension methods in the given instance; see

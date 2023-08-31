@@ -1,5 +1,6 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
@@ -7,7 +8,7 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import scala.util.boundary
 
 object SingleAtomMatching {
@@ -15,40 +16,37 @@ object SingleAtomMatching {
     atomicQuery: Atom,
     orderedQueryVariables: List[Variable],
     appliedTerms: List[TA]
-  ): Option[List[TA]] = boundary {
-    val homomorphism = ArrayBuffer.fill[Option[TA]](orderedQueryVariables.size)(None)
+  ): Option[List[TA]] = boundary { returnMethod ?=>
+    val homomorphismMap = mutable.HashMap.empty[Variable, TA]
 
-    for (appliedTermIndex <- appliedTerms.indices) {
-      val termToMatch = atomicQuery.getTerms()(appliedTermIndex)
-      val appliedTerm = appliedTerms(appliedTermIndex)
-
+    for ((termToMatch, appliedTerm) <- atomicQuery.getTerms.zip(appliedTerms)) {
       termToMatch match {
         case constant: Constant =>
-          // if the term is a constant, we just check if that constant (considered as TA) has been applied
-          if (!(IncludesFolConstants[TA].includeConstant(constant) == appliedTerm)) {
-            // and fail if not
-            boundary.break(None)
+          // if the term is a constant, we only need to verify that the constant
+          // is the same as appliedTerm at the same argument position
+          if (IncludesFolConstants[TA].includeConstant(constant) != appliedTerm) {
+            boundary.break(None)(using returnMethod)
           }
         case variable: Variable =>
-          val variableIndex = orderedQueryVariables.indexOf(termToMatch)
-          val alreadyAssignedConstant = homomorphism(variableIndex)
-          if (alreadyAssignedConstant.isDefined) {
-            // if the variable has already been assigned a constant, we check if the constant is the same
-            if (!(alreadyAssignedConstant.get == appliedTerm)) {
-              // and fail if not
-              boundary.break(None)
-            }
-          } else {
-            // if the variable has not already been assigned a constant, we assign it
-            homomorphism(variableIndex) = Some(appliedTerm)
+          homomorphismMap.get(variable) match {
+            case None =>
+              // if the variable has not already been assigned a term, we assign appliedTerm
+              homomorphismMap(variable) = appliedTerm
+            case Some(alreadyAssignedTerm) if alreadyAssignedTerm != appliedTerm =>
+              // the variable has been assigned a term, but termToMatch conflicts with the old assignment
+              boundary.break(None)(using returnMethod)
+            case _ => ()
           }
         case _ =>
+          throw IllegalArgumentException(
+            s"term $termToMatch in query $atomicQuery is neither a variable nor a constant"
+          )
       }
     }
 
     // if we have reached this point, we have successfully matched all variables in the query
-    // to constants applied to the fact, so return the homomorphism
-    Some(homomorphism.map(_.get).toList)
+    // to terms applied in the fact, so construct a homomorphism and return it
+    Some(orderedQueryVariables.map(homomorphismMap))
   }
 
   /**
@@ -63,20 +61,12 @@ object SingleAtomMatching {
     atomicQuery: Atom,
     instance: FormalInstance[TA]
   ): JoinResult[TA] = {
-    val orderedQueryVariables = atomicQuery.getVariables.toSet.toList
-    val queryPredicate = atomicQuery.getPredicate
-    val homomorphisms = ArrayBuffer.empty[List[TA]]
+    val orderedQueryVariables: List[Variable] = atomicQuery.getVariables.toSet.toList
+    val relevantFacts: Set[FormalFact[TA]] =
+      instance.facts.filter(_.predicate == atomicQuery.getPredicate)
 
-    import scala.jdk.CollectionConverters.*
-    for (fact <- instance.facts) {
-      if (fact.predicate == queryPredicate) {
-        // compute a homomorphism and add to the builder, or continue to the next fact if we cannot do so
-        tryMatch(
-          atomicQuery,
-          orderedQueryVariables,
-          fact.appliedTerms
-        ).foreach(homomorphisms.append)
-      }
+    val homomorphisms = relevantFacts.flatMap { fact =>
+      tryMatch(atomicQuery, orderedQueryVariables, fact.appliedTerms)
     }
 
     JoinResult[TA](orderedQueryVariables, homomorphisms.toList)
