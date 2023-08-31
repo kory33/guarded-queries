@@ -1,6 +1,9 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalInstance, IncludesFolConstants}
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalInstance,
+  IncludesFolConstants
+}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
 

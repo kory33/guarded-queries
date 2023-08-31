@@ -2,7 +2,11 @@ package io.github.kory33.guardedqueries.core.datalog.saturationengines
 
 import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogSaturationEngine}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance, IncludesFolConstants}
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalFact,
+  FormalInstance,
+  IncludesFolConstants
+}
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
