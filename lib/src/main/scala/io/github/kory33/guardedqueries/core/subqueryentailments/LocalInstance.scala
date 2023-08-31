@@ -7,26 +7,23 @@ import io.github.kory33.guardedqueries.core.formalinstance.{
 }
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Term, Variable}
 
-sealed trait LocalInstanceTerm {
-  def isConstantOrSatisfies(predicate: LocalInstanceTerm.LocalName => Boolean): Boolean =
-    this match
-      case _: LocalInstanceTerm.RuleConstant      => true
-      case localName: LocalInstanceTerm.LocalName => predicate(localName)
-
-  def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term
-}
+enum LocalInstanceTerm:
+  case LocalName(value: Int)
+  case RuleConstant(constant: Constant)
 
 object LocalInstanceTerm {
-  // TODO: migrate to enums
-  case class LocalName(value: Int) extends LocalInstanceTerm {
-    override def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term =
-      mapper.apply(this)
-  }
+  given Extensions: AnyRef with
+    import LocalInstanceTerm.*
+    extension (t: LocalInstanceTerm)
+      def isConstantOrSatisfies(predicate: LocalName => Boolean): Boolean =
+        t match
+          case name @ LocalName(_)    => predicate(name)
+          case RuleConstant(constant) => true
 
-  case class RuleConstant(constant: Constant) extends LocalInstanceTerm {
-    override def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term =
-      this.constant
-  }
+      def mapLocalNamesToTerm(mapper: LocalName => Term): Term =
+        t match
+          case name @ LocalName(_)    => mapper(name)
+          case RuleConstant(constant) => constant
 
   def fromTermWithVariableMap(
     term: Term,
@@ -38,7 +35,8 @@ object LocalInstanceTerm {
       case _                  => throw new IllegalArgumentException("Unsupported term: " + term)
 
   given IncludesFolConstants[LocalInstanceTerm] with
-    override def includeConstant(constant: Constant): LocalInstanceTerm = RuleConstant(constant)
+    override def includeConstant(constant: Constant): LocalInstanceTerm =
+      RuleConstant(constant)
 }
 
 object LocalInstanceTermFact {
