@@ -1,43 +1,49 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
-import java.util
-import java.util.function.Function
 
+//format: off
 /**
- * A class of objects representing the result of a join operation. <p> We say that a {@code
- * JoinResult} is well-formed if: <ol> <li>the {@code variableOrdering} is a list of distinct
- * variables</li> <li>each list in {@code orderedMapping} has the same length as {@code
- * variableOrdering}</li> <li>{@code orderedMapping} is a list opf distinct join result
- * tuples</li> </ol> <p> For example, given a query {@code Q(x, y), R(y, z)}, a {@code
- * JoinResult} of the form <ol> <li>{@code variableOrdering = [x, y, z]}</li> <li>{@code
- * orderedMapping = [[a, b, c], [a, c, d]]}</li> </ol> is a well-formed answer to the query,
- * insinuating that {@code Q(a, b), R(b, c)} and {@code Q(a, c), R(c, d)} are the only answers
- * to the query.
+ * A class of objects representing the result of a join operation.
  *
- * @param <Term>
+ * We say that a `JoinResult` is well-formed if: <ol> <li>the `variableOrdering` is a list of
+ * distinct variables</li> <li>each list in `orderedMapping` has the same length as
+ * `variableOrdering`</li> <li>`orderedMapping` is a list opf distinct join result tuples</li>
+ * </ol>
+ *
+ * For example, given a query `Q(x, y), R(y, z)`, a `JoinResult` of the form
+ *
+ * <ol> <li>`variableOrdering = [x, y, z]`</li>
+ *
+ * <li> `orderedMapping = [ [a, b, c], [a, c, d] ]` </li> </ol>
+ *
+ * is a well-formed answer to the query, insinuating that `Q(a, b), R(b, c)` and
+ * `Q(a, c), R(c,d)` are the only answers to the query.
+ *
+ * @tparam Term
  *   type of values (typically constants) that appear in the input instance of the join
  *   operation
  */
+//format: on
 class JoinResult[Term](
-  variableOrdering: ImmutableList[Variable],
-  orderedMappingsOfAllHomomorphisms: ImmutableList[ImmutableList[Term]]
+  variableOrdering: List[Variable],
+  orderedMappingsOfAllHomomorphisms: List[List[Term]]
 ) {
-  // invariant: a single instance of ImmutableList<Variable> variableOrdering is shared among
+  // invariant: a single instance of List<Variable> variableOrdering is shared among
   //            all HomomorphicMapping objects
-  final var allHomomorphisms: ImmutableList[HomomorphicMapping[Term]] =
-    ImmutableList.copyOf(orderedMappingsOfAllHomomorphisms.stream.map(
-      (homomorphism: ImmutableList[Term]) =>
-        new HomomorphicMapping[Term](variableOrdering, homomorphism)
-    ).iterator)
+  final var allHomomorphisms: List[HomomorphicMapping[Term]] =
+    orderedMappingsOfAllHomomorphisms.map((homomorphism: List[Term]) =>
+      HomomorphicMapping[Term](variableOrdering, homomorphism)
+    )
 
   /**
    * Materialize the given atom by replacing the variables in the atom with the values in this
-   * result. <p> The returned list has the same length as {@code orderedMapping}.
+   * result.
+   *
+   * The returned list has the same length as `orderedMapping`.
    *
    * @param atomWhoseVariablesAreInThisResult
    *   a function-free atom whose variables are covered by this join result
@@ -47,54 +53,54 @@ class JoinResult[Term](
    *   a list of formal facts that are the result of materializing the given atom
    */
   def materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult: Atom,
-                                  constantInclusion: Function[Constant, Term]
-  ): ImmutableList[FormalFact[Term]] =
-    ImmutableList.copyOf(this.allHomomorphisms.stream.map((h: HomomorphicMapping[Term]) =>
+                                  constantInclusion: Constant => Term
+  ): List[FormalFact[Term]] =
+    allHomomorphisms.map((h: HomomorphicMapping[Term]) =>
       h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion)
-    ).iterator)
+    )
 
+  // format: off
   /**
-   * Extend the join result by adjoining a constant homomorphism. <p> For instance, suppose that
-   * this join result is obtained as an answer to a query {@code Q(x, y), R(y, z)} and has the
-   * following data: <ol> <li>{@code allHomomorphisms = [{x -> a, y -> b, z -> c}, {x -> a, y ->
-   * c, z -> d}]}</li> </ol> We can "extend" these results by adjoining a constant homomorphism
-   * {@code {w -> e}}. The result of such operation is: <ol> <li>{@code allHomomorphisms = [{x
-   * -> a, y -> b, z -> c, w -> e}, {x -> a, y -> c, z -> d, w -> e}]}</li> </ol>
+   * Extend the join result by adjoining a constant homomorphism.
+   *
+   * For instance, suppose that this join result is obtained as an answer to a query
+   * `Q(x, y), R(y, z)` and has the following data:
+   * <ol>
+   *   <li>`allHomomorphisms = [{x -> a, y -> b, z -> c}, {x -> a, y -> c, z -> d}]}`</li>
+   * </ol>
+   *
+   * We can "extend" these results by adjoining a constant homomorphism `{w -> e`}.
+   * The result of such operation is:
+   * <ol>
+   *  <li>`allHomomorphisms = [{x -> a, y -> b, z -> c, w -> e, {x -> a, y -> c, z -> d, w -> e}]`</li>
+   * </ol>
    *
    * @param constantHomomorphism
    *   The homomorphism with which the join result is to be extended
    * @return
    *   the extended join result
    * @throws IllegalArgumentException
-   *   if the given homomorphism maps a variable in {@code variableOrdering}
+   *   if the given homomorphism maps a variable in `variableOrdering`
    */
-  def extendWithConstantHomomorphism(constantHomomorphism: util.Map[Variable, Term])
+  // format: on
+  def extendWithConstantHomomorphism(constantHomomorphism: Map[Variable, Term])
     : JoinResult[Term] = {
     if (allHomomorphisms.isEmpty) {
-// then this join result contains no information and there is nothing to extend
+      // then this join result contains no information and there is nothing to extend
       return this
     }
-    val variableOrdering = allHomomorphisms.get(0).variableOrdering
-    if (variableOrdering.stream.anyMatch(constantHomomorphism.containsKey))
-      throw new IllegalArgumentException(
+    val variableOrdering = allHomomorphisms.head.variableOrdering
+    if (variableOrdering.exists(constantHomomorphism.contains))
+      throw IllegalArgumentException(
         "The given constant homomorphism has a conflicting variable mapping"
       )
-    val extensionVariableOrdering = ImmutableList.copyOf(constantHomomorphism.keySet)
-    val extensionMapping = ImmutableList.copyOf(
-      extensionVariableOrdering.stream.map(constantHomomorphism.get).iterator
-    )
-    val extendedVariableOrdering = ImmutableList.builder[Variable].addAll(
-      variableOrdering
-    ).addAll(extensionVariableOrdering).build
-    val extendedHomomorphisms = allHomomorphisms.stream.map(
-      (homomorphism: HomomorphicMapping[Term]) =>
-        ImmutableList.builder[Term].addAll(homomorphism.orderedMapping).addAll(
-          extensionMapping
-        ).build
-    )
-    new JoinResult[Term](
-      extendedVariableOrdering,
-      ImmutableList.copyOf(extendedHomomorphisms.iterator)
-    )
+
+    val extensionVariableOrdering = constantHomomorphism.keySet.toList
+    val extensionMapping = extensionVariableOrdering.map(constantHomomorphism)
+
+    val extendedVariableOrdering = variableOrdering ++ extensionVariableOrdering
+    val extendedHomomorphisms = allHomomorphisms.map(_.orderedMapping ++ extensionMapping)
+
+    JoinResult[Term](extendedVariableOrdering, extendedHomomorphisms)
   }
 }

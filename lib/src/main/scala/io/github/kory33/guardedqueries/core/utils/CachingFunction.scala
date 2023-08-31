@@ -1,21 +1,19 @@
 package io.github.kory33.guardedqueries.core.utils
 
-import java.util
-import java.util.function.Function
+import scala.collection.mutable
 
-final class CachingFunction[T, R](private val function: Function[T, R]) extends Function[T, R] {
-  private var cache: util.HashMap[T, R] = new util.HashMap[T, R]
+final class CachingFunction[T, R](private val function: T => R) extends (T => R) {
+  private val cache: mutable.HashMap[T, R] = mutable.HashMap.empty
 
   override def apply(t: T): R =
-    if (cache.containsKey(t)) cache.get(t)
+    if (cache.contains(t)) cache(t)
     else {
-      val result = function.apply(t)
+      val result = function(t)
       cache.put(t, result)
       result
     }
 }
 
 object CachingFunction {
-  def apply[T, R](function: Function[T, R]): CachingFunction[T, R] =
-    new CachingFunction[T, R](function)
+  def apply[T, R](function: T => R): CachingFunction[T, R] = new CachingFunction[T, R](function)
 }

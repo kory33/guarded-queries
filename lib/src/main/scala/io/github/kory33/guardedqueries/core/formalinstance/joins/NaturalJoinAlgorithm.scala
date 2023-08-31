@@ -3,7 +3,8 @@ package io.github.kory33.guardedqueries.core.formalinstance.joins
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 
 /**
- * An interface to objects that can answer natural join queries over database instances. <p>
+ * An interface to objects that can answer natural join queries over database instances.
+ *
  * Implementations of this interface need to support answering conjunctive queries that <ol>
  * <li>does not contain existential variables</li> <li>contains only variables and constants as
  * terms</li> </ol>

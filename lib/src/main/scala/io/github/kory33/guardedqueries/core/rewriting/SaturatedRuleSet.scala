@@ -1,45 +1,31 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.{Constant, Dependency, Formula}
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Formula
 
-import java.util
-import java.util.stream.Stream
-import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
+import scala.jdk.CollectionConverters.*
 
 class SaturatedRuleSet[RuleClass <: GTGD](
   saturation: AbstractSaturation[_ <: GTGD],
-  originalRules: util.Collection[_ <: RuleClass]
+  originalRules: Set[RuleClass]
 ) {
-
-  val saturatedRules: ImmutableList[GTGD] =
-    ImmutableList.copyOf(saturation.run(new util.ArrayList[Dependency](originalRules)))
+  val saturatedRules: Set[GTGD] = saturation.run(originalRules.toList.asJava).asScala.toSet
 
   val saturatedRulesAsDatalogProgram: DatalogProgram =
-    DatalogProgram.tryFromDependencies(this.saturatedRules)
+    DatalogProgram.tryFromDependencies(saturatedRules)
 
-  val existentialRules: ImmutableList[RuleClass] =
-    ImmutableList.copyOf(originalRules.stream.filter(rule =>
-      rule.getExistential.length > 0
-    ).iterator)
+  val existentialRules: Set[RuleClass] =
+    originalRules.filter(rule => rule.getExistential.length > 0)
 
-  val allRules: ImmutableList[GTGD] = {
-    val allRulesBuilder: ImmutableList.Builder[GTGD] = ImmutableList.builder[GTGD]
-    allRulesBuilder.addAll(existentialRules)
-    allRulesBuilder.addAll(saturatedRules)
-    allRulesBuilder.build
-  }
+  val allRules: Set[GTGD] = saturatedRules ++ existentialRules
 
-  lazy val constants: ImmutableSet[Constant] = ImmutableSet.copyOf(
-    this.allRules.stream.flatMap(SaturatedRuleSet.constantsInFormula).iterator
-  )
+  lazy val constants: Set[Constant] = allRules.flatMap(SaturatedRuleSet.constantsInFormula)
 }
 
 object SaturatedRuleSet {
-  private def constantsInFormula(formula: Formula) =
-    StreamExtensions.filterSubtype(util.Arrays.stream(formula.getTerms), classOf[Constant])
+  private def constantsInFormula(formula: Formula): Set[Constant] =
+    formula.getTerms.collect { case constant: Constant => constant }.toSet
 }

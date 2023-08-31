@@ -7,7 +7,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Constant
-import java.util.function.Function
 
 object RunOutputDatalogProgram {
 
@@ -32,7 +31,7 @@ object RunOutputDatalogProgram {
     testInstance: FormalInstance[TermAlphabet],
     rewriteResult: DatalogRewriteResult,
     answerAtom: Atom,
-    includeConstantIntoAlphabet: Function[Constant, TermAlphabet]
+    includeConstantIntoAlphabet: Constant => TermAlphabet
   ): FormalInstance[TermAlphabet] = {
     val saturationEngine = new NaiveSaturationEngine
 
@@ -64,7 +63,7 @@ object RunOutputDatalogProgram {
       FilterNestedLoopJoin[TermAlphabet](includeConstantIntoAlphabet).join(
         rewrittenGoalQuery,
         saturatedInstance
-      ).materializeFunctionFreeAtom(answerAtom, includeConstantIntoAlphabet)
+      ).materializeFunctionFreeAtom(answerAtom, includeConstantIntoAlphabet).toSet
     )
   }
 }

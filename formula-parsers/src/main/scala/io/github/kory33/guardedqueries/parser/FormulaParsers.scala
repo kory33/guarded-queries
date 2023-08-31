@@ -104,7 +104,7 @@ object FormulaParsers extends RegexParsers {
       _ <-
         if (foundExistentialVariables != declaredExistentialVariables)
           failure(
-            s"existential variables in head do not match those in body: " +
+            "existential variables in head do not match those in body: " +
               s"declared: $declaredExistentialVariables, found: $foundExistentialVariables"
           )
         else

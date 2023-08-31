@@ -1,49 +1,43 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
-import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Variable
-import java.util
-import java.util.Optional
-import java.util.function.Function
+import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
+
+import scala.util.boundary
+import scala.collection.mutable.ArrayBuffer
 
 object SingleAtomMatching {
   private def tryMatch[TA](atomicQuery: Atom,
-                           orderedQueryVariables: ImmutableList[Variable],
-                           appliedTerms: ImmutableList[TA],
-                           includeConstantsToTA: Function[Constant, TA]
-  ): Optional[ImmutableList[TA]] = {
-    val homomorphism = new util.ArrayList[Optional[TA]](orderedQueryVariables.size)
+                           orderedQueryVariables: List[Variable],
+                           appliedTerms: List[TA],
+                           includeConstantsToTA: Constant => TA
+  ): Option[List[TA]] = boundary {
+    val homomorphism = ArrayBuffer.fill[Option[TA]](orderedQueryVariables.size)(None)
 
-    for (i <- 0 until orderedQueryVariables.size) { homomorphism.add(Optional.empty) }
-
-    for (appliedTermIndex <- 0 until appliedTerms.size) {
+    for (appliedTermIndex <- appliedTerms.indices) {
       val termToMatch = atomicQuery.getTerms()(appliedTermIndex)
-      val appliedTerm = appliedTerms.get(appliedTermIndex)
+      val appliedTerm = appliedTerms(appliedTermIndex)
 
       termToMatch match {
         case constant: Constant =>
           // if the term is a constant, we just check if that constant (considered as TA) has been applied
           if (!(includeConstantsToTA.apply(constant) == appliedTerm)) {
             // and fail if not
-            return Optional.empty
+            boundary.break(None)
           }
         case variable: Variable =>
           val variableIndex = orderedQueryVariables.indexOf(termToMatch)
-          val alreadyAssignedConstant = homomorphism.get(variableIndex)
-          if (alreadyAssignedConstant.isPresent) {
+          val alreadyAssignedConstant = homomorphism(variableIndex)
+          if (alreadyAssignedConstant.isDefined) {
             // if the variable has already been assigned a constant, we check if the constant is the same
             if (!(alreadyAssignedConstant.get == appliedTerm)) {
               // and fail if not
-              return Optional.empty
+              boundary.break(None)
             }
           } else {
             // if the variable has not already been assigned a constant, we assign it
-            homomorphism.set(variableIndex, Optional.of(appliedTerm))
+            homomorphism(variableIndex) = Some(appliedTerm)
           }
         case _ =>
       }
@@ -51,29 +45,27 @@ object SingleAtomMatching {
 
     // if we have reached this point, we have successfully matched all variables in the query
     // to constants applied to the fact, so return the homomorphism
-    val unwrappedHomomorphism =
-      ImmutableList.copyOf(homomorphism.stream.map(_.get).iterator)
-    Optional.of(unwrappedHomomorphism)
+    Some(homomorphism.map(_.get).toList)
   }
 
   /**
-   * Finds all answers to the given atomic query in the given instance. <p> The returned join
-   * result is well-formed.
+   * Finds all answers to the given atomic query in the given instance.
+   *
+   * The returned join result is well-formed.
    *
    * @throws IllegalArgumentException
    *   if the given query contains a term that is neither a variable nor a constant
    */
   def allMatches[TA](atomicQuery: Atom,
                      instance: FormalInstance[TA],
-                     includeConstantsToTA: Function[Constant, TA]
+                     includeConstantsToTA: Constant => TA
   ): JoinResult[TA] = {
-    val orderedQueryVariables =
-      ImmutableList.copyOf(ImmutableSet.copyOf(atomicQuery.getVariables))
+    val orderedQueryVariables = atomicQuery.getVariables.toSet.toList
     val queryPredicate = atomicQuery.getPredicate
-    val homomorphisms = ImmutableList.builder[ImmutableList[TA]]
+    val homomorphisms = ArrayBuffer.empty[List[TA]]
 
-    import scala.jdk.CollectionConverters._
-    for (fact <- instance.facts.asScala) {
+    import scala.jdk.CollectionConverters.*
+    for (fact <- instance.facts) {
       if (fact.predicate == queryPredicate) {
         // compute a homomorphism and add to the builder, or continue to the next fact if we cannot do so
         tryMatch(
@@ -81,11 +73,10 @@ object SingleAtomMatching {
           orderedQueryVariables,
           fact.appliedTerms,
           includeConstantsToTA
-        ).ifPresent(homomorphisms.add)
+        ).foreach(homomorphisms.append)
       }
     }
 
-    new JoinResult[TA](orderedQueryVariables, homomorphisms.build)
+    new JoinResult[TA](orderedQueryVariables, homomorphisms.toList)
   }
 }
-class SingleAtomMatching private {}

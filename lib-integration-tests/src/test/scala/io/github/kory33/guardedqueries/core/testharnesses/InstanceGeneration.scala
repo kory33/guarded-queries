@@ -1,44 +1,38 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import com.google.common.collect.{ImmutableList, ImmutableMap, ImmutableSet}
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import io.github.kory33.guardedqueries.core.utils.MappingStreams
+import io.github.kory33.guardedqueries.core.utils.FunctionSpaces
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
 
-import java.util.stream.IntStream
-
 object InstanceGeneration {
   def allFactsOver(predicate: Predicate,
-                   constantsToUse: ImmutableSet[Constant]
+                   constantsToUse: Set[Constant]
   ): FormalInstance[Constant] = {
-    val predicateArgIndices =
-      ImmutableList.copyOf(IntStream.range(0, predicate.getArity).iterator)
+    val predicateArgIndices = 0 until predicate.getArity
 
-    val allFormalFacts = MappingStreams.allTotalFunctionsBetween(
-      predicateArgIndices,
+    val allFormalFacts = FunctionSpaces.allTotalFunctionsBetween(
+      predicateArgIndices.toSet,
       constantsToUse
-    ).map((mapping: ImmutableMap[Integer, Constant]) =>
+    ).map(mapping =>
       new FormalFact[Constant](
         predicate,
-        ImmutableList.copyOf(predicateArgIndices.stream.map(mapping.get).iterator)
+        predicateArgIndices.map(mapping(_)).toList
       )
     )
 
-    FormalInstance[Constant](allFormalFacts.iterator)
+    FormalInstance[Constant](allFormalFacts.toSet)
   }
 
   def randomInstanceOver(signature: FunctionFreeSignature): FormalInstance[Constant] = {
     val constantsToUse =
-      ImmutableSet.copyOf(IntStream.range(0, signature.maxArity * 4).mapToObj[Constant](
-        (i: Int) => TypedConstant.create("c_" + i)
-      ).iterator)
+      (0 until signature.maxArity * 4).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
 
-    val allFactsOverSignature = signature.predicates.stream.flatMap((p: Predicate) =>
-      allFactsOver(p, constantsToUse).facts.stream
+    val allFactsOverSignature = signature.predicates.flatMap(p =>
+      allFactsOver(p, constantsToUse).facts
     )
 
     /**
@@ -50,6 +44,6 @@ object InstanceGeneration {
 
     FormalInstance[Constant](allFactsOverSignature.filter((fact: FormalFact[Constant]) =>
       Math.random < selectionRate
-    ).iterator)
+    ))
   }
 }

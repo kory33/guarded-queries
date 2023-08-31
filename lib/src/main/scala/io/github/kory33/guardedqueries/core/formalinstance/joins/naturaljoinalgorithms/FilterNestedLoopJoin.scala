@@ -1,22 +1,13 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
-import com.google.common.collect.ImmutableSet
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.joins.{
+  JoinResult,
+  NaturalJoinAlgorithm
+}
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
-import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
-import io.github.kory33.guardedqueries.core.utils.extensions.ImmutableMapExtensions
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions
-import io.github.kory33.guardedqueries.core.utils.extensions.StreamExtensions
-import uk.ac.ox.cs.pdq.fol._
-import java.util
-import java.util.Comparator
-import java.util.Optional
-import java.util.function.Consumer
-import java.util.function.Function
-import java.util.stream.Collectors
+import uk.ac.ox.cs.pdq.fol.*
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * A join algorithm that first filters tuples matching query atoms and then joins them in a
@@ -26,49 +17,47 @@ object FilterNestedLoopJoin {
 
   /**
    * Recursively nest matching loops to extend the given partial homomorphism, in the order
-   * specified by {@code remainingAtomsToJoin}. <p> Each result of the successful join is passed
-   * to {@code visitEachCompleteHomomorphism}. <p> As a successful join uniquely determines the
-   * sequence of tuples in join results corresponding to the sequence of query atoms, as long as
-   * each {@code JoinResult} in {@code atomToMatches} does not contain duplicate tuples, no
-   * duplicate tuples will be passed to {@code visitEachCompleteHomomorphism}.
+   * specified by `remainingAtomsToJoin`.
+   *
+   * Each result of the successful join is passed to `visitEachCompleteHomomorphism`.
+   *
+   * As a successful join uniquely determines the sequence of tuples in join results
+   * corresponding to the sequence of query atoms, as long as each `JoinResult` in
+   * `atomToMatches` does not contain duplicate tuples, no duplicate tuples will be passed to
+   * `visitEachCompleteHomomorphism`.
    */
-  private def visitAllJoinResults[TA](remainingAtomsToJoin: ImmutableList[Atom],
-                                      atomToMatches: ImmutableMap[Atom, JoinResult[TA]],
-                                      resultVariableOrdering: ImmutableList[Variable],
-                                      partialHomomorphism: ImmutableList[Optional[TA]],
-                                      visitEachCompleteHomomorphism: Consumer[ImmutableList[TA]]
+  private def visitAllJoinResults[TA](remainingAtomsToJoin: List[Atom],
+                                      atomToMatches: Map[Atom, JoinResult[TA]],
+                                      resultVariableOrdering: List[Variable],
+                                      partialHomomorphism: List[Option[TA]],
+                                      visitEachCompleteHomomorphism: List[TA] => Unit
   ): Unit = {
     if (remainingAtomsToJoin.isEmpty) {
       // If there are no more atoms to join, the given partial homomorphism
-      // should be complete. So unwrap Optionals and visit
-      val unwrappedHomomorphism =
-        ImmutableList.copyOf[TA](partialHomomorphism.stream.map(_.get).iterator)
-
-      visitEachCompleteHomomorphism.accept(unwrappedHomomorphism)
+      // should be complete. So unwrap Option and visit
+      val unwrappedHomomorphism = partialHomomorphism.map(_.get)
+      visitEachCompleteHomomorphism(unwrappedHomomorphism)
       return
     }
 
-    val nextAtomMatchResult = atomToMatches.get(remainingAtomsToJoin.get(0))
+    val nextAtomMatchResult = atomToMatches(remainingAtomsToJoin.head)
 
-    import scala.jdk.CollectionConverters._
     import scala.util.boundary
-    for (homomorphism <- nextAtomMatchResult.allHomomorphisms.asScala) {
+    for (homomorphism <- nextAtomMatchResult.allHomomorphisms) {
       boundary {
         val matchVariableOrdering = homomorphism.variableOrdering
-        val homomorphismExtension = new util.ArrayList[Optional[TA]](partialHomomorphism)
+        val homomorphismExtension = partialHomomorphism.toArray
 
-        for (matchVariableIndex <- 0 until matchVariableOrdering.size) {
-          val nextVariableToCheck = matchVariableOrdering.get(matchVariableIndex)
-          val extensionCandidate = homomorphism.orderedMapping.get(matchVariableIndex)
+        for (matchVariableIndex <- matchVariableOrdering.indices) {
+          val nextVariableToCheck = matchVariableOrdering(matchVariableIndex)
+          val extensionCandidate = homomorphism.orderedMapping(matchVariableIndex)
           val indexOfVariableInResultOrdering =
             resultVariableOrdering.indexOf(nextVariableToCheck)
-          val mappingSoFar = homomorphismExtension.get(indexOfVariableInResultOrdering)
+
+          val mappingSoFar = homomorphismExtension(indexOfVariableInResultOrdering)
           if (mappingSoFar.isEmpty) {
             // we are free to extend the homomorphism to the variable
-            homomorphismExtension.set(
-              indexOfVariableInResultOrdering,
-              Optional.of(extensionCandidate)
-            )
+            homomorphismExtension(indexOfVariableInResultOrdering) = Some(extensionCandidate)
           } else if (!(mappingSoFar.get == extensionCandidate)) {
             // the match cannot extend the partialHomomorphism, so skip to the next match
             boundary.break()
@@ -78,77 +67,64 @@ object FilterNestedLoopJoin {
         // at this point the match must have been extended to cover all variables in the atom,
         // so proceed
         visitAllJoinResults(
-          remainingAtomsToJoin.subList(1, remainingAtomsToJoin.size),
+          remainingAtomsToJoin.tail,
           atomToMatches,
           resultVariableOrdering,
-          ImmutableList.copyOf(homomorphismExtension),
+          homomorphismExtension.toList,
           visitEachCompleteHomomorphism
         )
       }
     }
   }
 }
-class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Function[Constant, TA])
+class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
     extends NaturalJoinAlgorithm[TA, FormalInstance[TA]] {
   override def join(query: ConjunctiveQuery,
                     formalInstance: FormalInstance[TA]
   ): JoinResult[TA] = {
-    val queryAtoms = ImmutableSet.copyOf(query.getAtoms)
+    val queryAtoms = query.getAtoms.toSet
 
     // we throw IllegalArgumentException if the query contains existential atoms
     if (query.getBoundVariables.length != 0)
       throw new IllegalArgumentException("NestedLoopJoin does not support existential queries")
 
-    val queryPredicates =
-      util.Arrays.stream(query.getAtoms).map(_.getPredicate).collect(Collectors.toSet)
+    val queryPredicates = query.getAtoms.map(_.getPredicate).toSet
 
-    val relevantRelationsToInstancesMap: ImmutableMap[Predicate, FormalInstance[TA]] = {
-      val relevantFactsStream = formalInstance.facts.stream.filter((fact: FormalFact[TA]) =>
-        queryPredicates.contains(fact.predicate)
+    val relevantRelationsToInstancesMap: Map[Predicate, FormalInstance[TA]] =
+      formalInstance.facts
+        .filter(fact => queryPredicates.contains(fact.predicate))
+        .groupBy(_.predicate)
+        .view.mapValues(FormalInstance(_)).toMap
+
+    val queryAtomsToMatches = queryAtoms.map { atom =>
+      atom -> SingleAtomMatching.allMatches(
+        atom,
+        relevantRelationsToInstancesMap.getOrElse(atom.getPredicate, FormalInstance.empty),
+        includeConstantsToTA
       )
-
-      val groupedFacts =
-        relevantFactsStream.collect(Collectors.groupingBy[FormalFact[TA], Predicate](_.predicate))
-
-      MapExtensions.composeWithFunction(groupedFacts, FormalInstance(_))
-    }
-
-    val queryAtomsToMatches = ImmutableMapExtensions.consumeAndCopy(StreamExtensions.associate(
-      queryAtoms.stream,
-      (atom: Atom) =>
-        SingleAtomMatching.allMatches(
-          atom,
-          relevantRelationsToInstancesMap.getOrDefault(atom.getPredicate, FormalInstance.empty),
-          includeConstantsToTA
-        )
-    ).iterator)
+    }.toMap
 
     // we start joining from the outer
     val queryAtomsOrderedByMatchSizes =
-      ImmutableList.copyOf(queryAtomsToMatches.keySet.stream.sorted(Comparator.comparing(
-        (atom: Atom) => queryAtomsToMatches.get(atom).allHomomorphisms.size
-      )).iterator)
+      queryAtomsToMatches.keySet.toList.sortBy(atom =>
+        queryAtomsToMatches(atom).allHomomorphisms.size
+      )
 
     val queryVariableOrdering =
-      ImmutableList.copyOf(ImmutableSet.copyOf(util.Arrays.stream(query.getAtoms).flatMap(
-        (atom: Atom) => util.Arrays.stream(atom.getVariables)
-      ).iterator))
+      query.getAtoms.flatMap((atom: Atom) => atom.getVariables).toSet.toList
 
-    val emptyHomomorphism =
-      ImmutableList.copyOf(queryVariableOrdering.stream.map((v: Variable) =>
-        Optional.empty[TA]
-      ).iterator)
+    val emptyHomomorphism = queryVariableOrdering.map(_ => None)
 
-    val resultBuilder = ImmutableList.builder[ImmutableList[TA]]
+    val resultBuilder = ArrayBuffer[List[TA]]()
 
     FilterNestedLoopJoin.visitAllJoinResults(
       queryAtomsOrderedByMatchSizes,
       queryAtomsToMatches,
       queryVariableOrdering,
       emptyHomomorphism,
-      resultBuilder.add
+      resultBuilder.append
     )
 
-    new JoinResult[TA](queryVariableOrdering, resultBuilder.build)
+    new JoinResult[TA](queryVariableOrdering, resultBuilder.toList)
   }
 }

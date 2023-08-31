@@ -1,14 +1,9 @@
 package io.github.kory33.guardedqueries.core.fol
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableSet
 import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import uk.ac.ox.cs.pdq.fol.Formula
-import uk.ac.ox.cs.pdq.fol.Predicate
-import java.util
-import java.util.stream.Collectors
+import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Formula, Predicate}
+import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions.given
 
 /**
  * An object of this class represents a first-order logic signature with
@@ -17,25 +12,23 @@ import java.util.stream.Collectors
  *   - no function symbols
  */
 object FunctionFreeSignature {
-  def fromFormulas(formulas: util.Collection[_ <: Formula]) =
-    new FunctionFreeSignature(formulas.stream.flatMap(
-      FormulaExtensions.streamPredicatesAppearingIn
-    ).collect(Collectors.toList))
+  private def fromFormulas(formulas: Set[Formula]) =
+    new FunctionFreeSignature(formulas.flatMap(_.allPredicates))
 
-  def encompassingRuleQuery(rules: util.Collection[_ <: GTGD],
-                            query: ConjunctiveQuery
-  ): FunctionFreeSignature = FunctionFreeSignature.fromFormulas(
-    ImmutableList.builder[Formula].addAll(rules).add(query).build
-  )
+  def encompassingRuleQuery(rules: Set[GTGD], query: ConjunctiveQuery): FunctionFreeSignature =
+    FunctionFreeSignature.fromFormulas(Set(query: Formula) ++ rules)
 }
 
-case class FunctionFreeSignature(predicates: ImmutableSet[Predicate]) {
-  def this(predicates: java.lang.Iterable[? <: Predicate]) = {
-    this(ImmutableSet.copyOf[Predicate](predicates))
+case class FunctionFreeSignature(predicates: Set[Predicate]) {
+  def this(predicates: Iterable[Predicate]) = {
+    this(predicates.toSet)
   }
 
-  def predicateNames: ImmutableSet[String] =
-    ImmutableSet.copyOf(predicates.stream.map(_.getName).toList)
+  def predicateNames: Set[String] =
+    predicates.map(_.getName)
 
-  def maxArity: Int = predicates.stream.mapToInt(_.getArity).max.orElse(0)
+  def maxArity: Int = predicates.map(_.getArity) match {
+    case arities if arities.isEmpty => 0
+    case arities                    => arities.max
+  }
 }

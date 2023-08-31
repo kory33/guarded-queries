@@ -1,6 +1,5 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import com.google.common.collect.ImmutableList
 import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
@@ -10,13 +9,14 @@ import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewrite
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQuery
+import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
 import java.time.Instant
 import java.util.Date
-import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
+import scala.jdk.CollectionConverters._
 
 object GSatEquivalenceTestHarness {
   private def logWithTime(message: String): Unit = {
@@ -40,7 +40,7 @@ object GSatEquivalenceTestHarness {
       FormalInstance[Constant](new FilterNestedLoopJoin[Constant]((c: Constant) => c).join(
         gsatQuery,
         gsatSaturatedInstance
-      ).materializeFunctionFreeAtom(answerAtom, (c: Constant) => c))
+      ).materializeFunctionFreeAtom(answerAtom, (c: Constant) => c).toSet)
     }
 
     def answersWithOurRewriting(testInstance: FormalInstance[Constant])
@@ -95,22 +95,20 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
 
     val gsatRewritingStart = System.nanoTime
     val gsatRewriting =
-      DatalogProgram.tryFromDependencies(gsatImplementation.run(
-        ImmutableList.builder[Dependency]
-          .addAll(ruleQuery.guardedRules)
-          .addAll(ruleQuery.reducibleQuery.reductionRules)
-          .build
-      ))
+      DatalogProgram.tryFromDependencies(
+        gsatImplementation.run(
+          (ruleQuery.guardedRules.toList ++ ruleQuery.reducibleQuery.reductionRules).asJava
+        ).asScala
+      )
+
     GSatEquivalenceTestHarness.logWithTime(
       "Done Gsat rewriting in " + (System.nanoTime - gsatRewritingStart) + " ns"
     )
 
     val ourRewritingStart = System.nanoTime
     val ourRewriting =
-      rewriterToBeTested.rewrite(
-        ruleQuery.guardedRules,
-        ruleQuery.reducibleQuery.originalQuery
-      )
+      rewriterToBeTested.rewrite(ruleQuery.guardedRules, ruleQuery.reducibleQuery.originalQuery)
+
     GSatEquivalenceTestHarness.logWithTime(
       "Done guarded-query rewriting in " + (System.nanoTime - ourRewritingStart) + " ns"
     )
@@ -132,9 +130,10 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <
 
   /**
    * Test that [[gsatImplementation]] and [[rewriterToBeTested]] produce the equivalent Datalog
-   * rewritings on the given [[GTGDRuleAndGTGDReducibleQuery]]. <p> The test is repeatedly
-   * performed on randomly generated database instances (with the number of test rounds being
-   * specified by <pre>instanceGenerationRoundCount</pre>).
+   * rewritings on the given [[GTGDRuleAndGTGDReducibleQuery]].
+   *
+   * The test is repeatedly performed on randomly generated database instances (with the number
+   * of test rounds being specified by <pre>instanceGenerationRoundCount</pre>).
    */
   def checkThatGSatAndTheRewriterAgreeOn(
     ruleQuery: GTGDRuleAndGTGDReducibleQuery,

@@ -1,9 +1,6 @@
 package io.github.kory33.guardedqueries.core.testcases
 
-import com.google.common.collect.ImmutableList
-import io.github.kory33.guardedqueries.parser.FormulaParsers
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 
 /**
  * A static class containing test cases of GTGD rules and GTGD-reducible queries.
@@ -17,7 +14,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.simpleArity2Rule_0,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("R(z_1, z_1)"),
-        ImmutableList.of,
+        Set.empty,
         conjunctiveQuery.parse("R(z_1, z_1)")
       )
     )
@@ -25,7 +22,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.simpleArity2Rule_0,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("R(z_1, z_2), R(z_2, z_3)"),
-        ImmutableList.of,
+        Set.empty,
         conjunctiveQuery.parse("R(z_1, z_2), R(z_2, z_3)")
       )
     )
@@ -34,7 +31,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
         GTGDRuleSets.simpleArity2Rule_0,
         GTGDReducibleConjunctiveQuery(
           conjunctiveQuery.parse("EE y. R(x, y), R(y, y)"),
-          ImmutableList.of(gtgd.parse("R(x, y), R(y, y) -> Goal(x)")),
+          Set(gtgd.parse("R(x, y), R(y, y) -> Goal(x)")),
           conjunctiveQuery.parse("Goal(x)")
         )
       )
@@ -42,7 +39,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.simpleArity2Rule_0,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("EE y,z. R(w, y), R(y, z)"),
-        ImmutableList.of(gtgd.parse("R(y, z) -> I(y)"), gtgd.parse("R(w, y), I(y) -> Goal(w)")),
+        Set(gtgd.parse("R(y, z) -> I(y)"), gtgd.parse("R(w, y), I(y) -> Goal(w)")),
         conjunctiveQuery.parse("Goal(w)")
       )
     )
@@ -50,7 +47,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.simpleArity2Rule_0,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("EE y,z. R(y, t), R(t, w), R(w, z), U(z)"),
-        ImmutableList.of(
+        Set(
           gtgd.parse("R(y, t) -> I_1(t)"),
           gtgd.parse("R(w, z), U(z) -> I_2(w)")
         ),
@@ -64,7 +61,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.constantRule,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("R(c_3, x)"),
-        ImmutableList.of,
+        Set.empty,
         conjunctiveQuery.parse("R(c_3, x)")
       )
     )
@@ -73,7 +70,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
         GTGDRuleSets.constantRule,
         GTGDReducibleConjunctiveQuery(
           conjunctiveQuery.parse("EE y. R(c_3, y)"),
-          ImmutableList.of(gtgd.parse("R(c_3, y) -> Goal()")),
+          Set(gtgd.parse("R(c_3, y) -> Goal()")),
           conjunctiveQuery.parse("Goal()")
         )
       )
@@ -82,7 +79,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
         GTGDRuleSets.constantRule,
         GTGDReducibleConjunctiveQuery(
           conjunctiveQuery.parse("EE y. R(c_1, y), R(y, w), R(w, c_3)"),
-          ImmutableList.of(gtgd.parse("R(c_1, y), R(y, w), R(w, c_3) -> Goal(w)")),
+          Set(gtgd.parse("R(c_1, y), R(y, w), R(w, c_3) -> Goal(w)")),
           conjunctiveQuery.parse("Goal(w)")
         )
       )
@@ -94,7 +91,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.arity3Rule_0,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("EE y. T(x, y, z), T(y, x, z)"),
-        ImmutableList.of(gtgd.parse("T(x, y, z), T(y, x, z) -> Goal(x, z)")),
+        Set(gtgd.parse("T(x, y, z), T(y, x, z) -> Goal(x, z)")),
         conjunctiveQuery.parse("Goal(x, z)")
       )
     )
@@ -104,7 +101,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.arity4Rule,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("S(x, z, y, x)"),
-        ImmutableList.of,
+        Set.empty,
         conjunctiveQuery.parse("S(x, z, y, x)")
       )
     )
@@ -115,7 +112,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
         GTGDRuleSets.arity4Rule,
         GTGDReducibleConjunctiveQuery(
           conjunctiveQuery.parse("EE y. S(x, y, y, z), R(y, x)"),
-          ImmutableList.of(gtgd.parse("S(x, y, y, z), R(y, x) -> Goal(x, z)")),
+          Set(gtgd.parse("S(x, y, y, z), R(y, x) -> Goal(x, z)")),
           conjunctiveQuery.parse("Goal(x, z)")
         )
       )
@@ -125,7 +122,7 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       GTGDRuleSets.arity4Rule,
       GTGDReducibleConjunctiveQuery(
         conjunctiveQuery.parse("EE y_1, y_2. T(z_1, y_1, z_2), R(y_1, y_2), T(y_1, y_2, z_2)"),
-        ImmutableList.of(
+        Set(
           gtgd.parse("R(y_1, y_2), T(y_1, y_2, z_2) -> I(y_1, z_2)"),
           gtgd.parse("T(z_1, y_1, z_2), I(y_1, z_2) -> Goal(z_1, z_2)")
         ),

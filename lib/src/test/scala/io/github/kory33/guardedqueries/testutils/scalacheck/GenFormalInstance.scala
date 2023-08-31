@@ -1,16 +1,13 @@
 package io.github.kory33.guardedqueries.testutils.scalacheck
 
-import scala.jdk.CollectionConverters.*
-import uk.ac.ox.cs.pdq.fol.Predicate
-import uk.ac.ox.cs.pdq.fol.Constant
-import org.scalacheck.Gen
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen
-import com.google.common.collect.ImmutableList
-import uk.ac.ox.cs.pdq.fol.TypedConstant
-import org.scalacheck.Shrink
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkSet
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen
+import org.scalacheck.Gen
+import org.scalacheck.Shrink
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
 
 object GenFormalInstance {
   def genFormalInstanceOver(predicate: Predicate,
@@ -26,10 +23,8 @@ object GenFormalInstance {
 
     for {
       tupleSet <- GenSet.chooseSubset(buildTuples(Nil).toSet)
-      factSet = tupleSet
-        .map(tuple => ImmutableList.copyOf(tuple.asJavaCollection))
-        .map(javaTuple => new FormalFact[Constant](predicate, javaTuple))
-    } yield FormalInstance[Constant](factSet.asJava)
+      factSet = tupleSet.map(FormalFact(predicate, _))
+    } yield FormalInstance(factSet)
   }
 
   def genFormalInstanceContainingPredicates(predicates: Set[Predicate],
@@ -38,16 +33,14 @@ object GenFormalInstance {
     import TraverseListGen.traverse
     predicates.toList
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
-      .map { instanceList =>
-        FormalInstance[Constant](instanceList.flatMap(_.facts.asScala).asJava)
-      }
+      .map { instanceList => FormalInstance(instanceList.flatMap(_.facts).toSet) }
   }
 }
 
 object ShrinkFormalInstance {
   given Shrink[FormalInstance[Constant]] = Shrink { instance =>
     ShrinkSet.intoSubsets[FormalFact[Constant]]
-      .shrink(instance.facts.asScala.toSet)
-      .map(factSet => FormalInstance[Constant](factSet.asJava))
+      .shrink(instance.facts)
+      .map(FormalInstance(_))
   }
 }

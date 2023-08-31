@@ -1,15 +1,14 @@
 package io.github.kory33.guardedqueries.testutils.scalacheck
 
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkList
 import org.scalacheck.*
-import uk.ac.ox.cs.pdq.fol.Variable
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.TypedConstant
-import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkList
-import uk.ac.ox.cs.pdq.fol.Conjunction
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Term
+import uk.ac.ox.cs.pdq.fol.TypedConstant
+import uk.ac.ox.cs.pdq.fol.Variable
 
 object GenFormula {
   def genNumberedVariable(indexUpperLimit: Int): Gen[Variable] = for {

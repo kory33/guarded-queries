@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.testcases
 
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import java.util
 
 /**
  * A conjunctive query that can be "GTGD-reduced" to an atomic query with help of additional
@@ -35,7 +34,7 @@ import java.util
  */
 case class GTGDReducibleConjunctiveQuery(
   originalQuery: ConjunctiveQuery,
-  reductionRules: util.Collection[_ <: GTGD],
+  reductionRules: Set[GTGD],
   existentialFreeQuery: ConjunctiveQuery
 ) {
   if (existentialFreeQuery.getBoundVariables.length != 0)

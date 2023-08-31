@@ -1,28 +1,20 @@
 package io.github.kory33.guardedqueries.core.formalinstance
 
-import com.google.common.collect.ImmutableList
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Term
-import java.util.function.Function
 
-case class FormalFact[TermAlphabet](predicate: Predicate,
-                                    appliedTerms: ImmutableList[TermAlphabet]
-) {
-  def map[T](mapper: Function[_ >: TermAlphabet, _ <: T]) = new FormalFact[T](
-    this.predicate,
-    ImmutableList.copyOf(this.appliedTerms.stream.map(mapper).iterator)
-  )
+case class FormalFact[TermAlphabet](predicate: Predicate, appliedTerms: List[TermAlphabet]) {
+  def map[T](mapper: TermAlphabet => T) = new FormalFact[T](predicate, appliedTerms.map(mapper))
 
   override def toString: String =
-    s"${predicate.toString}(${String.join(", ", appliedTerms.stream.map(_.toString).toList)})"
+    s"${predicate.toString}(${appliedTerms.map(_.toString).mkString(", ")})"
+
+  def asAtom(using ev: TermAlphabet =:= Term): Atom =
+    Atom.create(predicate, ev.substituteCo(appliedTerms): _*)
 }
 
 object FormalFact {
-  def asAtom(fact: FormalFact[Term]): Atom =
-    import scala.jdk.CollectionConverters._
-    Atom.create(fact.predicate, fact.appliedTerms.asScala.toArray: _*)
-
   def fromAtom(atom: Atom) =
-    new FormalFact[Term](atom.getPredicate, ImmutableList.copyOf(atom.getTerms))
+    new FormalFact[Term](atom.getPredicate, atom.getTerms.toList)
 }

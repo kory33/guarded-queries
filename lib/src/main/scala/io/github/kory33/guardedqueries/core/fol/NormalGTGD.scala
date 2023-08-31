@@ -1,14 +1,13 @@
 package io.github.kory33.guardedqueries.core.fol
 
-import com.google.common.collect.ImmutableSet
-import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Variable}
 
-import java.util
+import scala.jdk.CollectionConverters.*
 
-abstract sealed class NormalGTGD protected (body: util.Set[Atom], head: util.Set[Atom])
-    extends GTGD(body, head) {}
+abstract sealed class NormalGTGD protected (body: Set[Atom], head: Set[Atom])
+    extends GTGD(body.asJava, head.asJava) {}
 
 /**
  * A GTGD in a normal form (i.e. either single-headed or full).
@@ -21,8 +20,8 @@ object NormalGTGD {
   /**
    * A single-headed GTGD.
    */
-  class SingleHeadedGTGD(body: util.Set[Atom], head: Atom)
-      extends NormalGTGD(body, util.Set.of(head)) {}
+  private class SingleHeadedGTGD(body: Set[Atom], head: Atom)
+      extends NormalGTGD(body, Set(head)) {}
 
   /**
    * An existential-free GTGD.
@@ -30,14 +29,13 @@ object NormalGTGD {
    * The primary constructor throws an [[IllegalArgumentException]] if not all variables in the
    * head appear in the body.
    */
-  class FullGTGD(body: util.Collection[Atom], head: util.Collection[Atom])
-      extends NormalGTGD(ImmutableSet.copyOf(body), ImmutableSet.copyOf(head)) {
+  class FullGTGD(body: Set[Atom], head: Set[Atom]) extends NormalGTGD(body, head) {
     if (getExistential.length != 0) throw new IllegalArgumentException(
       "Datalog rules cannot contain existential variables, got " + super.toString
     )
   }
 
-  object FullGTGD {
+  private object FullGTGD {
 
     /**
      * Try constructing the object from a GTGD.
@@ -46,10 +44,7 @@ object NormalGTGD {
      * existentially quantified variables.
      */
     def tryFromGTGD(gtgd: GTGD) =
-      new NormalGTGD.FullGTGD(
-        util.Set.of(gtgd.getBodyAtoms: _*),
-        util.Set.of(gtgd.getHeadAtoms: _*)
-      )
+      new NormalGTGD.FullGTGD(gtgd.getBodyAtoms.toSet, gtgd.getHeadAtoms.toSet)
   }
 
   /**
@@ -71,22 +66,15 @@ object NormalGTGD {
    *   a prefix to use for naming intermediary predicates. For example, if the prefix is "I",
    *   intermediary predicates will have names "I_0", "I_1", etc.
    */
-  def normalize(inputRules: util.Collection[_ <: GTGD],
-                intermediaryPredicatePrefix: String
-  ): ImmutableSet[NormalGTGD] = {
-    import scala.jdk.CollectionConverters.*
-
+  def normalize(inputRules: Set[GTGD], intermediaryPredicatePrefix: String): Set[NormalGTGD] = {
     val (fullRules, existentialRules) =
-      inputRules.asScala.toList.partition(_.getExistential.length == 0)
+      inputRules.partition(_.getExistential.length == 0)
     val fullGTGDs = fullRules.map(FullGTGD.tryFromGTGD)
 
     val splitExistentialRules =
       existentialRules.zipWithIndex.flatMap { (originalRule, index) =>
-        val intermediaryPredicateVariables = {
-          val frontierVariables = TGDExtensions.frontierVariables(originalRule)
-
-          (frontierVariables.asScala.toList ++ originalRule.getExistential.toList).toSet.toArray
-        }
+        val intermediaryPredicateVariables =
+          (originalRule.frontierVariables ++ originalRule.getExistential).toArray
 
         val intermediaryPredicate: Predicate = {
           val predicateName =
@@ -96,18 +84,18 @@ object NormalGTGD {
         }
 
         val splitExistentialRule = NormalGTGD.SingleHeadedGTGD(
-          util.Set.of(originalRule.getBodyAtoms: _*),
+          originalRule.getBodyAtoms.toSet,
           Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)
         )
 
         val splitFullRule = NormalGTGD.FullGTGD(
-          util.Set.of(Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)),
-          util.Set.of(originalRule.getHeadAtoms: _*)
+          Set(Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)),
+          originalRule.getHeadAtoms.toSet
         )
 
         List(splitExistentialRule, splitFullRule)
       }
 
-    ImmutableSet.copyOf((fullGTGDs ++ splitExistentialRules).asJava)
+    fullGTGDs ++ splitExistentialRules
   }
 }

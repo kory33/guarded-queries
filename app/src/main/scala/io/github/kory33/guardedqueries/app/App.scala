@@ -4,17 +4,14 @@ import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{
-  DFSNormalizingDPTableSEEnumeration,
-  NaiveDPTableSEEnumeration,
-  NormalizingDPTableSEEnumeration
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.DFSNormalizingDPTableSEEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NaiveDPTableSEEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NormalizingDPTableSEEnumeration
 import io.github.kory33.guardedqueries.core.subsumption.formula
-import io.github.kory33.guardedqueries.core.subsumption.formula.{
-  MinimalExactBodyDatalogRuleSet,
-  MinimallyUnifiedDatalogRuleSet
-}
-import uk.ac.ox.cs.gsat.{GSat, GTGD}
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet
+import uk.ac.ox.cs.gsat.GSat
+import uk.ac.ox.cs.gsat.GTGD
 
 object App {
   private def formatGTGD(rule: GTGD): String = {
@@ -136,10 +133,10 @@ object App {
         currentState.registeredRules.foreach(rule => log("  " + formatGTGD(rule)))
 
         val rewrittenRules =
-          GSat.getInstance().run(currentState.registeredRulesAsDependencies.asJava).asScala
+          GSat.getInstance().run(currentState.registeredRulesAsDependencies.asJava)
         log("Done computing atomic rewriting of registered rules")
         log("Rewritten rules:")
-        rewrittenRules.foreach(rule => log("  " + formatGTGD(rule)))
+        rewrittenRules.asScala.foreach(rule => log("  " + formatGTGD(rule)))
         currentState
       case AppCommand.Rewrite(query, implChoice) =>
         val rewriter = implChoice match
@@ -151,8 +148,7 @@ object App {
         log("  using " + rewriter + ", with registered rules:")
         currentState.registeredRules.foreach(rule => log("  " + formatGTGD(rule)))
         val beginRewriteNanoTime = System.nanoTime()
-        val rewriteResult =
-          rewriter.rewrite(currentState.registeredRules.asJavaCollection, query)
+        val rewriteResult = rewriter.rewrite(currentState.registeredRules, query)
         val rewriteTimeNanos = System.nanoTime() - beginRewriteNanoTime
         log("Done rewriting query in " + rewriteTimeNanos + " nanoseconds.")
         log("Minimizing the result...")
@@ -166,11 +162,11 @@ object App {
         log("Rewritten query:")
         log("  Goal atom: " + minimizedRewriteResult.goal)
         log("  Atomic rewriting part:")
-        minimizedRewriteResult.inputRuleSaturationRules.rules.forEach(rule =>
+        minimizedRewriteResult.inputRuleSaturationRules.rules.foreach(rule =>
           log("    " + formatDatalogRule(rule))
         )
         log("  Subgoal derivation part:")
-        minimizedRewriteResult.subgoalAndGoalDerivationRules.rules.forEach(rule =>
+        minimizedRewriteResult.subgoalAndGoalDerivationRules.rules.foreach(rule =>
           log("    " + formatDatalogRule(rule))
         )
 

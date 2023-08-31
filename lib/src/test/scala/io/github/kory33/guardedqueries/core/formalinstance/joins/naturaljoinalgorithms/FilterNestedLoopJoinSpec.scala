@@ -1,24 +1,21 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormalInstance
+import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
+import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import io.github.kory33.guardedqueries.testutils.scalacheck.{
-  GenFormalInstance,
-  GenFormula,
-  GenSet
-}
-import org.scalacheck.Gen
-import uk.ac.ox.cs.pdq.fol.Predicate
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Atom
-import scala.jdk.CollectionConverters._
-import com.google.common.collect.ImmutableList
-import uk.ac.ox.cs.pdq.fol.Variable
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.TypedConstant
+import uk.ac.ox.cs.pdq.fol.Variable
+
+import scala.jdk.CollectionConverters._
 
 class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallPredicateSet: Gen[Set[Predicate]] = for {
@@ -57,10 +54,10 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
         val joinAlgorithm = new FilterNestedLoopJoin(c => c)
         joinAlgorithm
           .join(query, instance)
-          .allHomomorphisms.asScala
+          .allHomomorphisms
           .foreach { homomorphism =>
             val materializedInstance =
-              homomorphism.materializeFunctionFreeAtoms(query.getAtoms.toList.asJava, c => c)
+              homomorphism.materializeFunctionFreeAtoms(query.getAtoms.toSet, c => c)
             assert(instance.isSuperInstanceOf(materializedInstance))
           }
     }
@@ -72,10 +69,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
     variablesInQuery = query.getFreeVariables.toSet
     homomorphism <-
       Gen.listOfN(variablesInQuery.size, GenFormula.genConstant(15)).map { constants =>
-        new HomomorphicMapping(
-          ImmutableList.copyOf(variablesInQuery.toList.asJava),
-          ImmutableList.copyOf(constants.asJava)
-        )
+        HomomorphicMapping(variablesInQuery.toList, constants)
       }
   } yield (query, homomorphism)
 
@@ -83,7 +77,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
                                 h2: HomomorphicMapping[Constant]
   ): Boolean = {
     def asMap(h: HomomorphicMapping[Constant]): Map[Variable, Constant] =
-      h.variableOrdering.asScala.zip(h.orderedMapping.asScala).toMap
+      h.variableOrdering.zip(h.orderedMapping).toMap
 
     asMap(h1) == asMap(h2)
   }
@@ -92,13 +86,12 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
     forAll(genQueryAndHomomorphism, minSuccessful(3000)) {
       case (query, originalHomomorphism) =>
         val materializedInstance = originalHomomorphism
-          .materializeFunctionFreeAtoms(query.getAtoms.toList.asJava, c => c)
+          .materializeFunctionFreeAtoms(query.getAtoms.toSet, c => c)
 
         assert {
           new FilterNestedLoopJoin(c => c)
             .join(query, materializedInstance)
             .allHomomorphisms
-            .asScala
             .exists(equivalentAsHomomorphisms(_, originalHomomorphism))
         }
     }
