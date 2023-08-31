@@ -23,22 +23,18 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
                                   facts: Set[FormalFact[TA]],
                                   includeConstantsToTA: Constant => TA
   ) = {
-    val inputInstance = new FormalInstance[TA](facts)
-    val producedFacts = mutable.HashSet[FormalFact[TA]]()
-    val joinAlgorithm = new FilterNestedLoopJoin[TA](includeConstantsToTA)
+    val inputInstance = FormalInstance[TA](facts)
+    val joinAlgorithm = FilterNestedLoopJoin[TA](includeConstantsToTA)
 
-    for (rule <- program.rules) {
-      val joinResult = joinAlgorithm.join(rule.bodyAsCQ, inputInstance)
-      for (ruleHeadAtom <- rule.getHeadAtoms) {
-        producedFacts ++= {
-          // because we are dealing with Datalog rules, we can materialize every head atom
-          // using the join result (and its variable ordering)
-          joinResult.materializeFunctionFreeAtom(ruleHeadAtom, includeConstantsToTA)
-        }
-      }
-    }
-
-    producedFacts.toSet
+    for {
+      rule <- program.rules
+      joinResult = joinAlgorithm.join(rule.bodyAsCQ, inputInstance)
+      ruleHeadAtom <- rule.getHeadAtoms
+      // because we are dealing with Datalog rules, we can materialize every head atom
+      // using the join result (and its variable ordering)
+      materializedHead <-
+        joinResult.materializeFunctionFreeAtom(ruleHeadAtom, includeConstantsToTA)
+    } yield materializedHead
   }
 
   override def saturateUnionOfSaturatedAndUnsaturatedInstance[TA](
@@ -46,11 +42,8 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
     saturatedInstance: FormalInstance[TA],
     instance: FormalInstance[TA],
     includeConstantsToTA: Constant => TA
-  ): FormalInstance[TA] = {
-    val saturatedFactSet =
-      (saturatedInstance.facts ++ instance.facts).generateFromSetUntilFixpoint(
-        (facts: Set[FormalFact[TA]]) => chaseSingleStep(program, facts, includeConstantsToTA)
-      )
-    new FormalInstance[TA](saturatedFactSet)
+  ): FormalInstance[TA] = FormalInstance[TA] {
+    (saturatedInstance.facts ++ instance.facts)
+      .generateFromSetUntilFixpoint(chaseSingleStep(program, _, includeConstantsToTA))
   }
 }
