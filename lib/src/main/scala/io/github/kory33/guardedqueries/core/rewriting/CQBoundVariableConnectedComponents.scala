@@ -39,21 +39,10 @@ class CQBoundVariableConnectedComponents(cq: ConjunctiveQuery) {
     cq.getAtoms.filter(atom => atom.getVariables.forall(!cqBoundVariables.contains(_))).toSet
 
   val maximallyConnectedSubqueries: Set[ConjunctiveQuery] = {
-    // split bound variables into connected components
-    val boundVariableConnectedComponents: Set[Set[Variable]] = {
-      val boundVariableUFTree = SimpleUnionFindTree(cqBoundVariables)
-
-      for (atom <- cq.getAtoms) {
-        boundVariableUFTree.unionAll(atom.getVariables.toSet.intersect(cqBoundVariables))
-      }
-
-      boundVariableUFTree.getEquivalenceClasses
-    }
-
-    boundVariableConnectedComponents.map(component =>
-      // this .get() call succeeds because
-      // we are strictly inducing a subquery by
-      // a maximally connected component of bound variables
+    cq.connectedComponentsOf(cqBoundVariables).map(component =>
+      // this .get() call succeeds because we are strictly inducing a subquery
+      // by a maximally connected component of bound variables,
+      // which is always non-empty since the original CQ is nonempty.
       cq.strictlyInduceSubqueryByVariables(component).get
     )
   }
