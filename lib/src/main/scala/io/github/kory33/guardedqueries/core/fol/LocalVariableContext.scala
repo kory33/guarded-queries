@@ -16,8 +16,8 @@ class LocalVariableContext(private val variablePrefix: String) {
   private var variableCount = 0
 
   def getFreshVariable: Variable = {
-    val newVariable = Variable.create(this.variablePrefix + this.variableCount)
-    this.variableCount += 1
+    val newVariable = Variable.create(s"$variablePrefix$variableCount")
+    variableCount += 1
     newVariable
   }
 }

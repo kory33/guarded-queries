@@ -14,13 +14,8 @@ import uk.ac.ox.cs.pdq.fol.Predicate
  *   - no function symbols
  */
 case class FunctionFreeSignature(predicates: Set[Predicate]) {
-  def this(predicates: Iterable[Predicate]) = {
-    this(predicates.toSet)
-  }
-
-  def predicateNames: Set[String] =
-    predicates.map(_.getName)
-
+  def predicateNames: Set[String] = predicates.map(_.getName)
+  
   def maxArity: Int = predicates.map(_.getArity).maxOption.getOrElse(0)
 }
 

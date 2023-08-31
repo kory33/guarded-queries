@@ -73,30 +73,27 @@ object NormalGTGD {
       inputRules.partition(_.getExistential.length == 0)
     val fullGTGDs = fullRules.map(FullGTGD.tryFromGTGD)
 
-    val splitExistentialRules =
-      existentialRules.zipWithIndex.flatMap { (originalRule, index) =>
-        val intermediaryPredicateVariables =
-          (originalRule.frontierVariables ++ originalRule.getExistential).toArray
+    val splitExistentialRules = existentialRules.zipWithIndex.flatMap { (originalRule, index) =>
+      val intermediaryPredicateVariables =
+        (originalRule.frontierVariables ++ originalRule.getExistential).toArray
 
-        val intermediaryPredicate: Predicate = {
-          val predicateName =
-            intermediaryPredicatePrefix + "_" + Integer.toUnsignedString(index)
-          val predicateArity = intermediaryPredicateVariables.length
-          Predicate.create(predicateName, predicateArity)
-        }
+      val intermediaryPredicate: Predicate = Predicate.create(
+        s"${intermediaryPredicatePrefix}_$index",
+        intermediaryPredicateVariables.length
+      )
 
-        val splitExistentialRule = NormalGTGD.SingleHeadedGTGD(
-          originalRule.getBodyAtoms.toSet,
-          Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)
-        )
+      val splitExistentialRule = NormalGTGD.SingleHeadedGTGD(
+        originalRule.getBodyAtoms.toSet,
+        Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)
+      )
 
-        val splitFullRule = NormalGTGD.FullGTGD(
-          Set(Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)),
-          originalRule.getHeadAtoms.toSet
-        )
+      val splitFullRule = NormalGTGD.FullGTGD(
+        Set(Atom.create(intermediaryPredicate, intermediaryPredicateVariables: _*)),
+        originalRule.getHeadAtoms.toSet
+      )
 
-        List(splitExistentialRule, splitFullRule)
-      }
+      List(splitExistentialRule, splitFullRule)
+    }
 
     fullGTGDs ++ splitExistentialRules
   }
