@@ -513,7 +513,7 @@ object DFSNormalizingDPTableSEEnumeration {
                 )
 
                 allQueryConstantEmbeddings.map(queryConstantEmbedding =>
-                  new SubqueryEntailmentInstance(
+                  SubqueryEntailmentInstance(
                     ruleConstantWitnessGuess,
                     coexistentialVariables,
                     localInstance,
