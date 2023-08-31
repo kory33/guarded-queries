@@ -5,23 +5,29 @@ import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 
+//format: off
 /**
  * A class of objects representing the result of a join operation.
  *
- * We say that a {@code JoinResult} is well-formed if: <ol> <li>the {@code variableOrdering} is
- * a list of distinct variables</li> <li>each list in {@code orderedMapping} has the same length
- * as {@code variableOrdering}</li> <li>{@code orderedMapping} is a list opf distinct join
- * result tuples</li> </ol>
+ * We say that a `JoinResult` is well-formed if: <ol> <li>the `variableOrdering` is a list of
+ * distinct variables</li> <li>each list in `orderedMapping` has the same length as
+ * `variableOrdering`</li> <li>`orderedMapping` is a list opf distinct join result tuples</li>
+ * </ol>
  *
- * For example, given a query {@code Q(x, y), R(y, z)}, a {@code JoinResult} of the form <ol>
- * <li>{@code variableOrdering = [x, y, z]}</li> <li>{@code orderedMapping =
- * [[a, b, c], [a, c, d]]}</li> </ol> is a well-formed answer to the query, insinuating that
- * {@code Q(a, b), R(b, c)} and {@code Q(a, c), R(c, d)} are the only answers to the query.
+ * For example, given a query `Q(x, y), R(y, z)`, a `JoinResult` of the form
  *
- * @param <Term>
+ * <ol> <li>`variableOrdering = [x, y, z]`</li>
+ *
+ * <li> `orderedMapping = [ [a, b, c], [a, c, d] ]` </li> </ol>
+ *
+ * is a well-formed answer to the query, insinuating that `Q(a, b), R(b, c)` and
+ * `Q(a, c), R(c,d)` are the only answers to the query.
+ *
+ * @tparam Term
  *   type of values (typically constants) that appear in the input instance of the join
  *   operation
  */
+//format: on
 class JoinResult[Term](
   variableOrdering: List[Variable],
   orderedMappingsOfAllHomomorphisms: List[List[Term]]
@@ -37,7 +43,7 @@ class JoinResult[Term](
    * Materialize the given atom by replacing the variables in the atom with the values in this
    * result.
    *
-   * The returned list has the same length as {@code orderedMapping}.
+   * The returned list has the same length as `orderedMapping`.
    *
    * @param atomWhoseVariablesAreInThisResult
    *   a function-free atom whose variables are covered by this join result
@@ -53,23 +59,30 @@ class JoinResult[Term](
       h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion)
     )
 
+  // format: off
   /**
    * Extend the join result by adjoining a constant homomorphism.
    *
-   * For instance, suppose that this join result is obtained as an answer to a query {@code Q(x,
-   * y), R(y, z)} and has the following data: <ol> <li>{@code allHomomorphisms = [{x -> a, y ->
-   * b, z -> c}, {x -> a, y -> c, z -> d}]}</li> </ol> We can "extend" these results by
-   * adjoining a constant homomorphism {@code {w -> e}}. The result of such operation is: <ol>
-   * <li>{@code allHomomorphisms = [{x -> a, y -> b, z -> c, w -> e}, {x -> a, y -> c, z -> d, w
-   * -> e}]}</li> </ol>
+   * For instance, suppose that this join result is obtained as an answer to a query
+   * `Q(x, y), R(y, z)` and has the following data:
+   * <ol>
+   *   <li>`allHomomorphisms = [{x -> a, y -> b, z -> c}, {x -> a, y -> c, z -> d}]}`</li>
+   * </ol>
+   *
+   * We can "extend" these results by adjoining a constant homomorphism `{w -> e`}.
+   * The result of such operation is:
+   * <ol>
+   *  <li>`allHomomorphisms = [{x -> a, y -> b, z -> c, w -> e, {x -> a, y -> c, z -> d, w -> e}]`</li>
+   * </ol>
    *
    * @param constantHomomorphism
    *   The homomorphism with which the join result is to be extended
    * @return
    *   the extended join result
    * @throws IllegalArgumentException
-   *   if the given homomorphism maps a variable in {@code variableOrdering}
+   *   if the given homomorphism maps a variable in `variableOrdering`
    */
+  // format: on
   def extendWithConstantHomomorphism(constantHomomorphism: Map[Variable, Term])
     : JoinResult[Term] = {
     if (allHomomorphisms.isEmpty) {

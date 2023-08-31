@@ -12,11 +12,11 @@ object ConjunctiveQueryExtensions {
   given Extensions: AnyRef with
     extension (conjunctiveQuery: ConjunctiveQuery)
       /**
-       * Computes a subquery of a given {@code ConjunctiveQuery} that includes only the atoms
+       * Computes a subquery of a given `ConjunctiveQuery` that includes only the atoms
        * satisfying a specified predicate.
        *
-       * Since {@code ConjunctiveQuery} cannot be empty, an empty {@code Optional} is returned
-       * if the predicate is not satisfied by any atom in the given {@code ConjunctiveQuery}.
+       * Since `ConjunctiveQuery` cannot be empty, an empty `Optional` is returned if the
+       * predicate is not satisfied by any atom in the given `ConjunctiveQuery`.
        */
       def filterAtoms(atomPredicate: Atom => Boolean): Option[ConjunctiveQuery] = {
         val originalFreeVariables = conjunctiveQuery.getFreeVariables.toSet
@@ -39,19 +39,16 @@ object ConjunctiveQueryExtensions {
        * contains at least one bound variable and all bound variables in the atom are present in
        * a specified set of variables.
        *
-       * The set of variables in the returned subquery is a subset of {@code variables}, and a
-       * variable is bound in the returned subquery if and only if it is bound in {@code
-       * conjunctiveQuery}.
+       * The set of variables in the returned subquery is a subset of `variables`, and a
+       * variable is bound in the returned subquery if and only if it is bound in
+       * `conjunctiveQuery`.
        *
-       * For example, if {@code conjunctiveQuery} is {@code ∃x,y,z. T(x,y,z) ∧ T(x,y,w) ∧
-       * T(x,c,z)} and {@code boundVariableSet} is {@code {x,y}}, then the returned subquery is
-       * {@code ∃x,y. T(x,y,w)}.
+       * For example, if `conjunctiveQuery` is `∃x,y,z. T(x,y,z) ∧ T(x,y,w) ∧ T(x,c,z)` and
+       * `boundVariableSet` is `{x,y`}, then the returned subquery is `∃x,y. T(x,y,w)`.
        *
-       * If no atom in the given {@code ConjunctiveQuery} has variable set entirely contained in
-       * {@code variables}, an empty {@code Optional} is returned.
+       * If no atom in the given `ConjunctiveQuery` has variable set entirely contained in
+       * `variables`, an empty `Optional` is returned.
        *
-       * @param conjunctiveQuery
-       *   The Conjunctive Query to compute the subquery from
        * @param variables
        *   The filter of variables that should be included in the subquery.
        * @return
@@ -71,12 +68,11 @@ object ConjunctiveQueryExtensions {
        * Computes a subquery of a given Conjunctive Query that includes only the atoms which
        * have at least one bound variable in a specified set of variables.
        *
-       * For example, if {@code conjunctiveQuery} is {@code ∃x,y,z. T(x,y,w) ∧ T(x,c,z)} and
-       * {@code boundVariableSet} is {@code {y}}, then the returned subquery is {@code ∃x,y.
-       * T(x,y,w)}.
+       * For example, if `conjunctiveQuery` is `∃x,y,z. T(x,y,w) ∧ T(x,c,z)` and
+       * `boundVariableSet` is `{y`}, then the returned subquery is `∃x,y. T(x,y,w)`.
        *
-       * If no atom in the given {@code ConjunctiveQuery} has variable set intersecting with
-       * {@code variables}, an empty {@code Optional} is returned.
+       * If no atom in the given `ConjunctiveQuery` has variable set intersecting with
+       * `variables`, an empty `Optional` is returned.
        */
       def subqueryRelevantToVariables(variables: Set[Variable]): Option[ConjunctiveQuery] = {
         val queryBoundVariables = conjunctiveQuery.getBoundVariables.toSet
@@ -90,10 +86,9 @@ object ConjunctiveQueryExtensions {
       /**
        * Variables in the strict neighbourhood of a given set of variables in the given CQ.
        *
-       * Given a conjunctive query {@code q} and a variable {@code x} appearing in {@code q},
-       * {@code x} is said to be in the strict neighbourhood of a set {@code V} of variables if
-       * <ol> <li>{@code x} is not an element of {@code V}, and</li> <li>{@code x} occurs in the
-       * subquery of {@code q} relevant to {@code V}.</li> </ol>
+       * Given a conjunctive query `q` and a variable `x` appearing in `q`, `x` is said to be in
+       * the strict neighbourhood of a set `V` of variables if <ol> <li>`x` is not an element of
+       * `V`, and</li> <li>`x` occurs in the subquery of `q` relevant to `V`.</li> </ol>
        */
       def strictNeighbourhoodOf(variables: Set[Variable]): Set[Variable] =
         conjunctiveQuery.subqueryRelevantToVariables(variables)
@@ -101,9 +96,9 @@ object ConjunctiveQueryExtensions {
           .getOrElse(Set.empty)
 
       /**
-       * Given a conjunctive query {@code conjunctiveQuery} and a set {@code boundVariables} of
-       * variables bound in {@code conjunctiveQuery}, returns a stream of all {@code
-       * conjunctiveQuery}-connected components of {@code variables}.
+       * Given a conjunctive query `conjunctiveQuery` and a set `boundVariables` of variables
+       * bound in `conjunctiveQuery`, returns a stream of all `conjunctiveQuery`-connected
+       * components of `variables`.
        */
       def connectedComponentsOf(boundVariables: Set[Variable]): Set[Set[Variable]] = {
         if (boundVariables.isEmpty) return Set()
@@ -123,11 +118,11 @@ object ConjunctiveQueryExtensions {
       }
 
       /**
-       * Given a conjunctive query {@code q} and a set {@code v} of variables in {@code q},
-       * checks if {@code v} is connected in {@code q}.
+       * Given a conjunctive query `q` and a set `v` of variables in `q`, checks if `v` is
+       * connected in `q`.
        *
-       * A set of variables {@code V} is said to be connected in {@code q} if there is at most
-       * one {@code q}-connected component of {@code V} in {@code q}.
+       * A set of variables `V` is said to be connected in `q` if there is at most one
+       * `q`-connected component of `V` in `q`.
        */
       def connects(variables: Set[Variable]): Boolean =
         conjunctiveQuery.connectedComponentsOf(variables).size <= 1

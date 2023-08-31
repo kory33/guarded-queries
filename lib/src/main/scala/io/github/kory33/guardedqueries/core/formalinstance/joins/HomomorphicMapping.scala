@@ -12,13 +12,13 @@ import scala.collection.mutable.ArrayBuffer
  * A mapping from variables to terms, which is part of a homomorphism mapping a query to an
  * instance.
  *
- * {@code variableOrdering} must be an ordered list of variables to be mapped, and this must not
- * contain any duplicate variables (no runtime check is enforced for this). The {@code i}-th
- * element of {@code orderedMapping} specifies to which term the {@code i}-th variable in {@code
- * variableOrdering} is mapped.
+ * `variableOrdering` must be an ordered list of variables to be mapped, and this must not
+ * contain any duplicate variables (no runtime check is enforced for this). The `i`-th element
+ * of `orderedMapping` specifies to which term the `i`-th variable in `variableOrdering` is
+ * mapped.
  *
- * For instance, suppose that {@code variableOrdering = [x, y, z]} and {@code orderedMapping =
- * [a, a, b]}. Then the mapping this object represents is {@code x -> a, y -> a, z -> b}.
+ * For instance, suppose that `variableOrdering = [x, y, z]` and {@code orderedMapping = [a, a,
+ * b]}. Then the mapping this object represents is `x -> a, y -> a, z -> b`.
  */
 case class HomomorphicMapping[Term](
   variableOrdering: List[Variable],
@@ -32,11 +32,11 @@ case class HomomorphicMapping[Term](
    * Returns the term to which the given variable is mapped.
    *
    * @param variable
-   *   a variable in {@code variableOrdering}
+   *   a variable in `variableOrdering`
    * @return
    *   the term to which the given variable is mapped
    * @throws IllegalArgumentException
-   *   if the given variable is not in {@code variableOrdering}
+   *   if the given variable is not in `variableOrdering`
    */
   override def apply(variable: Variable) = {
     val index = variableOrdering.indexOf(variable)
@@ -49,7 +49,7 @@ case class HomomorphicMapping[Term](
    * this homomorphic mapping.
    *
    * @param atomWhoseVariablesAreInThisResult
-   *   a function-free atom whose variables are in {@code variableOrdering}
+   *   a function-free atom whose variables are in `variableOrdering`
    * @param constantInclusion
    *   a function that maps a constant in the input instance to a term
    */
@@ -70,7 +70,7 @@ case class HomomorphicMapping[Term](
    * Function)} to each atom.
    *
    * @param atomsWhoseVariablesAreInThisResult
-   *   a set of function-free atoms whose variables are in {@code variableOrdering}
+   *   a set of function-free atoms whose variables are in `variableOrdering`
    * @param constantInclusion
    *   a function that maps a constant in the input instance to a term
    */
@@ -85,7 +85,7 @@ case class HomomorphicMapping[Term](
    * Extend the homomorphism with the given mapping.
    *
    * @throws IllegalArgumentException
-   *   if the given homomorphism maps a variable in {@code variableOrdering}
+   *   if the given homomorphism maps a variable in `variableOrdering`
    */
   def extendWithMapping(additionalMapping: Map[Variable, Term]): HomomorphicMapping[Term] = {
     if (additionalMapping.isEmpty) {

@@ -26,14 +26,13 @@ object SetExtensions {
       }
 
       /**
-       * Saturate a collection of elements of type {@code T} by repeatedly applying a generator
-       * function {@code generator} that generates a collection of elements of type {@code T}
-       * from values of type {@code T}.
+       * Saturate a collection of elements of type `T` by repeatedly applying a generator
+       * function `generator` that generates a collection of elements of type `T` from values of
+       * type `T`.
        *
-       * More precisely, the returned set is the smallest set {@code S} such that <ol>
-       * <li>{@code S} contains all elements from the initial collection</li> <li>for every
-       * element {@code t} of {@code S}, {@code generator.apply(t)} is contained in {@code
-       * S}</li> </ol>
+       * More precisely, the returned set is the smallest set `S` such that <ol> <li>`S`
+       * contains all elements from the initial collection</li> <li>for every element `t` of
+       * `S`, `generator.apply(t)` is contained in `S`</li> </ol>
        */
       def generateFromElementsUntilFixpoint(generator: T => Set[T]): Set[T] = {
         val hashSet = mutable.HashSet.from(set)
@@ -59,13 +58,13 @@ object SetExtensions {
       }
 
       /**
-       * Saturate a collection of elements of type {@code T} by repeatedly applying a generator
-       * function {@code generator} that generates a collection of elements of type {@code T}
-       * from a collection of values of type {@code T}.
+       * Saturate a collection of elements of type `T` by repeatedly applying a generator
+       * function `generator` that generates a collection of elements of type `T` from a
+       * collection of values of type `T`.
        *
-       * More precisely, the returned set is the smallest set {@code S} such that <ol>
-       * <li>{@code S} contains all elements from the initial collection</li> <li>{@code
-       * generator.apply(S)} is contained in {@code S}</li> </ol>
+       * More precisely, the returned set is the smallest set `S` such that <ol> <li>`S`
+       * contains all elements from the initial collection</li> <li>`generator.apply(S)` is
+       * contained in `S`</li> </ol>
        */
       def generateFromSetUntilFixpoint(generator: Set[T] => Set[T]): Set[T] = {
         @tailrec def recurse(elementsGeneratedSoFar: Set[T]): Set[T] = {

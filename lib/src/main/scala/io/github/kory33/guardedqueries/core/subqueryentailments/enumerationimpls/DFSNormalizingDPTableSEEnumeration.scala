@@ -298,9 +298,8 @@ final class DFSNormalizingDPTableSEEnumeration(
      * instances without chasing further.
      *
      * @param relevantSubquery
-     *   this must equal {@code
-     *   ConjunctiveQueryExtensions.subqueryRelevantToVariables(connectedConjunctiveQuery,
-     *   instance.coexistentialVariables()).get()}
+     *   this must equal
+     *   `connectedConjunctiveQuery.subqueryRelevantToVariables(instance.coexistentialVariables).get()`
      */
     private def canBeSplitIntoYesInstancesWithoutChasing(relevantSubquery: ConjunctiveQuery,
                                                          instance: SubqueryEntailmentInstance

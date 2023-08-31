@@ -7,8 +7,8 @@ import uk.ac.ox.cs.pdq.fol.TGD
  * with respect to a certain subsumption relation.
  *
  * An object conforming to this interface is typically initialized to the "empty" state, and
- * then multiple Datalog rules are then added via {@link #addRule} method. Finally, the set of
- * rules can be retrieved via {@link #getRules} method.
+ * then multiple Datalog rules are then added via [[#addRule]] method. Finally, the set of rules
+ * can be retrieved via [[#getRules]] method.
  */
 trait MaximallySubsumingTGDSet[F <: TGD] {
 

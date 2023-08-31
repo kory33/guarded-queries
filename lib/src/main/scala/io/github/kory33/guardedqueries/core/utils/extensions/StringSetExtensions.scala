@@ -10,8 +10,8 @@ object StringSetExtensions {
       }
 
       /**
-       * Pick a string starting with {@code prefix}, that is not a prefix of any string from
-       * {@code strings}.
+       * Pick a string starting with `prefix`, that is not a prefix of any string from
+       * `strings`.
        */
       def freshPrefixStartingWith(prefix: String): String = {
         @tailrec def searchForFreshPrefix(count: Long): String = {
