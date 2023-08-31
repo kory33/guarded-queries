@@ -4,9 +4,11 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
+import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.boundary
 
 /**
  * A join algorithm that first filters tuples matching query atoms and then joins them in a
@@ -17,38 +19,33 @@ class FilterNestedLoopJoin[TA: IncludesFolConstants]
   override def join(query: ConjunctiveQuery,
                     formalInstance: FormalInstance[TA]
   ): JoinResult[TA] = {
-    val queryAtoms = query.getAtoms.toSet
-
     // we throw IllegalArgumentException if the query contains existential atoms
     if (query.getBoundVariables.length != 0)
       throw new IllegalArgumentException("NestedLoopJoin does not support existential queries")
 
-    val queryPredicates = query.getAtoms.map(_.getPredicate).toSet
-
-    val relevantRelationsToInstancesMap: Map[Predicate, FormalInstance[TA]] =
+    val relevantRelationsToInstancesMap: Map[Predicate, FormalInstance[TA]] = {
+      val queryPredicates = query.allPredicates
       formalInstance.facts
         .filter(fact => queryPredicates.contains(fact.predicate))
         .groupBy(_.predicate)
         .view.mapValues(FormalInstance(_)).toMap
+    }
 
-    val queryAtomsToMatches = queryAtoms.map { atom =>
-      atom -> SingleAtomMatching.allMatches(
-        atom,
-        relevantRelationsToInstancesMap.getOrElse(atom.getPredicate, FormalInstance.empty)
-      )
+    val queryAtomsToMatches: Map[Atom, JoinResult[TA]] = query.getAtoms.map { atom =>
+      val relevantInstance: FormalInstance[TA] = relevantRelationsToInstancesMap
+        .getOrElse(atom.getPredicate, FormalInstance.empty)
+
+      atom -> SingleAtomMatching.allMatches(atom, relevantInstance)
     }.toMap
 
     // we start joining from the outer
-    val queryAtomsOrderedByMatchSizes =
+    val queryAtomsOrderedByMatchSizes: List[Atom] =
       queryAtomsToMatches.keySet.toList.sortBy(atom =>
         queryAtomsToMatches(atom).allHomomorphisms.size
       )
 
-    val queryVariableOrdering =
-      query.getAtoms.flatMap((atom: Atom) => atom.getVariables).toSet.toList
-
+    val queryVariableOrdering: List[Variable] = query.allVariables.toList
     val emptyHomomorphism = queryVariableOrdering.map(_ => None)
-
     val resultBuilder = ArrayBuffer[List[TA]]()
 
     FilterNestedLoopJoin.visitAllJoinResults(
@@ -59,7 +56,7 @@ class FilterNestedLoopJoin[TA: IncludesFolConstants]
       resultBuilder.append
     )
 
-    new JoinResult[TA](queryVariableOrdering, resultBuilder.toList)
+    JoinResult[TA](queryVariableOrdering, resultBuilder.toList)
   }
 }
 
@@ -81,49 +78,44 @@ object FilterNestedLoopJoin {
                                       resultVariableOrdering: List[Variable],
                                       partialHomomorphism: List[Option[TA]],
                                       visitEachCompleteHomomorphism: List[TA] => Unit
-  ): Unit = {
-    if (remainingAtomsToJoin.isEmpty) {
+  ): Unit = remainingAtomsToJoin match {
+    case Nil =>
       // If there are no more atoms to join, the given partial homomorphism
       // should be complete. So unwrap Option and visit
       val unwrappedHomomorphism = partialHomomorphism.map(_.get)
       visitEachCompleteHomomorphism(unwrappedHomomorphism)
-      return
-    }
 
-    val nextAtomMatchResult = atomToMatches(remainingAtomsToJoin.head)
+    case nextAtomToMatch :: nextRemainingAtomsToJoin =>
+      for (atomMatch <- atomToMatches(nextAtomToMatch).allHomomorphisms) {
+        boundary { continueMatchLoop ?=>
+          val homomorphismExtension = partialHomomorphism.toArray
 
-    import scala.util.boundary
-    for (homomorphism <- nextAtomMatchResult.allHomomorphisms) {
-      boundary {
-        val matchVariableOrdering = homomorphism.variableOrdering
-        val homomorphismExtension = partialHomomorphism.toArray
+          // try to extend partialHomomorphism with atomMatch, but break to the boundary
+          // (i.e. continue the outer loop) if atomMatch conflicts with partialHomomorphism
+          for ((nextVariableToCheck, extensionCandidate) <- atomMatch.toMap) {
+            val indexOfVariableInResult = resultVariableOrdering.indexOf(nextVariableToCheck)
 
-        for (matchVariableIndex <- matchVariableOrdering.indices) {
-          val nextVariableToCheck = matchVariableOrdering(matchVariableIndex)
-          val extensionCandidate = homomorphism.orderedMapping(matchVariableIndex)
-          val indexOfVariableInResultOrdering =
-            resultVariableOrdering.indexOf(nextVariableToCheck)
-
-          val mappingSoFar = homomorphismExtension(indexOfVariableInResultOrdering)
-          if (mappingSoFar.isEmpty) {
-            // we are free to extend the homomorphism to the variable
-            homomorphismExtension(indexOfVariableInResultOrdering) = Some(extensionCandidate)
-          } else if (!(mappingSoFar.get == extensionCandidate)) {
-            // the match cannot extend the partialHomomorphism, so skip to the next match
-            boundary.break()
+            homomorphismExtension(indexOfVariableInResult) match
+              case None =>
+                // no term is assigned to the variable yet,
+                // so we are free to extend the homomorphism to the variable
+                homomorphismExtension(indexOfVariableInResult) = Some(extensionCandidate)
+              case Some(existingResult) if existingResult != extensionCandidate =>
+                // the match cannot extend the partialHomomorphism, so skip to the next match
+                boundary.break()(using continueMatchLoop)
+              case _ => ()
           }
-        }
 
-        // at this point the match must have been extended to cover all variables in the atom,
-        // so proceed
-        visitAllJoinResults(
-          remainingAtomsToJoin.tail,
-          atomToMatches,
-          resultVariableOrdering,
-          homomorphismExtension.toList,
-          visitEachCompleteHomomorphism
-        )
+          // at this point the match must have been extended to cover all variables in the atom,
+          // so proceed
+          visitAllJoinResults(
+            nextRemainingAtomsToJoin,
+            atomToMatches,
+            resultVariableOrdering,
+            homomorphismExtension.toList,
+            visitEachCompleteHomomorphism
+          )
+        }
       }
-    }
   }
 }

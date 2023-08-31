@@ -47,17 +47,20 @@ case class HomomorphicMapping[Term](
   }
 
   /**
+   * Returns a map from variables to terms, which is equivalent to this homomorphic mapping.
+   */
+  def toMap: Map[Variable, Term] = variableOrdering.zip(orderedMapping).toMap
+
+  /**
    * Materialize the given atom by mapping the variables in the atom into terms specified by
    * this homomorphic mapping.
    *
    * @param atomWhoseVariablesAreInThisResult
    *   a function-free atom whose variables are in `variableOrdering`
-   * @param constantInclusion
-   *   a function that maps a constant in the input instance to a term
    */
   def materializeFunctionFreeAtom(
     atomWhoseVariablesAreInThisResult: Atom
-  )(using IncludesFolConstants[Term]) = {
+  )(using IncludesFolConstants[Term]): FormalFact[Term] = {
     FormalFact.fromAtom(atomWhoseVariablesAreInThisResult).map({
       case constant: Constant => IncludesFolConstants[Term].includeConstant(constant)
       case variable: Variable => this.apply(variable)
