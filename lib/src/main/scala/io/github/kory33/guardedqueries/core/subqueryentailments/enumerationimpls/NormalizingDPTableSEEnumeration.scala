@@ -390,7 +390,7 @@ object NormalizingDPTableSEEnumeration {
 
         val allCoexistentialVariableSets = queryExistentialVariables.powerset
           .filter(_.nonEmpty)
-          .filter(!_.intersects(ruleConstantWitnessGuess.keySet))
+          .filter(_ disjointFrom ruleConstantWitnessGuess.keySet)
           .filter(variableSet => conjunctiveQuery.connects(variableSet))
 
         allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>

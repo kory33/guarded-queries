@@ -5,4 +5,5 @@ object IterableExtensions {
     extension [T](i: Iterable[T])
       def intersects[U >: T](set: Set[U]): Boolean = i.exists(set.contains)
 
+      def disjointFrom[U >: T](set: Set[U]): Boolean = !i.intersects(set)
 }

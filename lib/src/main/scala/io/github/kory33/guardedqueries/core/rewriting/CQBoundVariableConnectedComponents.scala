@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Variable
@@ -35,7 +35,7 @@ class CQBoundVariableConnectedComponents(cq: ConjunctiveQuery) {
   private val cqBoundVariables: Set[Variable] = cq.getBoundVariables.toSet
 
   val boundVariableFreeAtoms: Set[Atom] =
-    cq.getAtoms.filter(atom => atom.getVariables.forall(!cqBoundVariables.contains(_))).toSet
+    cq.getAtoms.filter(_.getVariables.toList disjointFrom cqBoundVariables).toSet
 
   val maximallyConnectedSubqueries: Set[ConjunctiveQuery] = {
     cq.connectedComponentsOf(cqBoundVariables).map(component =>
