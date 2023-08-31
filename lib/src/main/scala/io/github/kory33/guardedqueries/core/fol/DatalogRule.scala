@@ -9,6 +9,12 @@ import uk.ac.ox.cs.pdq.fol.*
  *   - all variables are universally quantified, and
  *   - every variable in the head appears in some atom in the body.
  */
+class DatalogRule(body: Array[Atom], head: Array[Atom]) extends TGD(body, head) {
+  if (this.getExistential.length != 0) throw new IllegalArgumentException(
+    "Datalog rule cannot contain existential variables, got " + super.toString
+  )
+}
+
 object DatalogRule {
   private def notConjunctionOfAtoms(formula: Formula): Boolean = formula match
     case _: Atom                  => false
@@ -32,10 +38,4 @@ object DatalogRule {
     )
     new DatalogRule(dependency.getBodyAtoms, dependency.getHeadAtoms)
   }
-}
-
-class DatalogRule(body: Array[Atom], head: Array[Atom]) extends TGD(body, head) {
-  if (this.getExistential.length != 0) throw new IllegalArgumentException(
-    "Datalog rule cannot contain existential variables, got " + super.toString
-  )
 }

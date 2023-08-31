@@ -33,120 +33,6 @@ import scala.util.boundary
 /**
  * An implementation of subquery entailment enumeration using a DP table.
  */
-object NaiveDPTableSEEnumeration {
-  private def allLocalInstances(extensionalSignature: FunctionFreeSignature,
-                                ruleConstants: Set[Constant]
-  ) = {
-    val maxArityOfExtensionalSignature = extensionalSignature.maxArity
-    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant.apply)
-
-    // We need to consider sufficiently large collection of set of active local names.
-    // As it is sufficient to check subquery entailments for all guarded instance
-    // over the extensional signature, and the extensional signature has
-    // maxArityOfExtensionalSignature as the maximal arity, we only need to
-    // consider a powerset of {0, ..., 2 * maxArityOfExtensionalSignature - 1}
-    // with size at most maxArityOfExtensionalSignature.
-    val allActiveLocalNames = (0 until maxArityOfExtensionalSignature * 2)
-      .toSet
-      .powerset
-      .filter(_.size <= maxArityOfExtensionalSignature)
-
-    allActiveLocalNames.flatMap((localNameSet: Set[Int]) => {
-      def foo(localNameSet: Set[Int]) = {
-        val localNames = localNameSet.map(LocalInstanceTerm.LocalName.apply)
-
-        val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
-        val predicates = extensionalSignature.predicates
-        val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
-          val predicateParameterIndices = (0 until predicate.getArity).toSet
-
-          val allFormalFactsOverThePredicate =
-            allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(
-              parameterMap => {
-                val parameterList = (0 until predicate.getArity).map(parameterMap.apply)
-                FormalFact[LocalInstanceTerm](predicate, parameterList.toList)
-              }
-            ).toSet
-
-          allFormalFactsOverThePredicate.powerset.map(FormalInstance.apply)
-        }
-
-        val allInstancesOverLocalNameSet = predicates.toList
-          .productMappedIterablesToLists(allLocalInstancesOverThePredicate)
-          .map(FormalInstance.unionAll)
-
-        allInstancesOverLocalNameSet.filter(
-          _.getActiveTermsIn[LocalName].size == localNameSet.size
-        )
-      }
-
-      foo(localNameSet)
-    })
-  }
-
-  private def allWellFormedSubqueryEntailmentInstancesFor(
-    extensionalSignature: FunctionFreeSignature,
-    ruleConstants: Set[Constant],
-    conjunctiveQuery: ConjunctiveQuery
-  ) = {
-    val queryVariables = conjunctiveQuery.allVariables
-    val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
-
-    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
-      (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
-        val allCoexistentialVariableSets = queryExistentialVariables.powerset
-          .filter(_.nonEmpty)
-          .filter(!_.intersects(ruleConstantWitnessGuess.keySet))
-          .filter(variableSet => conjunctiveQuery.connects(variableSet))
-
-        allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
-          allLocalInstances(extensionalSignature, ruleConstants).flatMap(
-            (localInstance: LocalInstance) => {
-              // As coexistentialVariables is a nonempty subset of queryVariables,
-              // we expect to see a non-empty optional.
-              // noinspection OptionalGetWithoutIsPresent
-              val relevantSubquery = conjunctiveQuery.subqueryRelevantToVariables(
-                coexistentialVariables
-              ).get
-              val nonConstantNeighbourhood =
-                conjunctiveQuery.strictNeighbourhoodOf(
-                  coexistentialVariables
-                ) -- ruleConstantWitnessGuess.keySet
-
-              val allLocalWitnessGuesses = allTotalFunctionsBetween(
-                nonConstantNeighbourhood,
-                localInstance.getActiveTermsIn[LocalName]
-              )
-
-              allLocalWitnessGuesses.flatMap(localWitnessGuess => {
-                val subqueryConstants = relevantSubquery.allConstants -- ruleConstants
-
-                val nonWitnessingActiveLocalNames =
-                  localInstance.getActiveTermsIn[LocalName] -- localWitnessGuess.values
-
-                val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
-                  subqueryConstants,
-                  nonWitnessingActiveLocalNames
-                )
-
-                allQueryConstantEmbeddings.map(queryConstantEmbedding =>
-                  SubqueryEntailmentInstance(
-                    ruleConstantWitnessGuess,
-                    coexistentialVariables,
-                    localInstance,
-                    localWitnessGuess,
-                    queryConstantEmbedding
-                  )
-                )
-              })
-            }
-          )
-        )
-      }
-    )
-  }
-}
-
 final class NaiveDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
@@ -451,4 +337,118 @@ final class NaiveDPTableSEEnumeration(
   }
   override def toString: String =
     "NaiveDPTableSEEnumeration{" + "datalogSaturationEngine=" + datalogSaturationEngine + '}'
+}
+
+object NaiveDPTableSEEnumeration {
+  private def allLocalInstances(extensionalSignature: FunctionFreeSignature,
+                                ruleConstants: Set[Constant]
+  ) = {
+    val maxArityOfExtensionalSignature = extensionalSignature.maxArity
+    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant.apply)
+
+    // We need to consider sufficiently large collection of set of active local names.
+    // As it is sufficient to check subquery entailments for all guarded instance
+    // over the extensional signature, and the extensional signature has
+    // maxArityOfExtensionalSignature as the maximal arity, we only need to
+    // consider a powerset of {0, ..., 2 * maxArityOfExtensionalSignature - 1}
+    // with size at most maxArityOfExtensionalSignature.
+    val allActiveLocalNames = (0 until maxArityOfExtensionalSignature * 2)
+      .toSet
+      .powerset
+      .filter(_.size <= maxArityOfExtensionalSignature)
+
+    allActiveLocalNames.flatMap((localNameSet: Set[Int]) => {
+      def foo(localNameSet: Set[Int]) = {
+        val localNames = localNameSet.map(LocalInstanceTerm.LocalName.apply)
+
+        val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
+        val predicates = extensionalSignature.predicates
+        val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
+          val predicateParameterIndices = (0 until predicate.getArity).toSet
+
+          val allFormalFactsOverThePredicate =
+            allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(
+              parameterMap => {
+                val parameterList = (0 until predicate.getArity).map(parameterMap.apply)
+                FormalFact[LocalInstanceTerm](predicate, parameterList.toList)
+              }
+            ).toSet
+
+          allFormalFactsOverThePredicate.powerset.map(FormalInstance.apply)
+        }
+
+        val allInstancesOverLocalNameSet = predicates.toList
+          .productMappedIterablesToLists(allLocalInstancesOverThePredicate)
+          .map(FormalInstance.unionAll)
+
+        allInstancesOverLocalNameSet.filter(
+          _.getActiveTermsIn[LocalName].size == localNameSet.size
+        )
+      }
+
+      foo(localNameSet)
+    })
+  }
+
+  private def allWellFormedSubqueryEntailmentInstancesFor(
+    extensionalSignature: FunctionFreeSignature,
+    ruleConstants: Set[Constant],
+    conjunctiveQuery: ConjunctiveQuery
+  ) = {
+    val queryVariables = conjunctiveQuery.allVariables
+    val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
+
+    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
+      (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
+        val allCoexistentialVariableSets = queryExistentialVariables.powerset
+          .filter(_.nonEmpty)
+          .filter(!_.intersects(ruleConstantWitnessGuess.keySet))
+          .filter(variableSet => conjunctiveQuery.connects(variableSet))
+
+        allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
+          allLocalInstances(extensionalSignature, ruleConstants).flatMap(
+            (localInstance: LocalInstance) => {
+              // As coexistentialVariables is a nonempty subset of queryVariables,
+              // we expect to see a non-empty optional.
+              // noinspection OptionalGetWithoutIsPresent
+              val relevantSubquery = conjunctiveQuery.subqueryRelevantToVariables(
+                coexistentialVariables
+              ).get
+              val nonConstantNeighbourhood =
+                conjunctiveQuery.strictNeighbourhoodOf(
+                  coexistentialVariables
+                ) -- ruleConstantWitnessGuess.keySet
+
+              val allLocalWitnessGuesses = allTotalFunctionsBetween(
+                nonConstantNeighbourhood,
+                localInstance.getActiveTermsIn[LocalName]
+              )
+
+              allLocalWitnessGuesses.flatMap(localWitnessGuess => {
+                val subqueryConstants = relevantSubquery.allConstants -- ruleConstants
+
+                val nonWitnessingActiveLocalNames =
+                  localInstance.getActiveTermsIn[LocalName] -- localWitnessGuess.values
+
+                val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
+                  subqueryConstants,
+                  nonWitnessingActiveLocalNames
+                )
+
+                allQueryConstantEmbeddings.map(queryConstantEmbedding =>
+                  SubqueryEntailmentInstance(
+                    ruleConstantWitnessGuess,
+                    coexistentialVariables,
+                    localInstance,
+                    localWitnessGuess,
+                    queryConstantEmbedding
+                  )
+                )
+              })
+            }
+          )
+        )
+      }
+    )
+  }
 }

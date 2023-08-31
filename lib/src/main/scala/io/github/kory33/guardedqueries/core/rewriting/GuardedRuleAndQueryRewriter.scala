@@ -40,18 +40,6 @@ import scala.jdk.CollectionConverters.*
  * [[DatalogRewriteResult#minimizeSubgoalDerivationRulesUsing]] before running the output
  * program on a database instance.
  */
-object GuardedRuleAndQueryRewriter {
-
-  /**
-   * A result of rewriting a single maximally bound-variable-connected component of the input
-   * query.
-   */
-  private case class BoundVariableConnectedComponentRewriteResult(
-    goalAtom: Atom,
-    goalDerivationRules: Set[DatalogRule]
-  )
-}
-
 case class GuardedRuleAndQueryRewriter(
   saturation: AbstractSaturation[_ <: GTGD],
   subqueryEntailmentEnumeration: SubqueryEntailmentEnumeration
@@ -343,4 +331,16 @@ case class GuardedRuleAndQueryRewriter(
 
   override def toString: String =
     "GuardedRuleAndQueryRewriter{" + "saturation=" + saturation + ", subqueryEntailmentEnumeration=" + subqueryEntailmentEnumeration + '}'
+}
+
+object GuardedRuleAndQueryRewriter {
+
+  /**
+   * A result of rewriting a single maximally bound-variable-connected component of the input
+   * query.
+   */
+  private case class BoundVariableConnectedComponentRewriteResult(
+    goalAtom: Atom,
+    goalDerivationRules: Set[DatalogRule]
+  )
 }

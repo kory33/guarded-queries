@@ -36,137 +36,6 @@ import scala.util.boundary
  * An implementation of subquery entailment enumeration using a DP table together with efficient
  * DFS traversal and normalization.
  */
-object DFSNormalizingDPTableSEEnumeration {
-
-  /**
-   * Checks whether the given set of local names is of a form {0, ..., n - 1} for some n.
-   */
-  private def isZeroStartingContiguousLocalNameSet(localNames: Set[LocalName]) = {
-    var firstElementAfterZeroNotContainedInSet = 0
-    while (localNames.contains(LocalName(firstElementAfterZeroNotContainedInSet)))
-      firstElementAfterZeroNotContainedInSet += 1
-    firstElementAfterZeroNotContainedInSet == localNames.size
-  }
-
-  private def allNormalizedLocalInstances(extensionalSignature: FunctionFreeSignature,
-                                          ruleConstants: Set[Constant]
-  ) = {
-    val maxArityOfExtensionalSignature = extensionalSignature.maxArity
-    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant.apply)
-
-    // We need to consider sufficiently large collection of set of active local names.
-    // As it is sufficient to check subquery entailments for all guarded instance
-    // over the extensional signature, and the extensional signature has
-    // maxArityOfExtensionalSignature as the maximal arity, we only need to
-    // consider a powerset of {0, ..., maxArityOfExtensionalSignature - 1}
-    // (NORMALIZATION:
-    //  By remapping all local names in the range
-    //  [maxArityOfExtensionalSignature, maxArityOfExtensionalSignature * 2)
-    //  to the range [0, maxArityOfExtensionalSignature), since the size of
-    //  active local name set of local instances necessary to check
-    //  is at most maxArityOfExtensionalSignature.
-    //  Moreover, by symmetry of instance we can demand that the set of active
-    //  names to be contiguous and starting from 0, i.e. {0, ..., n} for some n < maxArityOfExtensionalSignature.
-    // )
-    val localNames = (0 until maxArityOfExtensionalSignature)
-      .map(LocalInstanceTerm.LocalName.apply)
-      .toSet
-
-    val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
-    val predicates = extensionalSignature.predicates
-
-    val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
-      val allFormalFactsOverThePredicate =
-        val parameterIndices = 0 until predicate.getArity
-
-        allTotalFunctionsBetween(parameterIndices.toSet, allLocalInstanceTerms)
-          .map(parameterMap =>
-            FormalFact(predicate, parameterIndices.map(parameterMap.apply).toList)
-          ).toSet
-
-      allFormalFactsOverThePredicate.powerset.map(FormalInstance.apply)
-    }
-
-    val allInstancesOverLocalNameSet = predicates.toList
-      .productMappedIterablesToLists(allLocalInstancesOverThePredicate)
-      .map(FormalInstance.unionAll)
-
-    allInstancesOverLocalNameSet.filter(instance =>
-      isZeroStartingContiguousLocalNameSet(instance.getActiveTermsIn[LocalName])
-    )
-  }
-
-  private def allWellFormedNormalizedSubqueryEntailmentInstancesFor(
-    extensionalSignature: FunctionFreeSignature,
-    ruleConstants: Set[Constant],
-    conjunctiveQuery: ConjunctiveQuery
-  ) = {
-    val queryVariables = conjunctiveQuery.allVariables
-    val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
-
-    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
-      (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
-        val allCoexistentialVariableSets =
-          queryExistentialVariables
-            .powerset
-            .filter(_.nonEmpty)
-            .filter(!_.intersects(ruleConstantWitnessGuess.keySet))
-            .filter(variableSet => conjunctiveQuery.connects(variableSet))
-
-        allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
-          allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(
-            localInstance => {
-              // As coexistentialVariables is a nonempty subset of queryVariables,
-              // we expect to see a non-empty optional.
-              // noinspection OptionalGetWithoutIsPresent
-              val relevantSubquery = conjunctiveQuery
-                .subqueryRelevantToVariables(coexistentialVariables).get
-
-              val nonConstantNeighbourhood = conjunctiveQuery
-                .strictNeighbourhoodOf(
-                  coexistentialVariables
-                ) -- ruleConstantWitnessGuess.keySet
-
-              val allLocalWitnessGuesses = allTotalFunctionsBetween(
-                nonConstantNeighbourhood,
-                localInstance.getActiveTermsIn[LocalName].filter(localName =>
-                  localName.value < nonConstantNeighbourhood.size
-                )
-              )
-
-              allLocalWitnessGuesses.flatMap(localWitnessGuess => {
-                val subqueryConstants = relevantSubquery.allConstants -- ruleConstants
-
-                val nonWitnessingActiveLocalNames =
-                  localInstance.getActiveTermsIn[LocalName] --
-                    localWitnessGuess.values
-
-                val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
-                  subqueryConstants,
-                  nonWitnessingActiveLocalNames
-                )
-
-                allQueryConstantEmbeddings.map(queryConstantEmbedding =>
-                  new SubqueryEntailmentInstance(
-                    ruleConstantWitnessGuess,
-                    coexistentialVariables,
-                    localInstance,
-                    localWitnessGuess,
-                    queryConstantEmbedding
-                  )
-                )
-
-              })
-
-            }
-          )
-        )
-
-      }
-    )
-  }
-}
-
 final class DFSNormalizingDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
@@ -531,4 +400,135 @@ final class DFSNormalizingDPTableSEEnumeration(
 
   override def toString: String =
     "DFSNormalizingDPTableSEEnumeration{datalogSaturationEngine=" + datalogSaturationEngine + '}'
+}
+
+object DFSNormalizingDPTableSEEnumeration {
+
+  /**
+   * Checks whether the given set of local names is of a form {0, ..., n - 1} for some n.
+   */
+  private def isZeroStartingContiguousLocalNameSet(localNames: Set[LocalName]) = {
+    var firstElementAfterZeroNotContainedInSet = 0
+    while (localNames.contains(LocalName(firstElementAfterZeroNotContainedInSet)))
+      firstElementAfterZeroNotContainedInSet += 1
+    firstElementAfterZeroNotContainedInSet == localNames.size
+  }
+
+  private def allNormalizedLocalInstances(extensionalSignature: FunctionFreeSignature,
+                                          ruleConstants: Set[Constant]
+  ) = {
+    val maxArityOfExtensionalSignature = extensionalSignature.maxArity
+    val ruleConstantsAsLocalTerms = ruleConstants.map(LocalInstanceTerm.RuleConstant.apply)
+
+    // We need to consider sufficiently large collection of set of active local names.
+    // As it is sufficient to check subquery entailments for all guarded instance
+    // over the extensional signature, and the extensional signature has
+    // maxArityOfExtensionalSignature as the maximal arity, we only need to
+    // consider a powerset of {0, ..., maxArityOfExtensionalSignature - 1}
+    // (NORMALIZATION:
+    //  By remapping all local names in the range
+    //  [maxArityOfExtensionalSignature, maxArityOfExtensionalSignature * 2)
+    //  to the range [0, maxArityOfExtensionalSignature), since the size of
+    //  active local name set of local instances necessary to check
+    //  is at most maxArityOfExtensionalSignature.
+    //  Moreover, by symmetry of instance we can demand that the set of active
+    //  names to be contiguous and starting from 0, i.e. {0, ..., n} for some n < maxArityOfExtensionalSignature.
+    // )
+    val localNames = (0 until maxArityOfExtensionalSignature)
+      .map(LocalInstanceTerm.LocalName.apply)
+      .toSet
+
+    val allLocalInstanceTerms = localNames ++ ruleConstantsAsLocalTerms
+    val predicates = extensionalSignature.predicates
+
+    val allLocalInstancesOverThePredicate = (predicate: Predicate) => {
+      val allFormalFactsOverThePredicate =
+        val parameterIndices = 0 until predicate.getArity
+
+        allTotalFunctionsBetween(parameterIndices.toSet, allLocalInstanceTerms)
+          .map(parameterMap =>
+            FormalFact(predicate, parameterIndices.map(parameterMap.apply).toList)
+          ).toSet
+
+      allFormalFactsOverThePredicate.powerset.map(FormalInstance.apply)
+    }
+
+    val allInstancesOverLocalNameSet = predicates.toList
+      .productMappedIterablesToLists(allLocalInstancesOverThePredicate)
+      .map(FormalInstance.unionAll)
+
+    allInstancesOverLocalNameSet.filter(instance =>
+      isZeroStartingContiguousLocalNameSet(instance.getActiveTermsIn[LocalName])
+    )
+  }
+
+  private def allWellFormedNormalizedSubqueryEntailmentInstancesFor(
+    extensionalSignature: FunctionFreeSignature,
+    ruleConstants: Set[Constant],
+    conjunctiveQuery: ConjunctiveQuery
+  ) = {
+    val queryVariables = conjunctiveQuery.allVariables
+    val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
+
+    allPartialFunctionsBetween(queryVariables, ruleConstants).flatMap(
+      (ruleConstantWitnessGuess: Map[Variable, Constant]) => {
+        val allCoexistentialVariableSets =
+          queryExistentialVariables
+            .powerset
+            .filter(_.nonEmpty)
+            .filter(!_.intersects(ruleConstantWitnessGuess.keySet))
+            .filter(variableSet => conjunctiveQuery.connects(variableSet))
+
+        allCoexistentialVariableSets.flatMap((coexistentialVariables: Set[Variable]) =>
+          allNormalizedLocalInstances(extensionalSignature, ruleConstants).flatMap(
+            localInstance => {
+              // As coexistentialVariables is a nonempty subset of queryVariables,
+              // we expect to see a non-empty optional.
+              // noinspection OptionalGetWithoutIsPresent
+              val relevantSubquery = conjunctiveQuery
+                .subqueryRelevantToVariables(coexistentialVariables).get
+
+              val nonConstantNeighbourhood = conjunctiveQuery
+                .strictNeighbourhoodOf(
+                  coexistentialVariables
+                ) -- ruleConstantWitnessGuess.keySet
+
+              val allLocalWitnessGuesses = allTotalFunctionsBetween(
+                nonConstantNeighbourhood,
+                localInstance.getActiveTermsIn[LocalName].filter(localName =>
+                  localName.value < nonConstantNeighbourhood.size
+                )
+              )
+
+              allLocalWitnessGuesses.flatMap(localWitnessGuess => {
+                val subqueryConstants = relevantSubquery.allConstants -- ruleConstants
+
+                val nonWitnessingActiveLocalNames =
+                  localInstance.getActiveTermsIn[LocalName] --
+                    localWitnessGuess.values
+
+                val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
+                  subqueryConstants,
+                  nonWitnessingActiveLocalNames
+                )
+
+                allQueryConstantEmbeddings.map(queryConstantEmbedding =>
+                  new SubqueryEntailmentInstance(
+                    ruleConstantWitnessGuess,
+                    coexistentialVariables,
+                    localInstance,
+                    localWitnessGuess,
+                    queryConstantEmbedding
+                  )
+                )
+
+              })
+
+            }
+          )
+        )
+
+      }
+    )
+  }
 }

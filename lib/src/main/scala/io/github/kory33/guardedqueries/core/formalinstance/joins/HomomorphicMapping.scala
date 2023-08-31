@@ -19,8 +19,8 @@ import scala.collection.mutable.ArrayBuffer
  * of `orderedMapping` specifies to which term the `i`-th variable in `variableOrdering` is
  * mapped.
  *
- * For instance, suppose that `variableOrdering = [x, y, z]` and {@code orderedMapping = [a, a,
- * b]}. Then the mapping this object represents is `x -> a, y -> a, z -> b`.
+ * For instance, suppose that `variableOrdering = [x, y, z]` and `orderedMapping = [a, a, b]`.
+ * Then the mapping this object represents is `x -> a, y -> a, z -> b`.
  */
 case class HomomorphicMapping[Term](
   variableOrdering: List[Variable],
@@ -40,7 +40,7 @@ case class HomomorphicMapping[Term](
    * @throws IllegalArgumentException
    *   if the given variable is not in `variableOrdering`
    */
-  override def apply(variable: Variable) = {
+  override def apply(variable: Variable): Term = {
     val index = variableOrdering.indexOf(variable)
     if (index == -1) throw new IllegalArgumentException("variable is not in variableOrdering")
     orderedMapping(index)

@@ -13,14 +13,6 @@ import uk.ac.ox.cs.pdq.fol.Predicate
  *   - finite set of predicate symbols
  *   - no function symbols
  */
-object FunctionFreeSignature {
-  private def fromFormulas(formulas: Set[Formula]) =
-    new FunctionFreeSignature(formulas.flatMap(_.allPredicates))
-
-  def encompassingRuleQuery(rules: Set[GTGD], query: ConjunctiveQuery): FunctionFreeSignature =
-    FunctionFreeSignature.fromFormulas(Set(query: Formula) ++ rules)
-}
-
 case class FunctionFreeSignature(predicates: Set[Predicate]) {
   def this(predicates: Iterable[Predicate]) = {
     this(predicates.toSet)
@@ -29,8 +21,13 @@ case class FunctionFreeSignature(predicates: Set[Predicate]) {
   def predicateNames: Set[String] =
     predicates.map(_.getName)
 
-  def maxArity: Int = predicates.map(_.getArity) match {
-    case arities if arities.isEmpty => 0
-    case arities                    => arities.max
-  }
+  def maxArity: Int = predicates.map(_.getArity).maxOption.getOrElse(0)
+}
+
+object FunctionFreeSignature {
+  private def fromFormulas(formulas: Set[Formula]) =
+    new FunctionFreeSignature(formulas.flatMap(_.allPredicates))
+
+  def encompassingRuleQuery(rules: Set[GTGD], query: ConjunctiveQuery): FunctionFreeSignature =
+    FunctionFreeSignature.fromFormulas(Set(query: Formula) ++ rules)
 }
