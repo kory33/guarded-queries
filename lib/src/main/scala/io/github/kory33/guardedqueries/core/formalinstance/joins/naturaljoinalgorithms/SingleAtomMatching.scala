@@ -1,14 +1,14 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalInstance,
-  IncludesFolConstants
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
-import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Variable
 
-import scala.util.boundary
 import scala.collection.mutable.ArrayBuffer
+import scala.util.boundary
 
 object SingleAtomMatching {
   private def tryMatch[TA: IncludesFolConstants](

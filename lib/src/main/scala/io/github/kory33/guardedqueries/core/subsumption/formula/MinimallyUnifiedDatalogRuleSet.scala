@@ -1,18 +1,16 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalFact,
-  FormalInstance,
-  IncludesFolConstants
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet.VariableOrConstant
+import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Term
 import uk.ac.ox.cs.pdq.fol.Constant as PDQConstant
 import uk.ac.ox.cs.pdq.fol.Variable as PDQVariable
-import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
 /**
  * An implementation of [[MaximallySubsumingTGDSet]] that keeps track of a set of datalog rules

@@ -1,13 +1,9 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.joins.{
-  JoinResult,
-  NaturalJoinAlgorithm
-}
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalInstance,
-  IncludesFolConstants
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
+import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
+import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable.ArrayBuffer

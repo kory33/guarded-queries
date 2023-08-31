@@ -1,11 +1,10 @@
 package io.github.kory33.guardedqueries.core.utils
 
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
+import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 
 import scala.collection.IterableOnce
 import scala.util.boundary
-
-import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 
 object FunctionSpaces {
   def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] = {

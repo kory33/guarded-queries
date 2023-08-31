@@ -2,10 +2,8 @@ package io.github.kory33.guardedqueries.core.testharnesses
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalInstance,
-  IncludesFolConstants
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery

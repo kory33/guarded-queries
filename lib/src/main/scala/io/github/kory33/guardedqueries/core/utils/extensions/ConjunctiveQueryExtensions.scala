@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.algorithms.SimpleUnionFindTree
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Constant

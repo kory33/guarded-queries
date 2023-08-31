@@ -1,11 +1,12 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments
 
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalFact,
-  FormalInstance,
-  IncludesFolConstants
-}
-import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Term, Variable}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Term
+import uk.ac.ox.cs.pdq.fol.Variable
 
 enum LocalInstanceTerm:
   case LocalName(value: Int)
