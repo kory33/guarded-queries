@@ -4,7 +4,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.{
   JoinResult,
   NaturalJoinAlgorithm
 }
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalInstance, IncludesFolConstants}
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable.ArrayBuffer
@@ -77,7 +77,8 @@ object FilterNestedLoopJoin {
     }
   }
 }
-class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
+
+class FilterNestedLoopJoin[TA: IncludesFolConstants]
     extends NaturalJoinAlgorithm[TA, FormalInstance[TA]] {
   override def join(query: ConjunctiveQuery,
                     formalInstance: FormalInstance[TA]
@@ -99,8 +100,7 @@ class FilterNestedLoopJoin[TA](private val includeConstantsToTA: Constant => TA)
     val queryAtomsToMatches = queryAtoms.map { atom =>
       atom -> SingleAtomMatching.allMatches(
         atom,
-        relevantRelationsToInstancesMap.getOrElse(atom.getPredicate, FormalInstance.empty),
-        includeConstantsToTA
+        relevantRelationsToInstancesMap.getOrElse(atom.getPredicate, FormalInstance.empty)
       )
     }.toMap
 

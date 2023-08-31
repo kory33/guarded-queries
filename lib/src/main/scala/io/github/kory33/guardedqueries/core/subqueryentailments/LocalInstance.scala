@@ -1,6 +1,10 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments
 
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalFact,
+  FormalInstance,
+  IncludesFolConstants
+}
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Term, Variable}
 
 sealed trait LocalInstanceTerm {
@@ -13,6 +17,7 @@ sealed trait LocalInstanceTerm {
 }
 
 object LocalInstanceTerm {
+  // TODO: migrate to enums
   case class LocalName(value: Int) extends LocalInstanceTerm {
     override def mapLocalNamesToTerm(mapper: LocalInstanceTerm.LocalName => Term): Term =
       mapper.apply(this)
@@ -31,6 +36,9 @@ object LocalInstanceTerm {
       case constant: Constant => RuleConstant(constant)
       case variable: Variable => mapper(variable)
       case _                  => throw new IllegalArgumentException("Unsupported term: " + term)
+
+  given IncludesFolConstants[LocalInstanceTerm] with
+    override def includeConstant(constant: Constant): LocalInstanceTerm = RuleConstant(constant)
 }
 
 object LocalInstanceTermFact {

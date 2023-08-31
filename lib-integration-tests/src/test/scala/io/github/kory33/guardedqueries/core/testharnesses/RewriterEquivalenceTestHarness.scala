@@ -31,16 +31,14 @@ object RewriterEquivalenceTestHarness {
       : FormalInstance[Constant] = RunOutputDatalogProgram.answersOn(
       testInstance,
       resultFromFirstRewriter,
-      answerAtom,
-      (c: Constant) => c
+      answerAtom
     )
 
     def answerWithSecondRewriter(testInstance: FormalInstance[Constant])
       : FormalInstance[Constant] = RunOutputDatalogProgram.answersOn(
       testInstance,
       resultFromSecondRewriter,
-      answerAtom,
-      (c: Constant) => c
+      answerAtom
     )
   }
 }

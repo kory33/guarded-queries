@@ -201,16 +201,15 @@ final class NaiveDPTableSEEnumeration(
                   .map { (variable, index) => (variable, localNamesUsableInChildren(index)) }
                   .toMap
 
-              val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm](
-                LocalInstanceTerm.RuleConstant.apply
-              ).join(existentialRule.bodyAsCQ, instance)
+              val bodyJoinResult = new FilterNestedLoopJoin[LocalInstanceTerm]().join(
+                existentialRule.bodyAsCQ,
+                instance
+              )
               val extendedJoinResult =
                 bodyJoinResult.extendWithConstantHomomorphism(headVariableHomomorphism)
 
-              val allSubstitutedHeadAtoms = extendedJoinResult.materializeFunctionFreeAtom(
-                headAtom,
-                LocalInstanceTerm.RuleConstant.apply
-              )
+              val allSubstitutedHeadAtoms =
+                extendedJoinResult.materializeFunctionFreeAtom(headAtom)
 
               allSubstitutedHeadAtoms.flatMap(
                 (substitutedHead: FormalFact[LocalInstanceTerm]) => {
@@ -240,8 +239,7 @@ final class NaiveDPTableSEEnumeration(
                         // because the parent is saturated, a restriction of it to the alphabet
                         // occurring in the child is also saturated.
                         inheritedFactsInstance,
-                        headInstance,
-                        LocalInstanceTerm.RuleConstant.apply
+                        headInstance
                       )
 
                     // we only need to keep chasing with extensional signature
@@ -266,8 +264,7 @@ final class NaiveDPTableSEEnumeration(
       // we keep chasing until we reach a fixpoint
       Set(datalogSaturationEngine.saturateInstance(
         datalogSaturation,
-        localInstance,
-        LocalInstanceTerm.RuleConstant.apply
+        localInstance
       )).generateFromElementsUntilFixpoint(shortcutChaseOneStep.apply.apply)
     }
 

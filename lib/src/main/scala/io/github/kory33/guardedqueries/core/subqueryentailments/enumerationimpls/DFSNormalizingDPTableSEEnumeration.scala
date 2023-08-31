@@ -215,7 +215,7 @@ final class DFSNormalizingDPTableSEEnumeration(
           // A set of existential variables in the existential rule
           val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
           val bodyJoinResult =
-            new FilterNestedLoopJoin[LocalInstanceTerm](RuleConstant.apply).join(
+            new FilterNestedLoopJoin[LocalInstanceTerm].join(
               existentialRule.bodyAsCQ,
               saturatedInstance
             )
@@ -253,10 +253,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                 // The instance containing only the head atom produced by the existential rule.
                 // This should be a singleton instance because the existential rule is normal.
               val headInstance =
-                FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(
-                  headAtom,
-                  RuleConstant.apply
-                ))
+                FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(headAtom))
 
               // if names are not preserved, we reject this homomorphism
               if (!namesToBePreserved.widen[LocalInstanceTerm].subsetOf(inheritedLocalNames))
@@ -279,8 +276,7 @@ final class DFSNormalizingDPTableSEEnumeration(
                   // because the parent is saturated, a restriction of it to the alphabet
                   // occurring in the child is also saturated.
                   inheritedFactsInstance,
-                  headInstance,
-                  RuleConstant.apply
+                  headInstance
                 )
 
               // we only need to keep chasing with extensional signature
@@ -397,8 +393,7 @@ final class DFSNormalizingDPTableSEEnumeration(
       val saturatedInstance =
         instance.withLocalInstance(datalogSaturationEngine.saturateInstance(
           saturatedRuleSet.saturatedRulesAsDatalogProgram,
-          instance.localInstance,
-          LocalInstanceTerm.RuleConstant.apply
+          instance.localInstance
         ))
       if (this.table.contains(saturatedInstance)) return
 

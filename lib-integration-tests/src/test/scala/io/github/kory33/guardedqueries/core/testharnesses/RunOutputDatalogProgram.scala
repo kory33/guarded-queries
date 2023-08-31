@@ -2,11 +2,10 @@ package io.github.kory33.guardedqueries.core.testharnesses
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalInstance, IncludesFolConstants}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import uk.ac.ox.cs.pdq.fol.Constant
 
 object RunOutputDatalogProgram {
 
@@ -27,11 +26,10 @@ object RunOutputDatalogProgram {
    *
    * <pre> {GoalAtom(5, 3), GoalAtom(1, 2)}. </pre>
    */
-  def answersOn[TermAlphabet](
+  def answersOn[TermAlphabet: IncludesFolConstants](
     testInstance: FormalInstance[TermAlphabet],
     rewriteResult: DatalogRewriteResult,
-    answerAtom: Atom,
-    includeConstantIntoAlphabet: Constant => TermAlphabet
+    answerAtom: Atom
   ): FormalInstance[TermAlphabet] = {
     val saturationEngine = new NaiveSaturationEngine
 
@@ -47,23 +45,21 @@ object RunOutputDatalogProgram {
      */
     val inputRuleSaturatedInstance = saturationEngine.saturateInstance(
       rewriteResult.inputRuleSaturationRules,
-      testInstance,
-      includeConstantIntoAlphabet
+      testInstance
     )
     val saturatedInstance = saturationEngine.saturateInstance(
       rewriteResult.subgoalAndGoalDerivationRules,
-      inputRuleSaturatedInstance,
-      includeConstantIntoAlphabet
+      inputRuleSaturatedInstance
     )
 
     val rewrittenGoalQuery =
       ConjunctiveQuery.create(rewriteResult.goal.getVariables, Array[Atom](rewriteResult.goal))
 
     FormalInstance[TermAlphabet](
-      FilterNestedLoopJoin[TermAlphabet](includeConstantIntoAlphabet).join(
+      FilterNestedLoopJoin[TermAlphabet]().join(
         rewrittenGoalQuery,
         saturatedInstance
-      ).materializeFunctionFreeAtom(answerAtom, includeConstantIntoAlphabet).toSet
+      ).materializeFunctionFreeAtom(answerAtom).toSet
     )
   }
 }

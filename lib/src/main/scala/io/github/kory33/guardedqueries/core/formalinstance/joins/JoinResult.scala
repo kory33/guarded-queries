@@ -1,9 +1,8 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, IncludesFolConstants}
 import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
 
 //format: off
@@ -48,16 +47,14 @@ class JoinResult[Term](
    *
    * @param atomWhoseVariablesAreInThisResult
    *   a function-free atom whose variables are covered by this join result
-   * @param constantInclusion
-   *   a function that maps a constant in the input instance to a term
    * @return
    *   a list of formal facts that are the result of materializing the given atom
    */
-  def materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult: Atom,
-                                  constantInclusion: Constant => Term
-  ): List[FormalFact[Term]] =
+  def materializeFunctionFreeAtom(
+    atomWhoseVariablesAreInThisResult: Atom
+  )(using IncludesFolConstants[Term]): List[FormalFact[Term]] =
     allHomomorphisms.map((h: HomomorphicMapping[Term]) =>
-      h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult, constantInclusion)
+      h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult)
     )
 
   // format: off

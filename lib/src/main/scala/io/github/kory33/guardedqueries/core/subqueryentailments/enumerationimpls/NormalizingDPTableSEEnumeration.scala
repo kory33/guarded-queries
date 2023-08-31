@@ -214,9 +214,8 @@ final class NormalizingDPTableSEEnumeration(
               // A set of existential variables in the existential rule
               val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
-              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm](
-                LocalInstanceTerm.RuleConstant.apply
-              ).join(existentialRule.bodyAsCQ, instance)
+              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm]()
+                .join(existentialRule.bodyAsCQ, instance)
 
               // because we are "reusing" local names, we can no longer
               // uniformly extend homomorphisms to existential variables
@@ -252,11 +251,9 @@ final class NormalizingDPTableSEEnumeration(
 
                   // The instance containing only the head atom produced by the existential rule.
                   // This should be a singleton instance because the existential rule is normal.
-                  val headInstance =
-                    FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(
-                      headAtom,
-                      LocalInstanceTerm.RuleConstant.apply
-                    ))
+                  val headInstance = FormalInstance.of(
+                    extendedHomomorphism.materializeFunctionFreeAtom(headAtom)
+                  )
 
                   // if names are not preserved, we reject this homomorphism
                   if (
@@ -283,8 +280,7 @@ final class NormalizingDPTableSEEnumeration(
                       // because the parent is saturated, a restriction of it to the alphabet
                       // occurring in the child is also saturated.
                       inheritedFactsInstance,
-                      headInstance,
-                      LocalInstanceTerm.RuleConstant.apply
+                      headInstance
                     )
 
                   // we only need to keep chasing with extensional signature
@@ -306,8 +302,7 @@ final class NormalizingDPTableSEEnumeration(
       // we keep chasing until we reach a fixpoint
       Set(datalogSaturationEngine.saturateInstance(
         datalogSaturation,
-        localInstance,
-        LocalInstanceTerm.RuleConstant.apply
+        localInstance
       )).generateFromElementsUntilFixpoint(shortcutChaseOneStep.apply)
     }
 

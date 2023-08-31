@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance, IncludesFolConstants}
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Variable
@@ -55,11 +54,10 @@ case class HomomorphicMapping[Term](
    *   a function that maps a constant in the input instance to a term
    */
   def materializeFunctionFreeAtom(
-    atomWhoseVariablesAreInThisResult: Atom,
-    constantInclusion: Constant => Term
-  ) = {
+    atomWhoseVariablesAreInThisResult: Atom
+  )(using IncludesFolConstants[Term]) = {
     FormalFact.fromAtom(atomWhoseVariablesAreInThisResult).map({
-      case constant: Constant => constantInclusion.apply(constant)
+      case constant: Constant => IncludesFolConstants[Term].includeConstant(constant)
       case variable: Variable => this.apply(variable)
       case term =>
         throw new IllegalArgumentException(s"Term $term is neither constant nor variable")
@@ -76,11 +74,9 @@ case class HomomorphicMapping[Term](
    *   a function that maps a constant in the input instance to a term
    */
   def materializeFunctionFreeAtoms(
-    atomsWhoseVariablesAreInThisResult: Set[Atom],
-    constantInclusion: Constant => Term
-  ) = FormalInstance(
-    atomsWhoseVariablesAreInThisResult.map(materializeFunctionFreeAtom(_, constantInclusion))
-  )
+    atomsWhoseVariablesAreInThisResult: Set[Atom]
+  )(using IncludesFolConstants[Term]) =
+    FormalInstance(atomsWhoseVariablesAreInThisResult.map(materializeFunctionFreeAtom))
 
   /**
    * Extend the homomorphism with the given mapping.

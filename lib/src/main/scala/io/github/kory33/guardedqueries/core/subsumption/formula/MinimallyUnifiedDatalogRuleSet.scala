@@ -1,15 +1,13 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance, IncludesFolConstants}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet.VariableOrConstant
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.Term
-import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant}
-import uk.ac.ox.cs.pdq.fol.{Variable => PDQVariable}
-
+import uk.ac.ox.cs.pdq.fol.Constant as PDQConstant
+import uk.ac.ox.cs.pdq.fol.Variable as PDQVariable
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
 /**
@@ -38,16 +36,12 @@ final class MinimallyUnifiedDatalogRuleSet
     first: DatalogRule,
     second: DatalogRule
   ): Boolean = {
-    val joinAlgorithm = new FilterNestedLoopJoin(VariableOrConstant.Constant(_))
-
-    joinAlgorithm.join(
+    new FilterNestedLoopJoin[VariableOrConstant]().join(
       first.bodyAsCQ,
       MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getBodyAtoms)
     ).allHomomorphisms.exists(homomorphism => {
-      val substitutedFirstHead = homomorphism.materializeFunctionFreeAtoms(
-        first.getHeadAtoms.toSet,
-        MinimallyUnifiedDatalogRuleSet.VariableOrConstant.Constant(_)
-      )
+      val substitutedFirstHead =
+        homomorphism.materializeFunctionFreeAtoms(first.getHeadAtoms.toSet)
       val secondHead =
         MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getHeadAtoms)
 
@@ -69,6 +63,11 @@ object MinimallyUnifiedDatalogRuleSet {
         case constant: PDQConstant => VariableOrConstant.Constant(constant)
         case _ =>
           throw new IllegalArgumentException("Either a constant or a variable is expected")
+
+    given IncludesFolConstants[VariableOrConstant] with {
+      override def includeConstant(constant: PDQConstant): VariableOrConstant =
+        VariableOrConstant.Constant(constant)
+    }
   }
 
   private def atomIntoFormalFact(atom: Atom) =

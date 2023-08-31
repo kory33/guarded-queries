@@ -31,24 +31,20 @@ object GSatEquivalenceTestHarness {
   ) {
     def answersWithGsatRewriting(testInstance: FormalInstance[Constant])
       : FormalInstance[Constant] = {
-      val gsatSaturatedInstance = new NaiveSaturationEngine().saturateInstance(
-        gsatRewriting,
-        testInstance,
-        (c: Constant) => c
-      )
+      val gsatSaturatedInstance =
+        new NaiveSaturationEngine().saturateInstance(gsatRewriting, testInstance)
 
-      FormalInstance[Constant](new FilterNestedLoopJoin[Constant]((c: Constant) => c).join(
+      FormalInstance[Constant](new FilterNestedLoopJoin[Constant]().join(
         gsatQuery,
         gsatSaturatedInstance
-      ).materializeFunctionFreeAtom(answerAtom, (c: Constant) => c).toSet)
+      ).materializeFunctionFreeAtom(answerAtom).toSet)
     }
 
     def answersWithOurRewriting(testInstance: FormalInstance[Constant])
       : FormalInstance[Constant] = RunOutputDatalogProgram.answersOn(
       testInstance,
       ourRewriting,
-      answerAtom,
-      (c: Constant) => c
+      answerAtom
     )
   }
 }

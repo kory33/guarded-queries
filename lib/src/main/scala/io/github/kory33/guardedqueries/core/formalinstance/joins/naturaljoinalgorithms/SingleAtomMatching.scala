@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalInstance, IncludesFolConstants}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Variable}
 
@@ -8,10 +8,10 @@ import scala.util.boundary
 import scala.collection.mutable.ArrayBuffer
 
 object SingleAtomMatching {
-  private def tryMatch[TA](atomicQuery: Atom,
-                           orderedQueryVariables: List[Variable],
-                           appliedTerms: List[TA],
-                           includeConstantsToTA: Constant => TA
+  private def tryMatch[TA: IncludesFolConstants](
+    atomicQuery: Atom,
+    orderedQueryVariables: List[Variable],
+    appliedTerms: List[TA]
   ): Option[List[TA]] = boundary {
     val homomorphism = ArrayBuffer.fill[Option[TA]](orderedQueryVariables.size)(None)
 
@@ -22,7 +22,7 @@ object SingleAtomMatching {
       termToMatch match {
         case constant: Constant =>
           // if the term is a constant, we just check if that constant (considered as TA) has been applied
-          if (!(includeConstantsToTA.apply(constant) == appliedTerm)) {
+          if (!(IncludesFolConstants[TA].includeConstant(constant) == appliedTerm)) {
             // and fail if not
             boundary.break(None)
           }
@@ -56,9 +56,9 @@ object SingleAtomMatching {
    * @throws IllegalArgumentException
    *   if the given query contains a term that is neither a variable nor a constant
    */
-  def allMatches[TA](atomicQuery: Atom,
-                     instance: FormalInstance[TA],
-                     includeConstantsToTA: Constant => TA
+  def allMatches[TA: IncludesFolConstants](
+    atomicQuery: Atom,
+    instance: FormalInstance[TA]
   ): JoinResult[TA] = {
     val orderedQueryVariables = atomicQuery.getVariables.toSet.toList
     val queryPredicate = atomicQuery.getPredicate
@@ -71,12 +71,11 @@ object SingleAtomMatching {
         tryMatch(
           atomicQuery,
           orderedQueryVariables,
-          fact.appliedTerms,
-          includeConstantsToTA
+          fact.appliedTerms
         ).foreach(homomorphisms.append)
       }
     }
 
-    new JoinResult[TA](orderedQueryVariables, homomorphisms.toList)
+    JoinResult[TA](orderedQueryVariables, homomorphisms.toList)
   }
 }

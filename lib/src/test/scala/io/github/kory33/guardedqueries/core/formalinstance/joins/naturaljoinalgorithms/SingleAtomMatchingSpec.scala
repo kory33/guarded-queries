@@ -52,8 +52,8 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genInstanceAndQuery, minSuccessful(100)) {
       case (instance, query) =>
         SingleAtomMatching
-          .allMatches(query, instance, c => c)
-          .materializeFunctionFreeAtom(query, c => c)
+          .allMatches(query, instance)
+          .materializeFunctionFreeAtom(query)
           .foreach { fact => assert(fact.predicate.equals(query.getPredicate)) }
     }
   }
@@ -62,8 +62,8 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genInstanceAndQuery, minSuccessful(100)) {
       case (instance, query) =>
         SingleAtomMatching
-          .allMatches(query, instance, c => c)
-          .materializeFunctionFreeAtom(query, c => c)
+          .allMatches(query, instance)
+          .materializeFunctionFreeAtom(query)
           .foreach { fact => assert(instance.facts.contains(fact)) }
     }
   }
@@ -72,13 +72,13 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genInstanceAndQuery, minSuccessful(100)) {
       case (instance, query) =>
         val firstMatch = SingleAtomMatching
-          .allMatches(query, instance, c => c)
-          .materializeFunctionFreeAtom(query, c => c)
+          .allMatches(query, instance)
+          .materializeFunctionFreeAtom(query)
           .toSet
 
         val secondMatch = SingleAtomMatching
-          .allMatches(query, FormalInstance(firstMatch), c => c)
-          .materializeFunctionFreeAtom(query, c => c)
+          .allMatches(query, FormalInstance(firstMatch))
+          .materializeFunctionFreeAtom(query)
 
         assert(firstMatch == secondMatch.toSet)
     }
@@ -107,11 +107,11 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genAtomAndHomomorphism, minSuccessful(1000)) {
       case (atom, homomorphism) =>
         val instanceContainingJustTheMaterializedAtom =
-          FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom, c => c))
+          FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom))
 
         val matches = SingleAtomMatching
-          .allMatches(atom, instanceContainingJustTheMaterializedAtom, c => c)
-          .materializeFunctionFreeAtom(atom, c => c)
+          .allMatches(atom, instanceContainingJustTheMaterializedAtom)
+          .materializeFunctionFreeAtom(atom)
           .toSet
 
         val matchInstance = FormalInstance(matches)
