@@ -279,23 +279,6 @@ case class GuardedRuleAndQueryRewriter(
 
       new SaturatedRuleSet[NormalGTGD](saturation, normalizedRules)
     }
-    val cqConnectedComponents = CQBoundVariableConnectedComponents(query)
-
-    // List of rewrite results of each maximally connected subquery
-    val bvccRewriteResults = cqConnectedComponents.maximallyConnectedSubqueries
-      .zipWithIndex
-      .map((maximallyConnectedSubquery, index) =>
-        rewriteBoundVariableConnectedComponent(
-          extensionalSignature,
-          saturatedRuleSet,
-          maximallyConnectedSubquery,
-          // prepare a prefix for intentional predicates that may be introduced to rewrite a
-          // maximally connected subquery. "SQ" stands for "subquery".
-          s"${intentionalPredicatePrefix}_SQ$index"
-        )
-      )
-      .toList
-
     val goalAtom = {
       val deduplicatedQueryVariables = query.getFreeVariables.toSet
       val goalPredicate = Predicate.create(
@@ -306,21 +289,39 @@ case class GuardedRuleAndQueryRewriter(
       Atom.create(goalPredicate, deduplicatedQueryVariables.toArray: _*)
     }
 
-    // the rule to "join" all subquery results
-    val subgoalBindingRule: TGD = {
-      // we have to join all of
-      //  - bound-variable-free atoms
-      //  - goal predicates of each maximally connected subquery
-      val bodyAtoms =
-        cqConnectedComponents.boundVariableFreeAtoms.toArray ++
-          bvccRewriteResults.map(_.goalAtom)
+    val allGoalDerivationRules = {
+      val cqConnectedComponents = CQBoundVariableConnectedComponents(query)
 
-      // ... to derive the final goal predicate
-      TGD.create(bodyAtoms, Array(goalAtom))
-    }
+      // List of rewrite results of each maximally connected subquery
+      val bvccRewriteResults = cqConnectedComponents.maximallyConnectedSubqueries
+        .zipWithIndex
+        .map((maximallyConnectedSubquery, index) =>
+          rewriteBoundVariableConnectedComponent(
+            extensionalSignature,
+            saturatedRuleSet,
+            maximallyConnectedSubquery,
+            // prepare a prefix for intentional predicates that may be introduced to rewrite a
+            // maximally connected subquery. "SQ" stands for "subquery".
+            s"${intentionalPredicatePrefix}_SQ$index"
+          )
+        )
+        .toList
 
-    val allGoalDerivationRules =
+      // the rule to "join" all subquery results
+      val subgoalBindingRule: TGD = {
+        // we have to join all of
+        //  - bound-variable-free atoms
+        //  - goal predicates of each maximally connected subquery
+        val bodyAtoms =
+          cqConnectedComponents.boundVariableFreeAtoms.toArray ++
+            bvccRewriteResults.map(_.goalAtom)
+
+        // ... to derive the final goal predicate
+        TGD.create(bodyAtoms, Array(goalAtom))
+      }
+
       bvccRewriteResults.flatMap(_.goalDerivationRules) :+ subgoalBindingRule
+    }
 
     DatalogRewriteResult(
       DatalogProgram.tryFromDependencies(saturatedRuleSet.saturatedRules),
@@ -328,7 +329,4 @@ case class GuardedRuleAndQueryRewriter(
       goalAtom
     )
   }
-
-  override def toString: String =
-    s"GuardedRuleAndQueryRewriter{saturation=$saturation, subqueryEntailmentEnumeration=$subqueryEntailmentEnumeration}"
 }
