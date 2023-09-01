@@ -38,7 +38,7 @@ class FilterNestedLoopJoin[TA: IncludesFolConstants]
           .getOrElse(atom.getPredicate, FormalInstance.empty)
 
         SingleAtomMatching.allMatches(atom, relevantInstance)
-      }.toMap
+      }
 
     // we start joining from the outer
     val queryAtomsOrderedByMatchSizes: List[Atom] =
