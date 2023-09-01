@@ -6,6 +6,12 @@ ThisBuild / version := "0.1.0"
 ThisBuild / organization := "io.github.kory33"
 
 ThisBuild / javacOptions ++= Seq("-encoding", "UTF-8")
+ThisBuild / scalacOptions ++= Seq(
+  "-Ykind-projector:underscores",
+  "-deprecation",
+  "-feature",
+  "-unchecked"
+)
 
 ThisBuild / resolvers += "Maven Central" at "https://repo1.maven.org/maven2/"
 

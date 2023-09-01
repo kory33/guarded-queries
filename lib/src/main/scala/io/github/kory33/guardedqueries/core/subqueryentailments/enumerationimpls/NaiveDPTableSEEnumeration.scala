@@ -36,7 +36,7 @@ import scala.util.boundary
 final class NaiveDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
-  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
+  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
                               private val extensionalSignature: FunctionFreeSignature,
                               private val maxArityOfAllPredicatesUsedInRules: Int,
                               private val connectedConjunctiveQuery: ConjunctiveQuery
@@ -169,7 +169,7 @@ final class NaiveDPTableSEEnumeration(
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
         instance.localWitnessGuess.values.toSet ++
-          instance.queryConstantEmbedding.values
+          instance.queryConstantEmbedding.asMap.values
       )
 
       for (chasedInstance <- instancesWithGuessedVariablesPreserved) {
@@ -266,7 +266,7 @@ final class NaiveDPTableSEEnumeration(
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
-            saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
+            saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants

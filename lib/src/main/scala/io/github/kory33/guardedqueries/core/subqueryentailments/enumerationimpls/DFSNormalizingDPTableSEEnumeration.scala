@@ -40,7 +40,7 @@ final class DFSNormalizingDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
 
-  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
+  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
                               private val extensionalSignature: FunctionFreeSignature,
                               private val maxArityOfAllPredicatesUsedInRules: Int,
                               private val connectedConjunctiveQuery: ConjunctiveQuery
@@ -281,7 +281,7 @@ final class DFSNormalizingDPTableSEEnumeration(
       // because they are treated as special symbols corresponding to variables and query constants
       // occurring in the subquery.
       val localNamesToPreserveDuringChase =
-        saturatedInstance.localWitnessGuess.values.toSet ++ saturatedInstance.queryConstantEmbedding.values
+        saturatedInstance.localWitnessGuess.values.toSet ++ saturatedInstance.queryConstantEmbedding.asMap.values
 
       // Chasing procedure:
       //   We hold a pair of (parent instance, children iterator) to the stack
@@ -375,7 +375,7 @@ final class DFSNormalizingDPTableSEEnumeration(
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
-            saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
+            saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants

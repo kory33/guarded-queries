@@ -9,7 +9,7 @@ import uk.ac.ox.cs.pdq.fol.Formula
 import scala.jdk.CollectionConverters.*
 
 class SaturatedRuleSet[RuleClass <: GTGD](
-  saturation: AbstractSaturation[_ <: GTGD],
+  saturation: AbstractSaturation[? <: GTGD],
   originalRules: Set[RuleClass]
 ) {
   val saturatedRules: Set[GTGD] = saturation.run(originalRules.toList.asJava).asScala.toSet

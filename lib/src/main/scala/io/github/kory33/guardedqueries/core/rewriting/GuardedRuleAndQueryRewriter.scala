@@ -51,7 +51,7 @@ private case class BoundVariableConnectedComponentRewriteResult(
  * program on a database instance.
  */
 case class GuardedRuleAndQueryRewriter(
-  saturation: AbstractSaturation[_ <: GTGD],
+  saturation: AbstractSaturation[? <: GTGD],
   subqueryEntailmentEnumeration: SubqueryEntailmentEnumeration
 ) {
 
@@ -113,7 +113,7 @@ case class GuardedRuleAndQueryRewriter(
       val nameToTermInRule = activeLocalNames.associate(localName =>
         neighbourhoodPreimages.get(localName) match {
           case None =>
-            queryConstantEmbeddingInverse.get(localName) match {
+            queryConstantEmbeddingInverse.asMap.get(localName) match {
               case Some(queryConstant) =>
                 // if this local name is bound to a query constant,
                 // we assign the query constant to the local name
@@ -127,7 +127,7 @@ case class GuardedRuleAndQueryRewriter(
             // the contract of SubqueryEntailmentEnumeration guarantees that
             // local names bound to bound variables should not be bound
             // to a query constant
-            assert(!queryConstantEmbeddingInverse.contains(localName))
+            assert(!queryConstantEmbeddingInverse.asMap.contains(localName))
 
             // otherwise unify to the variable corresponding to the preimage
             // e.g. if {x, y} is the preimage of localName and _xy is the variable
@@ -185,7 +185,7 @@ case class GuardedRuleAndQueryRewriter(
    */
   private def rewriteBoundVariableConnectedComponent(
     extensionalSignature: FunctionFreeSignature,
-    saturatedRules: SaturatedRuleSet[_ <: NormalGTGD],
+    saturatedRules: SaturatedRuleSet[? <: NormalGTGD],
     /* bound-variable-connected */ boundVariableConnectedQuery: ConjunctiveQuery,
     intentionalPredicatePrefix: String
   ) = {

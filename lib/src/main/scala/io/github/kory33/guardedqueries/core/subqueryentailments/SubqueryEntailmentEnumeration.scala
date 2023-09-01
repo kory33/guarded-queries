@@ -59,7 +59,7 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
  */
 @FunctionalInterface trait SubqueryEntailmentEnumeration {
   def apply(extensionalSignature: FunctionFreeSignature,
-            saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
+            saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
             boundVariableConnectedQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance]
 }

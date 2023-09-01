@@ -17,32 +17,32 @@ class BijectiveMap[K, V] private /* unchecked constructor */ (
 ) {
   def inverse: BijectiveMap[V, K] = new BijectiveMap(inverseMap, forwardMap)
 
-  def toMap: Map[K, V] = forwardMap
+  def asMap: Map[K, V] = forwardMap
 
   // We essentially delegate methods to `forwardMap` by defining `equals`, `hashCode`
   // and `toString` using `forwardMap`, and by providing a `Conversion`
   // from `BijectiveMap` to `Map` via `forwardMap`.
 
   override def equals(obj: Any): Boolean = obj match {
-    case that: BijectiveMap[_, _] => this.toMap == that.toMap
+    case that: BijectiveMap[?, ?] => this.asMap == that.asMap
     case _                        => false
   }
 
-  override def hashCode(): Int = toMap.hashCode()
+  override def hashCode(): Int = asMap.hashCode()
 
-  override def toString: String = s"BijectiveMap(${toMap.toString})"
+  override def toString: String = s"BijectiveMap(${asMap.toString})"
 }
 
 object BijectiveMap {
 
-  given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.toMap
+  given [K, V]: Conversion[BijectiveMap[K, V], Map[K, V]] = _.asMap
 
   given Extensions: AnyRef with
     extension [K, V](bmap: BijectiveMap[K, V])
       def restrictToKeys(keys: Set[K]): BijectiveMap[K, V] =
         import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
         // this call to .get never throws since a restriction of an injective map is again injective
-        BijectiveMap.tryFromInjectiveMap(bmap.toMap.restrictToKeys(keys)).get
+        BijectiveMap.tryFromInjectiveMap(bmap.asMap.restrictToKeys(keys)).get
 
   /**
    * Construct a bijective map from an injective map. If the given map is not injective, this
