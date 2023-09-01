@@ -6,21 +6,31 @@ import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import io.github.kory33.guardedqueries.core.fol.LocalVariableContext
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.StringSetExtensions.given
-import io.github.kory33.guardedqueries.core.utils.extensions.VariableSetExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.VariableIterableExtensions.given
 import uk.ac.ox.cs.gsat.AbstractSaturation
 import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
-import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+
+/**
+ * A result of rewriting a single maximally bound-variable-connected component of the input
+ * query.
+ */
+private case class BoundVariableConnectedComponentRewriteResult(
+  goalAtom: Atom,
+  goalDerivationRules: Set[DatalogRule]
+)
 
 /**
  * The algorithm to compute the Datalog program that is equivalent to the given set of guarded
@@ -64,95 +74,92 @@ case class GuardedRuleAndQueryRewriter(
    * performed and the variables in C are replaced by their preimages (hence some constant) in
    * C) </pre>
    */
-  private def subqueryEntailmentRecordToSubgoalRule(
+  private def subqueryEntailmentToSubgoalRule(
     subqueryEntailment: SubqueryEntailmentInstance,
     subgoalAtoms: SubgoalAtomGenerator
-  ) = {
+  ): DatalogRule = {
     val ruleConstantWitnessGuess = subqueryEntailment.ruleConstantWitnessGuess
     val coexistentialVariables = subqueryEntailment.coexistentialVariables
     val localWitnessGuess = subqueryEntailment.localWitnessGuess
     val localInstance = subqueryEntailment.localInstance
     val queryConstantEmbeddingInverse = subqueryEntailment.queryConstantEmbedding.inverse
 
+    val activeLocalNames = localInstance.getActiveTermsIn[LocalName]
+
     // We prepare a variable context that is closed within the rule
     // we are about to generate. This is essential to reduce the memory usage
     // of generated rule set, because this way we are more likely to
     // generate identical atoms which can be cached.
     val ruleLocalVariableContext = new LocalVariableContext("x_")
-    val activeLocalNames = localInstance.getActiveTermsIn[LocalName]
 
     // Mapping of local names to their preimages in the neighbourhood mapping.
     // Contains all active local names in the key set,
     // and the range of the mapping is a partition of domain of localWitnessGuess.
-    val neighbourhoodPreimages = localWitnessGuess.preimages(activeLocalNames)
+    val neighbourhoodPreimages: Map[LocalName, Set[Variable]] =
+      localWitnessGuess.preimages(activeLocalNames)
 
     // unification of variables mapped by localWitnessGuess to fresh variables
     val unification: Map[Variable, Variable] = {
-      val unificationMapBuilder = mutable.HashMap.empty[Variable, Variable]
+      for {
+        equivalenceClass <- neighbourhoodPreimages.values
+        unifiedVariable = ruleLocalVariableContext.getFreshVariable
+        variable <- equivalenceClass
+      } yield (variable, unifiedVariable)
+    }.toMap
 
-      for (equivalenceClass <- neighbourhoodPreimages.values) {
-        val unifiedVariable = ruleLocalVariableContext.getFreshVariable
-        for (variable <- equivalenceClass) {
-          unificationMapBuilder.put(variable, unifiedVariable)
+    val mappedInstance: FormalInstance[Term] = {
+      // Mapping of local names to variables (or constants for local names bound to query-constant).
+      // Contains all active local names in the key set.
+      val nameToTermInRule = activeLocalNames.associate(localName =>
+        neighbourhoodPreimages.get(localName) match {
+          case None =>
+            queryConstantEmbeddingInverse.get(localName) match {
+              case Some(queryConstant) =>
+                // if this local name is bound to a query constant,
+                // we assign the query constant to the local name
+                queryConstant
+              case None =>
+                // the local name is bound neither to a query constant nor
+                // query-bound variable, so we assign a fresh variable to it
+                ruleLocalVariableContext.getFreshVariable
+            }
+          case Some(equivalenceClass) =>
+            // the contract of SubqueryEntailmentEnumeration guarantees that
+            // local names bound to bound variables should not be bound
+            // to a query constant
+            assert(!queryConstantEmbeddingInverse.contains(localName))
+
+            // otherwise unify to the variable corresponding to the preimage
+            // e.g. if {x, y} is the preimage of localName and _xy is the variable
+            // corresponding to {x, y}, we turn localName into _xy
+            unification(equivalenceClass.head)
         }
-      }
+      )
 
-      unificationMapBuilder.toMap
+      localInstance.map(t => t.mapLocalNamesToTerm(nameToTermInRule(_)))
     }
 
-    // Mapping of local names to variables (or constants for local names bound to query-constant).
-    // Contains all active local names in the key set.
-    val nameToTermMap = activeLocalNames.map(localName =>
-      localName -> {
-        val preimage = neighbourhoodPreimages.get(localName)
-        if (preimage.isEmpty) {
-          if (queryConstantEmbeddingInverse.contains(localName)) {
-            // if this local name is bound to a query constant,
-            // we assign the query constant to the local name
-            queryConstantEmbeddingInverse(localName)
-          } else {
-            // the local name is bound neither to a query constant nor
-            // query-bound variable, so we assign a fresh variable to it
-            ruleLocalVariableContext.getFreshVariable
-          }
-        } else {
-          // the contract of SubqueryEntailmentEnumeration guarantees that
-          // local names bound to bound variables should not be bound
-          // to a query constant
-          assert(!queryConstantEmbeddingInverse.contains(localName))
-
-          // otherwise unify to the variable corresponding to the preimage
-          // e.g. if {x, y} is the preimage of localName and _xy is the variable
-          // corresponding to {x, y}, we turn localName into _xy
-          unification(preimage.get.head)
-        }
-      }
-    ).toMap
-
-    val mappedInstance = localInstance.map(t => t.mapLocalNamesToTerm(nameToTermMap(_)))
     val mappedSubgoalAtom: Atom = {
       val subgoalAtom = subgoalAtoms.apply(coexistentialVariables)
       val orderedNeighbourhoodVariables = subgoalAtom.getTerms.map((term: Term) =>
-        term.asInstanceOf[
-          Variable
-        ] /* safe, since only variables are applied to subgoal atoms */
+        // this cast is safe, since only variables are applied to subgoal atoms
+        term.asInstanceOf[Variable]
       )
-      val neighbourhoodVariableToTerm = (variable: Variable) => {
+
+      val neighbourhoodVariableToTermInRule: Variable => Term = variable => {
         if (unification.contains(variable)) unification(variable)
-        else if (ruleConstantWitnessGuess.contains(variable))
-          ruleConstantWitnessGuess(variable)
-        else {
+        else if (ruleConstantWitnessGuess.contains(variable)) ruleConstantWitnessGuess(variable)
+        else
           // The contract ensures that the given subquery entailment instance is a valid instance
           // with respect to the whole query (subgoalAtoms.query()), which means that
           // the neighbourhood of coexistential variables must be covered
           // by the union of domains of localWitnessGuess and ruleConstantWitnessGuess.
           throw new AssertionError(
-            "Variable " + variable + " is not mapped by either unification or ruleConstantWitnessGuess"
+            s"Variable $variable is not mapped by either unification or ruleConstantWitnessGuess"
           )
-        }
       }
       val replacedTerms =
-        orderedNeighbourhoodVariables.map(neighbourhoodVariableToTerm(_))
+        orderedNeighbourhoodVariables.map(neighbourhoodVariableToTermInRule(_))
 
       Atom.create(subgoalAtom.getPredicate, replacedTerms: _*)
     }
@@ -167,11 +174,8 @@ case class GuardedRuleAndQueryRewriter(
     // Therefore, every variable appearing in mappedSubgoalAtom is a variable produced by unification map,
     // which must also occur in some atom of mappedInstance (as the local name
     // to which the unified variables were sent was active in localInstance).
-    // Hence, the rule (mappedInstance → mappedSubgoalAtom) is a Datalog rule.
-    DatalogRule(
-      mappedInstance.asAtoms.toArray,
-      Array[Atom](mappedSubgoalAtom)
-    )
+    // Hence, the rule (mappedInstance → mappedSubgoalAtom) is a well-formed Datalog rule.
+    DatalogRule(mappedInstance.asAtoms.toArray, Array(mappedSubgoalAtom))
   }
 
   /**
@@ -186,33 +190,28 @@ case class GuardedRuleAndQueryRewriter(
     intentionalPredicatePrefix: String
   ) = {
     val queryGoalAtom: Atom = {
-      val queryFreeVariables = boundVariableConnectedQuery.getFreeVariables
-      val goalPredicate =
-        Predicate.create(s"${intentionalPredicatePrefix}_GOAL", queryFreeVariables.toSet.size)
+      val queryFreeVariables = boundVariableConnectedQuery.getFreeVariables.toSet
 
       Atom.create(
-        goalPredicate,
-        queryFreeVariables.toSet.sortBySymbol: _*
+        Predicate.create(s"${intentionalPredicatePrefix}_GOAL", queryFreeVariables.size),
+        queryFreeVariables.sortBySymbol: _*
       )
     }
 
     val subgoalAtoms =
       SubgoalAtomGenerator(boundVariableConnectedQuery, s"${intentionalPredicatePrefix}_SGL")
 
-    val subgoalDerivationRules = subqueryEntailmentEnumeration.apply(
+    val subgoalDerivationRules = subqueryEntailmentEnumeration(
       extensionalSignature,
       saturatedRules,
       boundVariableConnectedQuery
-    ).map(subqueryEntailment =>
-      subqueryEntailmentRecordToSubgoalRule(subqueryEntailment, subgoalAtoms)
-    ).toList
+    ).map(subqueryEntailmentToSubgoalRule(_, subgoalAtoms))
 
     val subgoalGlueingRules = boundVariableConnectedQuery
       .getBoundVariables
       .toSet
       .powerset
       .map(existentialWitnessCandidate => {
-
         // A single existentialWitnessCandidate is a set of variables that the rule
         // (which we are about to produce) expects to be existentially satisfied.
         //
@@ -236,20 +235,18 @@ case class GuardedRuleAndQueryRewriter(
           boundVariableConnectedQuery
             .strictlyInduceSubqueryByVariables(baseWitnessVariables)
             .map(_.getAtoms)
-            .getOrElse(Array[Atom]())
+            .getOrElse(Array.empty[Atom])
 
         val neighbourhoodsSubgoals = boundVariableConnectedQuery
           .connectedComponentsOf(existentialWitnessCandidate)
           .map(subgoalAtoms.apply)
 
-        new DatalogRule(
-          baseWitnessJoinConditions ++ neighbourhoodsSubgoals,
-          Array[Atom](queryGoalAtom)
-        )
+        baseWitnessJoinConditions ++ neighbourhoodsSubgoals
+      })
+      .map(ruleBody => DatalogRule(ruleBody, Array(queryGoalAtom)))
+      .toList
 
-      }).toList
-
-    GuardedRuleAndQueryRewriter.BoundVariableConnectedComponentRewriteResult(
+    BoundVariableConnectedComponentRewriteResult(
       queryGoalAtom,
       subgoalDerivationRules.toSet ++ subgoalGlueingRules
     )
@@ -265,8 +262,7 @@ case class GuardedRuleAndQueryRewriter(
     // Set of predicates that may appear in the input database.
     // Any predicate not in this signature can be considered as intentional predicates
     // and may be ignored in certain cases, such as when generating "test" instances.
-    val extensionalSignature =
-      FunctionFreeSignature.encompassingRuleQuery(rules, query)
+    val extensionalSignature = FunctionFreeSignature.encompassingRuleQuery(rules, query)
 
     val intentionalPredicatePrefix = extensionalSignature.predicateNames
       .freshPrefixStartingWith(
@@ -274,37 +270,41 @@ case class GuardedRuleAndQueryRewriter(
         "IP"
       )
 
-    val normalizedRules = NormalGTGD.normalize(
-      rules,
-      // stands for Normalization-Intermediate predicates
-      intentionalPredicatePrefix + "_NI"
-    )
+    val saturatedRuleSet = {
+      val normalizedRules = NormalGTGD.normalize(
+        rules,
+        // stands for Normalization-Intermediate predicates
+        s"${intentionalPredicatePrefix}_NI"
+      )
 
-    val saturatedRuleSet = new SaturatedRuleSet[NormalGTGD](saturation, normalizedRules)
-    val cqConnectedComponents = new CQBoundVariableConnectedComponents(query)
+      new SaturatedRuleSet[NormalGTGD](saturation, normalizedRules)
+    }
+    val cqConnectedComponents = CQBoundVariableConnectedComponents(query)
 
-    val bvccRewriteResults =
-      cqConnectedComponents.maximallyConnectedSubqueries.zipWithIndex.map(
-        (maximallyConnectedSubquery, index) => {
+    // List of rewrite results of each maximally connected subquery
+    val bvccRewriteResults = cqConnectedComponents.maximallyConnectedSubqueries
+      .zipWithIndex
+      .map((maximallyConnectedSubquery, index) =>
+        rewriteBoundVariableConnectedComponent(
+          extensionalSignature,
+          saturatedRuleSet,
+          maximallyConnectedSubquery,
           // prepare a prefix for intentional predicates that may be introduced to rewrite a
           // maximally connected subquery. "SQ" stands for "subquery".
-          val subqueryIntentionalPredicatePrefix = s"${intentionalPredicatePrefix}_SQ$index"
+          s"${intentionalPredicatePrefix}_SQ$index"
+        )
+      )
+      .toList
 
-          this.rewriteBoundVariableConnectedComponent(
-            extensionalSignature,
-            saturatedRuleSet,
-            maximallyConnectedSubquery,
-            subqueryIntentionalPredicatePrefix
-          )
-        }
-      ).toList
+    val goalAtom = {
+      val deduplicatedQueryVariables = query.getFreeVariables.toSet
+      val goalPredicate = Predicate.create(
+        s"${intentionalPredicatePrefix}_GOAL",
+        deduplicatedQueryVariables.size
+      )
 
-    val deduplicatedQueryVariables = query.getFreeVariables.toSet
-
-    val goalPredicate =
-      Predicate.create(intentionalPredicatePrefix + "_GOAL", deduplicatedQueryVariables.size)
-
-    val goalAtom = Atom.create(goalPredicate, deduplicatedQueryVariables.toArray: _*)
+      Atom.create(goalPredicate, deduplicatedQueryVariables.toArray: _*)
+    }
 
     // the rule to "join" all subquery results
     val subgoalBindingRule: TGD = {
@@ -316,31 +316,19 @@ case class GuardedRuleAndQueryRewriter(
           bvccRewriteResults.map(_.goalAtom)
 
       // ... to derive the final goal predicate
-      TGD.create(bodyAtoms, Array[Atom](goalAtom))
+      TGD.create(bodyAtoms, Array(goalAtom))
     }
 
-    val allDerivationRules =
+    val allGoalDerivationRules =
       bvccRewriteResults.flatMap(_.goalDerivationRules) :+ subgoalBindingRule
 
     DatalogRewriteResult(
       DatalogProgram.tryFromDependencies(saturatedRuleSet.saturatedRules),
-      DatalogProgram.tryFromDependencies(allDerivationRules),
+      DatalogProgram.tryFromDependencies(allGoalDerivationRules),
       goalAtom
     )
   }
 
   override def toString: String =
-    "GuardedRuleAndQueryRewriter{" + "saturation=" + saturation + ", subqueryEntailmentEnumeration=" + subqueryEntailmentEnumeration + '}'
-}
-
-object GuardedRuleAndQueryRewriter {
-
-  /**
-   * A result of rewriting a single maximally bound-variable-connected component of the input
-   * query.
-   */
-  private case class BoundVariableConnectedComponentRewriteResult(
-    goalAtom: Atom,
-    goalDerivationRules: Set[DatalogRule]
-  )
+    s"GuardedRuleAndQueryRewriter{saturation=$saturation, subqueryEntailmentEnumeration=$subqueryEntailmentEnumeration}"
 }

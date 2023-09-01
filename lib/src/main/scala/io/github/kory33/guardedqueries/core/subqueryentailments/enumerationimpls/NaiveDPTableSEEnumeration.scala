@@ -261,14 +261,14 @@ final class NaiveDPTableSEEnumeration(
       this.table.put(instance, false)
     }
 
-    def getKnownYesInstances: IterableOnce[SubqueryEntailmentInstance] =
+    def getKnownYesInstances: Iterable[SubqueryEntailmentInstance] =
       this.table.filter(_._2).keys
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
-  ): IterableOnce[SubqueryEntailmentInstance] = {
+  ): Iterable[SubqueryEntailmentInstance] = {
     val ruleConstants = saturatedRuleSet.constants
     val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
       saturatedRuleSet.allRules,

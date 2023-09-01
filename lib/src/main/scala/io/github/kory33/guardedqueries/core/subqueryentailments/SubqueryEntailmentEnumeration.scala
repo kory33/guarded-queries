@@ -61,5 +61,5 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[_ <: NormalGTGD],
             boundVariableConnectedQuery: ConjunctiveQuery
-  ): IterableOnce[SubqueryEntailmentInstance]
+  ): Iterable[SubqueryEntailmentInstance]
 }
