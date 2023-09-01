@@ -5,6 +5,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.collection.mutable.ArrayBuffer
@@ -31,12 +32,13 @@ class FilterNestedLoopJoin[TA: IncludesFolConstants]
         .view.mapValues(FormalInstance(_)).toMap
     }
 
-    val queryAtomsToMatches: Map[Atom, JoinResult[TA]] = query.getAtoms.map { atom =>
-      val relevantInstance: FormalInstance[TA] = relevantRelationsToInstancesMap
-        .getOrElse(atom.getPredicate, FormalInstance.empty)
+    val queryAtomsToMatches: Map[Atom, JoinResult[TA]] = query.getAtoms.toVector
+      .associate { atom =>
+        val relevantInstance: FormalInstance[TA] = relevantRelationsToInstancesMap
+          .getOrElse(atom.getPredicate, FormalInstance.empty)
 
-      atom -> SingleAtomMatching.allMatches(atom, relevantInstance)
-    }.toMap
+        SingleAtomMatching.allMatches(atom, relevantInstance)
+      }.toMap
 
     // we start joining from the outer
     val queryAtomsOrderedByMatchSizes: List[Atom] =

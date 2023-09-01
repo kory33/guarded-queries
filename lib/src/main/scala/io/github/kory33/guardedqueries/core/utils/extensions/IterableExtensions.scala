@@ -6,4 +6,8 @@ object IterableExtensions {
       def intersects[U >: T](set: Set[U]): Boolean = i.exists(set.contains)
 
       def disjointFrom[U >: T](set: Set[U]): Boolean = !i.intersects(set)
+
+      def associate[V](extractValue: T => V): Map[T, V] = i.map { x =>
+        (x, extractValue(x))
+      }.toMap
 }
