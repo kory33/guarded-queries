@@ -41,10 +41,10 @@ final class SimpleUnionFindTree[V](values: Set[V]) {
   def unionAll(values: Iterable[V]): Unit = unionAll(values.toList)
 
   def getEquivalenceClasses: Set[Set[V]] = {
-    val equivClasses = mutable.HashMap[V, mutable.HashSet[V]]()
-
-    for (representative <- this.representatives) {
-      equivClasses.put(representative, mutable.HashSet[V](representative))
+    val equivClasses = mutable.HashMap.from {
+      this.representatives.map { representatives =>
+        (representatives, mutable.HashSet[V](representatives))
+      }
     }
 
     for (nonRepresentative <- this.referenceTowardsRepresentative.keySet) {

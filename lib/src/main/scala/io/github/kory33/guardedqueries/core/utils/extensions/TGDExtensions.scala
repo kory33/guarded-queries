@@ -14,6 +14,11 @@ object TGDExtensions {
       def frontierVariables: Set[Variable] =
         tgd.getHead.getFreeVariables.toSet.intersect(tgd.getBody.getFreeVariables.toSet)
 
+      /**
+       * Regard the body of the TGD as a conjunctive query. This method is useful to search
+       * homomorphisms with which the TGD can be fired, since searching for such homomorphisms
+       * is equivalent to answering the body of the TGD regarded as a conjunctive query.
+       */
       def bodyAsCQ: ConjunctiveQuery =
         ConjunctiveQuery.create(tgd.getBody.getFreeVariables, tgd.getBodyAtoms)
 }

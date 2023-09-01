@@ -8,14 +8,14 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 /**
  * The interface to objects that can compute subquery entailment relations.
  *
- * An object conforming to this interface is able to produce a stream of
+ * An object conforming to this interface is able to produce an Iterable of
  * [[SubqueryEntailmentInstances]] when given a saturated rule set and a
  * bound-variable-connected query. Given a saturated rule set `S` and a bound-variable-connected
- * query `Q`, the stream produced by this object must satisfy the following three conditions:
- * <ol> <li> <b>Well-formedness of each item in the stream</b>
+ * query `Q`, the Iterable produced by this object must satisfy the following three conditions:
+ * <ol> <li> <b>Well-formedness of each item in the Iterable</b>
  *
  * If we write `k` for the maximum arity of predicates appearing in `S` and `Q`, each
- * [[SubqueryEntailmentInstance]] `i` in the stream must satisfy the following conditions: <ol>
+ * [[SubqueryEntailmentInstance]] `i` in the Iterable must satisfy the following conditions: <ol>
  * <li> `i.ruleConstantWitnessGuess()` is a map from variables in `Q` to constants appearing in
  * `S` </li> <li> `i.coexistentialVariables()` is a nonempty set of bound variables in `Q` that
  * is connected in `Q` but disjoint from `i.ruleConstantWitnessGuess().keySet()` </li> <li>
@@ -31,11 +31,11 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
  * are <ol> <li>active in `i.localInstance()` and</li> <li>not in the range of
  * `i.localWitnessGuess()`</li> </ol> </li> </ol> </li> <li> <b>Soundness</b>
  *
- * All [[SubqueryEntailmentInstance]]s in the output stream must represent an entailment
+ * All [[SubqueryEntailmentInstance]]s in the output Iterable must represent an entailment
  * relation between the associated local instance and the subquery of `Q` that is induced in a
  * particular way.
  *
- * To be more precise, if `i` is an [[SubqueryEntailmentInstance]] in the output stream, then it
+ * To be more precise, if `i` is an [[SubqueryEntailmentInstance]] in the output Iterable, then it
  * must be the case that the conjunction of <ul> <li> local instance `i.localInstance` regarded
  * as a conjunction of facts, except that local names appearing in the local instance are
  * considered as fresh constants </li> <li> rules `S` regarded as a conjunction of normal GTGDs
@@ -49,7 +49,7 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
  * <li> <b>Covering property</b>
  *
  * If we write `outInstances` for the set of all [[SubqueryEntailmentInstance]]s in the output
- * stream and `soundInstances` for the set of all sound [[SubqueryEntailmentInstance]]s, it may
+ * Iterable and `soundInstances` for the set of all sound [[SubqueryEntailmentInstance]]s, it may
  * be the case that `outInstances` is a proper subset of `soundInstances`.
  *
  * However, we require that `outInstances` must be sufficiently large so that `outInstances`

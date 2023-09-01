@@ -7,6 +7,8 @@ import scala.collection.IterableOnce
 import scala.util.boundary
 
 object FunctionSpaces {
+  // TODO: add docs and refactor the implementation
+  // TODO: is there a better structure than IterableOnce?
   def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] = {
     val orderedDomain = domain.toList
     val orderedRange = range.toList
@@ -20,10 +22,10 @@ object FunctionSpaces {
     class RangeIndexArray {
       final private[utils] val rangeElementIndices = new Array[Int](orderedDomain.size)
 
-      // if we have reached the end of the stream
+      // if we have reached the end of the iteration
       private var reachedEnd = range.isEmpty || domain.isEmpty
 
-      // if we have invoked toMap() after reaching the end of the stream
+      // if we have invoked toMap() after reaching the end of the iteration
       private var _alreadyEmittedLastMap = reachedEnd && domain.nonEmpty
 
       /**
@@ -68,9 +70,13 @@ object FunctionSpaces {
     })
   }
 
+  // TODO: add docs
+  // TODO: is there a better structure than IterableOnce?
   def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] =
     domain.powerset.flatMap(allTotalFunctionsBetween(_, range))
 
+  // TODO: add docs and refactor the implementation
+  // TODO: is there a better structure than IterableOnce?
   def allInjectiveTotalFunctionsBetween[K, V](
     domain: Set[K],
     range: Set[V]

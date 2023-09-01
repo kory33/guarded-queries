@@ -26,11 +26,11 @@ object ConjunctiveQueryExtensions {
 
         if (filteredAtoms.nonEmpty) {
           // variables in filteredAtoms that are free in the original conjunctiveQuery
-          val filteredFreeVariables = filteredAtoms
+          val filteredFreeVariables = filteredAtoms.toSet
             .flatMap(_.getVariables)
-            .filter(originalFreeVariables.contains)
+            .intersect(originalFreeVariables)
 
-          Some(ConjunctiveQuery.create(filteredFreeVariables, filteredAtoms))
+          Some(ConjunctiveQuery.create(filteredFreeVariables.toArray, filteredAtoms))
         } else {
           None
         }
@@ -62,7 +62,7 @@ object ConjunctiveQueryExtensions {
         conjunctiveQuery.filterAtoms(atom => {
           // variables in the atom that are bound in the CQ
           val atomBoundVariables = atom.getVariables.toSet.intersect(queryBoundVariables)
-          atomBoundVariables.subsetOf(variables) && atomBoundVariables.nonEmpty
+          atomBoundVariables.nonEmpty && atomBoundVariables.subsetOf(variables)
         })
       }
 
@@ -80,8 +80,9 @@ object ConjunctiveQueryExtensions {
         val queryBoundVariables = conjunctiveQuery.getBoundVariables.toSet
         conjunctiveQuery.filterAtoms(atom => {
           // variables in the atom that are bound in the CQ
-          val atomBoundVariables = atom.getVariables.toSet.intersect(queryBoundVariables)
-          atomBoundVariables.intersects(variables)
+          val atomBoundVariables = atom.getVariables.toSet intersect queryBoundVariables
+
+          atomBoundVariables intersects variables
         })
       }
 
@@ -99,24 +100,26 @@ object ConjunctiveQueryExtensions {
 
       /**
        * Given a conjunctive query `conjunctiveQuery` and a set `boundVariables` of variables
-       * bound in `conjunctiveQuery`, returns a stream of all `conjunctiveQuery`-connected
+       * bound in `conjunctiveQuery`, returns a set of all `conjunctiveQuery`-connected
        * components of `variables`.
        */
       def connectedComponentsOf(boundVariables: Set[Variable]): Set[Set[Variable]] = {
-        if (boundVariables.isEmpty) return Set()
+        if (boundVariables.nonEmpty) {
+          for (variable <- boundVariables) {
+            if (!conjunctiveQuery.getBoundVariables.contains(variable))
+              throw new IllegalArgumentException(
+                s"Variable $variable is not bound in the given CQ $conjunctiveQuery"
+              )
+          }
 
-        for (variable <- boundVariables) {
-          if (!conjunctiveQuery.getBoundVariables.contains(variable))
-            throw new IllegalArgumentException(
-              s"Variable $variable is not bound in the given CQ $conjunctiveQuery"
-            )
+          val unionFindTree = SimpleUnionFindTree(boundVariables)
+          for (atom <- conjunctiveQuery.getAtoms) {
+            unionFindTree.unionAll(atom.getVariables.toSet.intersect(boundVariables))
+          }
+          unionFindTree.getEquivalenceClasses
+        } else {
+          Set.empty
         }
-
-        val unionFindTree = SimpleUnionFindTree(boundVariables)
-        for (atom <- conjunctiveQuery.getAtoms) {
-          unionFindTree.unionAll(atom.getVariables.toSet.intersect(boundVariables))
-        }
-        unionFindTree.getEquivalenceClasses
       }
 
       /**

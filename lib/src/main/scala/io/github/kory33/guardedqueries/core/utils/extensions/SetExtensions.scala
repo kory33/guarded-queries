@@ -7,8 +7,9 @@ object SetExtensions {
   given Extension: AnyRef with
     extension [T](set: Set[T])
       /**
-       * Powerset of a set of elements from the given collection, lazily streamed.
+       * Powerset of a set of elements from the given collection, lazily iterated.
        */
+      // TODO: refactor this; is there a more appropriate data structure to return here?
       def powerset: Iterable[Set[T]] = {
         val orderedSet = set.toList
 
@@ -34,6 +35,7 @@ object SetExtensions {
        * contains all elements from the initial collection</li> <li>for every element `t` of
        * `S`, `generator.apply(t)` is contained in `S`</li> </ol>
        */
+      // TODO: refactor this; can we make the implementation more succinct?
       def generateFromElementsUntilFixpoint(generator: T => Set[T]): Set[T] = {
         val hashSet = mutable.HashSet.from(set)
         var elementsAddedInPreviousIteration = hashSet.toSet

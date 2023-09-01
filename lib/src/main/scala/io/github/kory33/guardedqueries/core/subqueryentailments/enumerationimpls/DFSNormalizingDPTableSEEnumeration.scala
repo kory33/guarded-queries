@@ -52,7 +52,7 @@ final class DFSNormalizingDPTableSEEnumeration(
     }
 
     /**
-     * Returns a stream of all children (in the shortcut chase tree) of the given saturated
+     * Returns a set of all children (in the shortcut chase tree) of the given saturated
      * instance
      */
     private def allNormalizedSaturatedChildrenOf(

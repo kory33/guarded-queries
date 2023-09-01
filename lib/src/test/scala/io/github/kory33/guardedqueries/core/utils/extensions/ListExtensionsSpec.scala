@@ -19,7 +19,7 @@ class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       val result =
         xs.indices.toList.productMappedIterablesToLists(index => (1 to xs(index)).toSet)
 
-      // as a special case, the empty collection should result in an iterable containing a single empty stack
+      // as a special case, the empty collection should result in an Iterable containing a single empty stack
       // but this actually conforms to the specification
       assert(result.size == xs.product)
     }

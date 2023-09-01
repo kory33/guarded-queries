@@ -13,6 +13,9 @@ object MapExtensions {
           .filterKeys(values.contains)
           .toMap
 
+      /**
+       * Restricts the domain of this map to the given set of keys.
+       */
       def restrictToKeys(keys: Set[K]): Map[K, V] =
         map.view.filterKeys(keys.contains).toMap
 }

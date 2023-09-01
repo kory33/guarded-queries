@@ -5,6 +5,8 @@ import scala.util.boundary
 object ListExtensions {
   given Extensions: AnyRef with
     extension [I](list: List[I])
+      // TODO: refactor this method:
+      //  - is it even appropriate to return an iterator? Is there a better lazy data structure?
       def productMappedIterablesToLists[R](
         /* pure */ mapperToIterable: I => Iterable[R]
       ): Iterator[List[R]] = {
