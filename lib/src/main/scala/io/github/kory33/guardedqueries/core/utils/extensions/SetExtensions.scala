@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
 import scala.annotation.tailrec
-import scala.collection.{View, mutable}
+import scala.collection.View
 
 object SetExtensions {
   given Extension: AnyRef with
@@ -10,7 +10,7 @@ object SetExtensions {
        * Powerset of a set of elements from the given collection, lazily iterated and not
        * memoized.
        */
-      def powerset: View[Set[T]] = {
+      def powerset: Iterable[Set[T]] = {
         val orderedSet = set.toList
 
         // every non-negative BigInteger less than this value represents a unique subset of the given collection
