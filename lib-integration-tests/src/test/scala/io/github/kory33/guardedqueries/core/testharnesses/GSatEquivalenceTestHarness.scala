@@ -53,7 +53,7 @@ object GSatEquivalenceTestHarness {
  * A test harness to compare the rewriting outputs of GSat and of our implementation on [[
  * GTGDRuleAndGTGDReducibleQuery]] instances.
  */
-case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[_ <: GTGD],
+case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[? <: GTGD],
                                       rewriterToBeTested: GuardedRuleAndQueryRewriter
 ) {
   private def minimizeRewriteResultAndLogIntermediateCounts(
