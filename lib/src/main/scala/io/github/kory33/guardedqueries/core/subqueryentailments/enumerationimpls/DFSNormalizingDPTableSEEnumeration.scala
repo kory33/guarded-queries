@@ -454,7 +454,7 @@ object DFSNormalizingDPTableSEEnumeration {
     }
 
     val allInstancesOverLocalNameSet = predicates.toList
-      .traverse(allLocalInstancesOverThePredicate)
+      .productAll(allLocalInstancesOverThePredicate)
       .map(FormalInstance.unionAll)
 
     allInstancesOverLocalNameSet.filter(instance =>
