@@ -1,6 +1,6 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import scala.collection.AbstractView
+import scala.collection.View
 
 object IterableExtensions {
   given Extension: AnyRef with
@@ -49,8 +49,6 @@ object IterableExtensions {
 
         val iterablesToProduct = iterable.toList.map(mapperToIterable(_))
 
-        new AbstractView[List[R]] {
-          override def iterator: Iterator[List[R]] = productRemaining(iterablesToProduct)
-        }
+        View.fromIteratorProvider(_ => productRemaining(iterablesToProduct))
       }
 }
