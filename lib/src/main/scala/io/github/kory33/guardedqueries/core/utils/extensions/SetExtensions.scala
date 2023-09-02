@@ -1,22 +1,23 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
 import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.collection.{View, mutable}
 
 object SetExtensions {
   given Extension: AnyRef with
     extension [T](set: Set[T])
       /**
-       * Powerset of a set of elements from the given collection, lazily iterated.
+       * Powerset of a set of elements from the given collection, lazily iterated and not
+       * memoized.
        */
-      // TODO: refactor this; is there a more appropriate data structure to return here?
       def powerset: Iterable[Set[T]] = {
         val orderedSet = set.toList
 
         // every non-negative BigInteger less than this value represents a unique subset of the given collection
         val upperLimit = BigInt(1) << set.size
 
-        Iterable.unfold(BigInt(0))((currentIndex: BigInt) => {
+        // View.unfold is backed by a lazy iterator (UnfoldIterator) and not memoized
+        View.unfold(BigInt(0))((currentIndex: BigInt) => {
           if (currentIndex < upperLimit) {
             val subset = (0 until set.size).filter(currentIndex.testBit).map(orderedSet(_))
             Some((subset.toSet, currentIndex + 1))
@@ -35,28 +36,33 @@ object SetExtensions {
        * contains all elements from the initial collection</li> <li>for every element `t` of
        * `S`, `generator.apply(t)` is contained in `S`</li> </ol>
        */
-      // TODO: refactor this; can we make the implementation more succinct?
       def generateFromElementsUntilFixpoint(generator: T => Set[T]): Set[T] = {
-        val hashSet = mutable.HashSet.from(set)
-        var elementsAddedInPreviousIteration = hashSet.toSet
-
-        while (elementsAddedInPreviousIteration.nonEmpty) {
-          val newlyGeneratedElements: Set[T] =
-            // assuming that the generator function is pure,
-            // it is only meaningful to generate new elements
-            // from elements that have been newly added to the set
-            // in the previous iteration
-            for {
-              newElementToConsider <- elementsAddedInPreviousIteration
+        @tailrec def recurse(
+          elementsGeneratedSoFar: Set[T],
+          elementsNewlyGeneratedInPreviousIteration: Set[T]
+        ): Set[T] = {
+          if (elementsNewlyGeneratedInPreviousIteration.isEmpty) {
+            // we have reached the least fixpoint above the input set
+            elementsGeneratedSoFar
+          } else {
+            val newlyGeneratedElements: Set[T] = for {
+              // assuming that the generator function is pure,
+              // it is only meaningful to generate new elements
+              // from elements that have been newly added to the set
+              // in the previous iteration
+              newElementToConsider <- elementsNewlyGeneratedInPreviousIteration
               generatedElement <- generator.apply(newElementToConsider)
-              if !hashSet.contains(generatedElement)
+              if !elementsGeneratedSoFar.contains(generatedElement)
             } yield generatedElement
 
-          hashSet ++= newlyGeneratedElements
-          elementsAddedInPreviousIteration = newlyGeneratedElements
+            recurse(
+              elementsGeneratedSoFar ++ newlyGeneratedElements,
+              newlyGeneratedElements
+            )
+          }
         }
 
-        hashSet.toSet
+        recurse(set, set)
       }
 
       /**
@@ -65,8 +71,8 @@ object SetExtensions {
        * collection of values of type `T`.
        *
        * More precisely, the returned set is the smallest set `S` such that <ol> <li>`S`
-       * contains all elements from the initial collection</li> <li>`generator.apply(S)` is
-       * contained in `S`</li> </ol>
+       * contains all elements from the initial collection</li> <li>`S union generator.apply(S)`
+       * equals `S`</li> </ol>
        */
       def generateFromSetUntilFixpoint(generator: Set[T] => Set[T]): Set[T] = {
         @tailrec def recurse(elementsGeneratedSoFar: Set[T]): Set[T] = {
