@@ -4,7 +4,7 @@ import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 
-import scala.collection.IterableOnce
+import scala.collection.View
 import scala.util.boundary
 
 object FunctionSpaces {
@@ -32,12 +32,14 @@ object FunctionSpaces {
   def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): Iterable[Map[K, V]] =
     domain.powerset.flatMap(allTotalFunctionsBetween(_, range))
 
-  // TODO: add docs and refactor the implementation
-  // TODO: is there a better structure than IterableOnce?
+  /**
+   * Returns an iterable of all injective total functions from domain to range.
+   */
+  // TODO: refactor the implementation if possible
   def allInjectiveTotalFunctionsBetween[K, V](
     domain: Set[K],
     range: Set[V]
-  ): IterableOnce[BijectiveMap[K, V]] = {
+  ): Iterable[BijectiveMap[K, V]] = {
     val orderedDomain = domain.toList
     val orderedRange = range.toList
     if (orderedDomain.size > range.size) return Set.empty
@@ -111,14 +113,16 @@ object FunctionSpaces {
       }.get
     }
 
-    Iterable.unfold(new RangeIndexArray)(indexArray => {
-      if (indexArray.hasReachedEndAndIncrementAttempted) {
-        None
-      } else {
-        val output = indexArray.toMap
-        indexArray.increment()
-        Some((output, indexArray))
-      }
-    })
+    View.fromIteratorProvider(() =>
+      Iterator.unfold(new RangeIndexArray)(indexArray => {
+        if (indexArray.hasReachedEndAndIncrementAttempted) {
+          None
+        } else {
+          val output = indexArray.toMap
+          indexArray.increment()
+          Some((output, indexArray))
+        }
+      })
+    )
   }
 }
