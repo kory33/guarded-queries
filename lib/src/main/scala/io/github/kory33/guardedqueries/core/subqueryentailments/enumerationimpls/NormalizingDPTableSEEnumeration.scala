@@ -369,7 +369,7 @@ object NormalizingDPTableSEEnumeration {
     }
 
     val allInstancesOverLocalNameSet = predicates.toList
-      .productMappedIterablesToLists(allLocalInstancesOverThePredicate)
+      .traverse(allLocalInstancesOverThePredicate)
       .map(FormalInstance.unionAll)
 
     allInstancesOverLocalNameSet.filter(instance =>

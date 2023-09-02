@@ -5,11 +5,20 @@ import scala.util.boundary
 object ListExtensions {
   given Extensions: AnyRef with
     extension [I](list: List[I])
-      // TODO: refactor this method:
-      //  - is it even appropriate to return an iterator? Is there a better lazy data structure?
-      def productMappedIterablesToLists[R](
-        /* pure */ mapperToIterable: I => Iterable[R]
-      ): Iterator[List[R]] = {
+      /**
+       * Returns an [[Iterable]] that traverses all possible combinations of elements in the
+       * list.
+       *
+       * Mathematically, one can think of this as the product of sets indexed by the list:
+       * `\prod_{i \in \mathrm{list}} \mathrm{mapperToIterable}(i)`.
+       *
+       * This is conceptually equivalent to the `traverse` function in Haskell
+       * (https://hackage.haskell.org/package/base-4.18.0.0/docs/Data-Traversable.html#v:traverse)
+       * or Cats
+       * (https://github.com/typelevel/cats/blob/f496e2503f53ff09a7757f9a39920f0276297d27/core/src/main/scala/cats/Traverse.scala#L40-L55)
+       */
+      // TODO: make this function return an Iterable[List[R]] instead of Iterator[List[R]]
+      def traverse[R](mapperToIterable: /* pure */ I => Iterable[R]): Iterator[List[R]] = {
         val iterablesToProduct = list.map(mapperToIterable(_))
         val freshIteratorAt = (index: Int) => iterablesToProduct(index).iterator
 
