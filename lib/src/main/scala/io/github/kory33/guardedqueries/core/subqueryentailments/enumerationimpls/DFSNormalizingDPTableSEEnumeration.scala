@@ -18,7 +18,6 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailme
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
-import io.github.kory33.guardedqueries.core.utils.extensions.ListExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given

@@ -5,8 +5,8 @@ import org.scalacheck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class ListExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  import ListExtensions.given
+class IterableExtensionsSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  import IterableExtensions.given
 
   val smallInt: Gen[Int] = Gen.chooseNum(0, 8)
   val smallListOfSmallInts: Gen[List[Int]] =
