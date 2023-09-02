@@ -2,77 +2,34 @@ package io.github.kory33.guardedqueries.core.utils
 
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 
 import scala.collection.IterableOnce
 import scala.util.boundary
 
 object FunctionSpaces {
-  // TODO: add docs and refactor the implementation
-  // TODO: is there a better structure than IterableOnce?
-  def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] = {
-    val orderedDomain = domain.toList
-    val orderedRange = range.toList
 
-    /*
-     * An internal state representing a mapping between domain and range.
-     *
-     * A value of this class is essentially an int array rangeElementIndices of length orderedDomain.size(),
-     * representing a mapping that sends orderedDomain.get(i) to orderedRange.get(rangeElementIndices[i]).
-     */
-    class RangeIndexArray {
-      final private[utils] val rangeElementIndices = new Array[Int](orderedDomain.size)
+  /**
+   * Returns an iterable of all total functions from domain to range.
+   */
+  def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): Iterable[Map[K, V]] = {
+    val orderedDomain = domain.toVector
+    val orderedRange = range.toVector
 
-      // if we have reached the end of the iteration
-      private var reachedEnd = range.isEmpty || domain.isEmpty
-
-      // if we have invoked toMap() after reaching the end of the iteration
-      private var _alreadyEmittedLastMap = reachedEnd && domain.nonEmpty
-
-      /**
-       * Increment index array. For example, if the array is [5, 4, 2] and range.size is 6, we
-       * increment the array to [0, 5, 2] (increment the leftmost index that is not at
-       * range.size \- 1, and clear all indices to the left). If all indices are at the maximum
-       * value, no indices are modified and false is returned.
-       */
-      private def increment(): Unit = boundary {
-        for (i <- rangeElementIndices.indices) {
-          if (rangeElementIndices(i) < range.size - 1) {
-            rangeElementIndices(i) += 1
-            for (j <- i - 1 to 0 by -1) { rangeElementIndices(j) = 0 }
-            boundary.break()
-          }
-        }
-        reachedEnd = true
-      }
-
-      def alreadyEmittedLastMap: Boolean = _alreadyEmittedLastMap
-
-      private def currentToMap: Map[K, V] =
-        rangeElementIndices.indices
-          .map(i => (orderedDomain(i), orderedRange(rangeElementIndices(i))))
+    orderedDomain.indices
+      .productAll(_ => orderedRange.indices)
+      .map((rangeValueIndices: List[Int]) =>
+        orderedDomain
+          .zip(rangeValueIndices)
+          .map((domainValue, rangeValueIndex) => (domainValue, orderedRange(rangeValueIndex)))
           .toMap
-
-      def currentToMapAndIncrement: Map[K, V] = {
-        val output = currentToMap
-        increment()
-        if (reachedEnd) _alreadyEmittedLastMap = true
-        output
-      }
-    }
-
-    Iterable.unfold(new RangeIndexArray)(indexArray => {
-      // FIXME: this mutates RangeIndexArray, which is a bit weird
-      if (indexArray.alreadyEmittedLastMap) {
-        None
-      } else {
-        Some((indexArray.currentToMapAndIncrement, indexArray))
-      }
-    })
+      )
   }
 
-  // TODO: add docs
-  // TODO: is there a better structure than IterableOnce?
-  def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): IterableOnce[Map[K, V]] =
+  /**
+   * Returns an iterable of all partial functions from domain to range.
+   */
+  def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): Iterable[Map[K, V]] =
     domain.powerset.flatMap(allTotalFunctionsBetween(_, range))
 
   // TODO: add docs and refactor the implementation
