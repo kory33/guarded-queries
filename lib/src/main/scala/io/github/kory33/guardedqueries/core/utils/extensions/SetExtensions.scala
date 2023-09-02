@@ -10,7 +10,7 @@ object SetExtensions {
        * Powerset of a set of elements from the given collection, lazily iterated and not
        * memoized.
        */
-      def powerset: Iterable[Set[T]] = {
+      def powerset: View[Set[T]] = {
         val orderedSet = set.toList
 
         // every non-negative BigInteger less than this value represents a unique subset of the given collection
