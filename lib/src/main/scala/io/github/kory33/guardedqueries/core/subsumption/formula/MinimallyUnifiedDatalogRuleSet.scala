@@ -33,22 +33,24 @@ import uk.ac.ox.cs.pdq.fol.Variable as PDQVariable
  */
 final class MinimallyUnifiedDatalogRuleSet
     extends IndexlessMaximallySubsumingTGDSet[DatalogRule] {
+  import VariableOrConstant.given
 
   override protected def firstRuleSubsumesSecond(
     first: DatalogRule,
     second: DatalogRule
   ): Boolean = {
-    FilterNestedLoopJoin[VariableOrConstant].join(
-      first.bodyAsCQ,
-      MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getBodyAtoms)
-    ).allHomomorphisms.exists(homomorphism => {
-      val substitutedFirstHead =
-        homomorphism.materializeFunctionFreeAtoms(first.getHeadAtoms.toSet)
-      val secondHead =
-        MinimallyUnifiedDatalogRuleSet.atomArrayIntoFormalInstance(second.getHeadAtoms)
+    val secondBodyInstance = second.getBodyAtoms.intoFormalInstanceOfVariableOrConstant
 
-      substitutedFirstHead.isSuperInstanceOf(secondHead)
-    })
+    FilterNestedLoopJoin[VariableOrConstant]
+      .join(first.bodyAsCQ, secondBodyInstance).allHomomorphisms
+      .exists(homomorphism => {
+        val substitutedFirstHead =
+          homomorphism.materializeFunctionFreeAtoms(first.getHeadAtoms.toSet)
+        val secondHead =
+          second.getHeadAtoms.intoFormalInstanceOfVariableOrConstant
+
+        substitutedFirstHead.isSuperInstanceOf(secondHead)
+      })
   }
 }
 
@@ -70,15 +72,15 @@ object MinimallyUnifiedDatalogRuleSet {
       override def includeConstant(constant: PDQConstant): VariableOrConstant =
         VariableOrConstant.Constant(constant)
     }
+
+    private[MinimallyUnifiedDatalogRuleSet] given AtomExtensions: AnyRef with {
+      extension (atom: Atom)
+        def intoFormalFactOfVariableOrConstant: FormalFact[VariableOrConstant] =
+          FormalFact(atom.getPredicate, atom.getTerms.map(VariableOrConstant.of).toList)
+
+      extension (atoms: Array[Atom])
+        def intoFormalInstanceOfVariableOrConstant: FormalInstance[VariableOrConstant] =
+          FormalInstance(atoms.map(_.intoFormalFactOfVariableOrConstant).toSet)
+    }
   }
-
-  private def atomIntoFormalFact(atom: Atom) =
-    FormalFact(
-      atom.getPredicate,
-      atom.getTerms.map(VariableOrConstant.of).toList
-    )
-
-  private def atomArrayIntoFormalInstance(atoms: Array[Atom]) = FormalInstance(
-    atoms.map(atomIntoFormalFact).toSet
-  )
 }
