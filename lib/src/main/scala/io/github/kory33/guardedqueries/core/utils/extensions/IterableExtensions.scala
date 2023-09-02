@@ -49,6 +49,6 @@ object IterableExtensions {
 
         val iterablesToProduct = iterable.toList.map(mapperToIterable(_))
 
-        View.fromIteratorProvider(_ => productRemaining(iterablesToProduct))
+        View.fromIteratorProvider(() => productRemaining(iterablesToProduct))
       }
 }
