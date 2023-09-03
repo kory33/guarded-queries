@@ -17,13 +17,8 @@ object FunctionSpaces {
     val orderedRange = range.toVector
 
     orderedDomain.indices
-      .productAll(_ => orderedRange.indices)
-      .map((rangeValueIndices: List[Int]) =>
-        orderedDomain
-          .zip(rangeValueIndices)
-          .map((domainValue, rangeValueIndex) => (domainValue, orderedRange(rangeValueIndex)))
-          .toMap
-      )
+      .productAll(_ => orderedRange)
+      .map((orderedRangeValues: List[V]) => orderedDomain.zip(orderedRangeValues).toMap)
   }
 
   /**
