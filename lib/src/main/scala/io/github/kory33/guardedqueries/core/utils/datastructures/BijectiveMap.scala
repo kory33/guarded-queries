@@ -19,6 +19,8 @@ class BijectiveMap[K, V] private /* unchecked constructor */ (
 
   def asMap: Map[K, V] = forwardMap
 
+  def values: Set[V] = inverseMap.keySet
+
   // We essentially delegate methods to `forwardMap` by defining `equals`, `hashCode`
   // and `toString` using `forwardMap`, and by providing a `Conversion`
   // from `BijectiveMap` to `Map` via `forwardMap`.

@@ -29,13 +29,12 @@ object SetExtensions {
       }
 
       /**
-       * Saturate a collection of elements of type `T` by repeatedly applying a generator
-       * function `generator` that generates a collection of elements of type `T` from values of
-       * type `T`.
+       * Saturate this set by repeatedly applying a generator function `generator` that
+       * generates a collection of elements of type `T` from values of type `T`.
        *
        * More precisely, the returned set is the smallest set `S` such that <ol> <li>`S`
-       * contains all elements from the initial collection</li> <li>for every element `t` of
-       * `S`, `generator.apply(t)` is contained in `S`</li> </ol>
+       * contains all elements from the initial set</li> <li>for every element `t` of `S`,
+       * `generator.apply(t)` is contained in `S`</li> </ol>
        */
       def generateFromElementsUntilFixpoint(generator: T => Set[T]): Set[T] = {
         @tailrec def recurse(
