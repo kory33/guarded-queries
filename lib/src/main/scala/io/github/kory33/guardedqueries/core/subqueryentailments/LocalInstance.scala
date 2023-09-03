@@ -12,6 +12,10 @@ enum LocalInstanceTerm:
   case LocalName(value: Int)
   case RuleConstant(constant: Constant)
 
+type LocalInstanceTermFact = FormalFact[LocalInstanceTerm]
+
+type LocalInstance = FormalInstance[LocalInstanceTerm]
+
 object LocalInstanceTerm {
   given Extensions: AnyRef with
     import LocalInstanceTerm.*
@@ -25,6 +29,10 @@ object LocalInstanceTerm {
         t match
           case name @ LocalName(_)    => mapper(name)
           case RuleConstant(constant) => constant
+
+    extension (localInstance: LocalInstance)
+      def activeLocalNames: Set[LocalInstanceTerm.LocalName] =
+        localInstance.getActiveTermsIn[LocalInstanceTerm.LocalName]
 
   def fromTermWithVariableMap(
     term: Term,
@@ -48,5 +56,3 @@ object LocalInstanceTermFact {
     LocalInstanceTerm.fromTermWithVariableMap(term, mapper)
   )
 }
-
-type LocalInstance = FormalInstance[LocalInstanceTerm]

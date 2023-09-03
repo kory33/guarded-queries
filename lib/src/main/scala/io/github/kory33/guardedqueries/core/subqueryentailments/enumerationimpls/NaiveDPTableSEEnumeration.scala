@@ -1,37 +1,30 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
-import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
-import io.github.kory33.guardedqueries.core.fol.NormalGTGD
-import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
-import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName.*
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant.*
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{
   LocalName,
   RuleConstant
 }
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant.*
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
-import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstance,
+  LocalInstanceTerm,
+  SubqueryEntailmentEnumeration,
+  SubqueryEntailmentInstance
+}
+import io.github.kory33.guardedqueries.core.utils.CachingFunction
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
+import io.github.kory33.guardedqueries.core.utils.extensions.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
-import io.github.kory33.guardedqueries.core.utils.extensions.*
-import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Predicate
-
-import scala.collection.mutable
-import scala.util.boundary
+import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Constant, Predicate, Variable}
 
 /**
  * An implementation of subquery entailment enumeration using a DP table.
@@ -39,21 +32,19 @@ import scala.util.boundary
 final class NaiveDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
-  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
-                              private val extensionalSignature: FunctionFreeSignature,
-                              private val maxArityOfAllPredicatesUsedInRules: Int,
-                              private val connectedConjunctiveQuery: ConjunctiveQuery
-  ) {
+  private def isSubqueryEntailmentCached(
+    extensionalSignature: FunctionFreeSignature,
+    saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
+    connectedConjunctiveQuery: ConjunctiveQuery
+  ): CachingFunction[SubqueryEntailmentInstance, Boolean] = {
+    val maxArityOfAllPredicatesUsedInRules =
+      FunctionFreeSignature
+        .encompassingRuleQuery(saturatedRuleSet.allRules, connectedConjunctiveQuery)
+        .maxArity
 
-    final private val table = mutable.HashMap[SubqueryEntailmentInstance, Boolean]()
-
-    private def isYesInstance(instance: SubqueryEntailmentInstance) = {
-      if (!this.table.contains(instance)) fillTableUpto(instance)
-      this.table(instance)
-    }
-
-    private def chaseLocalInstance(localInstance: LocalInstance,
-                                   namesToBePreservedDuringChase: Set[LocalName]
+    // TODO: refactor this method!
+    def chaseLocalInstance(localInstance: LocalInstance,
+                           namesToBePreservedDuringChase: Set[LocalName]
     ): Set[LocalInstance] = {
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
       val shortcutChaseOneStep = (instance: LocalInstance) => {
@@ -131,10 +122,12 @@ final class NaiveDPTableSEEnumeration(
                     // we only need to keep chasing with extensional signature
                     Set(childInstance.restrictToSignature(extensionalSignature))
                   }
+
                   foo(substitutedHead)
                 }
               )
             }
+
             foo(existentialRule)
           }
 
@@ -154,136 +147,63 @@ final class NaiveDPTableSEEnumeration(
       )).generateFromElementsUntilFixpoint(shortcutChaseOneStep)
     }
 
-    /**
-     * Fill the DP table up to the given instance.
-     */
-    def fillTableUpto(instance: SubqueryEntailmentInstance): Unit = boundary { returnMethod ?=>
+    // We now define the three-way mutual recursion among isSubqueryEntailment, splitsAtInstance and splitsAtInstanceWith.
+    // We use lazy val to allow a forward reference of splitsAtInstance from isSubqueryEntailment.
+    lazy val isSubqueryEntailment = CachingFunction { (instance: SubqueryEntailmentInstance) =>
       // The subquery for which we are trying to decide the entailment problem.
-      // If the instance is well-formed, the variable set is non-empty and connected,
-      // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
-      // noinspection OptionalGetWithoutIsPresent
-      val relevantSubquery = connectedConjunctiveQuery.subqueryRelevantToVariables(
-        instance.coexistentialVariables
-      ).get
+      given relevantSubquery: ConjunctiveQuery = {
+        // If the instance is well-formed, the variable set is non-empty and connected,
+        // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
+        connectedConjunctiveQuery
+          .subqueryRelevantToVariables(instance.coexistentialVariables)
+          .get
+      }
 
-      val instancesWithGuessedVariablesPreserved = chaseLocalInstance(
+      chaseLocalInstance(
         instance.localInstance,
         // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
         instance.localWitnessGuess.values.toSet ++
           instance.queryConstantEmbedding.asMap.values
-      )
-
-      for (chasedInstance <- instancesWithGuessedVariablesPreserved) {
-        val localWitnessGuessExtensions = allPartialFunctionsBetween(
-          instance.coexistentialVariables,
-          chasedInstance.getActiveTermsIn[LocalName]
-        )
-
-        for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
-          boundary: continueInnerLoop ?=>
-            if (localWitnessGuessExtension.isEmpty) {
-              // we do not allow "empty split"; whenever we split (i.e. make some progress
-              // in the chase automaton), we must pick a nonempty set of coexistential variables
-              // to map to local names in the chased instance.
-              boundary.break()(using continueInnerLoop)
-            }
-
-            val newlyCoveredVariables = localWitnessGuessExtension.keySet
-            val extendedLocalWitnessGuess =
-              instance.localWitnessGuess.toMap ++ localWitnessGuessExtension
-
-            val newlyCoveredAtomsOccurInChasedInstance = {
-              val extendedGuess =
-                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms
-
-              val newlyCoveredAtoms = relevantSubquery.getAtoms.filter((atom: Atom) => {
-                val atomVariables = atom.getVariables.toSet
-                val allVariablesAreCovered = atomVariables.subsetOf(extendedGuess.keySet)
-
-                // we no longer care about the part of the query
-                // which entirely lies in the neighborhood of coexistential variables
-                // of the instance
-                val someVariableIsNewlyCovered =
-                  atomVariables.intersects(newlyCoveredVariables)
-
-                allVariablesAreCovered && someVariableIsNewlyCovered
-              })
-
-              newlyCoveredAtoms.map((atom: Atom) =>
-                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.apply)
-              ).forall(chasedInstance.containsFact)
-            }
-
-            if (!newlyCoveredAtomsOccurInChasedInstance)
-              boundary.break()(using continueInnerLoop)
-
-            val allSplitInstancesAreYesInstances = {
-              val splitCoexistentialVariables = relevantSubquery.connectedComponentsOf(
-                instance.coexistentialVariables -- newlyCoveredVariables
-              )
-
-              splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
-                val newNeighbourhood = relevantSubquery
-                  .strictNeighbourhoodOf(
-                    splitCoexistentialVariablesComponent
-                  ) -- instance.ruleConstantWitnessGuess.keySet
-
-                // For the same reason as .get() call in the beginning of the method,
-                // this .get() call succeeds.
-                // noinspection OptionalGetWithoutIsPresent
-                val newRelevantSubquery =
-                  relevantSubquery.subqueryRelevantToVariables(
-                    splitCoexistentialVariablesComponent
-                  ).get
-
-                val inducedInstance = SubqueryEntailmentInstance(
-                  instance.ruleConstantWitnessGuess,
-                  splitCoexistentialVariablesComponent,
-                  chasedInstance,
-                  extendedLocalWitnessGuess.restrictToKeys(newNeighbourhood),
-                  instance.queryConstantEmbedding.restrictToKeys(
-                    newRelevantSubquery.allConstants
-                  )
-                )
-                isYesInstance(inducedInstance)
-
-              })
-            }
-
-            if (allSplitInstancesAreYesInstances) {
-              this.table.put(instance, true)
-              boundary.break()(using returnMethod)
-            }
-        }
-      }
-
-      // all instances chased from the original instance fail to fulfill the subquery
-      // strongly induced by instance.coexistentialVariables(), so we mark the original instance false.
-      this.table.put(instance, false)
+      ).exists(chasedInstance => splitsAtInstance(instance.withLocalInstance(chasedInstance)))
     }
 
-    def getKnownYesInstances: Iterable[SubqueryEntailmentInstance] =
-      this.table.filter(_._2).keys
+    def splitsAtInstance(
+      instance: SubqueryEntailmentInstance
+    )(using relevantSubquery: ConjunctiveQuery): Boolean = {
+      allPartialFunctionsBetween(
+        instance.coexistentialVariables,
+        instance.localInstance.activeLocalNames
+      )
+        .filter(_.nonEmpty) // we require commit maps to be nonempty
+        .exists(splitsAtInstanceWith(instance, _))
+    }
+
+    def splitsAtInstanceWith(
+      entailmentInstance: SubqueryEntailmentInstance,
+      commitMap: Map[Variable, LocalName]
+    )(using relevantSubquery: ConjunctiveQuery): Boolean = {
+      val splitInstances = entailmentInstance.splitIntoSubInstances(commitMap)
+
+      def baseSatisfied =
+        splitInstances.newlyCommittedPart
+          .forall(entailmentInstance.localInstance.containsFact)
+
+      def allComponentsSatisfied =
+        splitInstances.subInstances
+          .forall(isSubqueryEntailment)
+
+      baseSatisfied && allComponentsSatisfied
+    }
+
+    isSubqueryEntailment
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance] = {
-    val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules,
-      connectedConjunctiveQuery
-    ).maxArity
-
-    val dpTable = new DPTable(
-      saturatedRuleSet,
-      extensionalSignature,
-      maxArityOfAllPredicatesUsedInRules,
-      connectedConjunctiveQuery
-    )
-
     // NOTE:
     //   This algorithm is massively inefficient as-is.
     //   Here are a few optimization points that we could further explore:
@@ -331,16 +251,25 @@ final class NaiveDPTableSEEnumeration(
     //       - true, which is subsumed by some other instance already marked as true
     //    - keeping track of only "maximally subsuming true instances" and "minimally subsuming false instances"
     //    - efficiently matching a problem instance to other subsuming instances using indexing techniques
-    NaiveDPTableSEEnumeration.allWellFormedSubqueryEntailmentInstances(
+    val isSubqueryEntailment = isSubqueryEntailmentCached(
       extensionalSignature,
-      saturatedRuleSet.constants,
+      saturatedRuleSet,
       connectedConjunctiveQuery
-    ).foreach(dpTable.fillTableUpto)
+    )
 
-    dpTable.getKnownYesInstances
+    for {
+      subqueryEntailmentInstance <-
+        NaiveDPTableSEEnumeration.allWellFormedSubqueryEntailmentInstances(
+          extensionalSignature,
+          saturatedRuleSet.constants,
+          connectedConjunctiveQuery
+        )
+      if isSubqueryEntailment(subqueryEntailmentInstance)
+    } yield subqueryEntailmentInstance
   }
+
   override def toString: String =
-    "NaiveDPTableSEEnumeration{" + "datalogSaturationEngine=" + datalogSaturationEngine + '}'
+    s"NaiveDPTableSEEnumeration{datalogSaturationEngine=$datalogSaturationEngine}"
 }
 
 object NaiveDPTableSEEnumeration {
