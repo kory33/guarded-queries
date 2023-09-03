@@ -2,6 +2,7 @@ package io.github.kory33.guardedqueries.core.utils.extensions
 
 import scala.annotation.tailrec
 import scala.collection.View
+import IterableExtensions.given
 
 object SetExtensions {
   given Extension: AnyRef with
@@ -89,4 +90,15 @@ object SetExtensions {
       }
 
       def widen[U >: T]: Set[U] = set.map(t => t)
+
+      /**
+       * Returns the [[Iterable]] that enumerates all sequences (with length `n`) of elements
+       * from this set.
+       */
+      def naturalPowerTo(n: Int): Iterable[List[T]] = (0 until n).productAll(_ => set)
+
+      /**
+       * Union of all elements in this set, where each element is an iterable.
+       */
+      def unionAll[U](using ev: T <:< Iterable[U]): Set[U] = set.flatMap(ev(_))
 }
