@@ -12,7 +12,7 @@ object FunctionSpaces {
   /**
    * Returns an iterable of all total functions from domain to range.
    */
-  def allTotalFunctionsBetween[K, V](domain: Set[K], range: Set[V]): Iterable[Map[K, V]] = {
+  def allFunctionsBetween[K, V](domain: Set[K], range: Set[V]): Iterable[Map[K, V]] = {
     val orderedDomain = domain.toVector
     val orderedRange = range.toVector
 
@@ -25,12 +25,12 @@ object FunctionSpaces {
    * Returns an iterable of all partial functions from domain to range.
    */
   def allPartialFunctionsBetween[K, V](domain: Set[K], range: Set[V]): Iterable[Map[K, V]] =
-    domain.powerset.flatMap(allTotalFunctionsBetween(_, range))
+    domain.powerset.flatMap(allFunctionsBetween(_, range))
 
   /**
    * Returns an iterable of all injective total functions from domain to range.
    */
-  def allInjectiveTotalFunctionsBetween[K, V](
+  def allInjectionsBetween[K, V](
     domain: Set[K],
     range: Set[V]
   ): Iterable[BijectiveMap[K, V]] = {

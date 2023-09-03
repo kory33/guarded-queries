@@ -22,7 +22,7 @@ class FunctionSpacesSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       val domain = setOfSize(domainSize)
       val codomain = setOfSize(codomainSize)
 
-      val allFunctions = FunctionSpaces.allTotalFunctionsBetween(domain, codomain)
+      val allFunctions = FunctionSpaces.allFunctionsBetween(domain, codomain)
 
       assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
     }
@@ -31,7 +31,7 @@ class FunctionSpacesSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
   ".allTotalFunctionsBetween" should "enumerate |codomain|^|domain| functions" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val allFunctions = FunctionSpaces
-        .allTotalFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
+        .allFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
 
       assert(allFunctions.size == {
         if (codomainSize == 0 && domainSize == 0)
@@ -69,20 +69,20 @@ class FunctionSpacesSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
       val domain = setOfSize(domainSize)
       val codomain = setOfSize(codomainSize)
 
-      val allFunctions = FunctionSpaces.allInjectiveTotalFunctionsBetween(domain, codomain)
+      val allFunctions = FunctionSpaces.allInjectionsBetween(domain, codomain)
 
-      assert(allFunctions.forall(respectsDomainAndCodomain(_, domain, codomain)))
+      assert(allFunctions.forall(i => respectsDomainAndCodomain(i.asMap, domain, codomain)))
     }
   }
 
   ".allInjectiveTotalFunctionsBetween" should "enumerate all injections" in {
     forAll(smallSetSize, smallSetSize) { (domainSize: Int, codomainSize: Int) =>
       val enumeratedInjectiveTotalFunctions = FunctionSpaces
-        .allInjectiveTotalFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
+        .allInjectionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
         .toSet
 
       val allTotalFunctions = FunctionSpaces
-        .allTotalFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
+        .allFunctionsBetween(setOfSize(domainSize), setOfSize(codomainSize))
         .toSet
 
       val allInjectiveTotalFunctions = allTotalFunctions

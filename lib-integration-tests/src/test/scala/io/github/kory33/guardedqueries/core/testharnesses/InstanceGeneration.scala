@@ -14,7 +14,7 @@ object InstanceGeneration {
   ): FormalInstance[Constant] = {
     val predicateArgIndices = 0 until predicate.getArity
 
-    val allFormalFacts = FunctionSpaces.allTotalFunctionsBetween(
+    val allFormalFacts = FunctionSpaces.allFunctionsBetween(
       predicateArgIndices.toSet,
       constantsToUse
     ).map(mapping =>

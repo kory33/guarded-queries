@@ -366,7 +366,7 @@ object NaiveDPTableSEEnumeration {
           val predicateParameterIndices = (0 until predicate.getArity).toSet
 
           val allFormalFactsOverThePredicate =
-            allTotalFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(
+            allFunctionsBetween(predicateParameterIndices, allLocalInstanceTerms).map(
               parameterMap => {
                 val parameterList = (0 until predicate.getArity).map(parameterMap.apply)
                 FormalFact[LocalInstanceTerm](predicate, parameterList.toList)
@@ -418,7 +418,7 @@ object NaiveDPTableSEEnumeration {
                   coexistentialVariables
                 ) -- ruleConstantWitnessGuess.keySet
 
-              val allLocalWitnessGuesses = allTotalFunctionsBetween(
+              val allLocalWitnessGuesses = allFunctionsBetween(
                 nonConstantNeighbourhood,
                 localInstance.getActiveTermsIn[LocalName]
               )
@@ -429,7 +429,7 @@ object NaiveDPTableSEEnumeration {
                 val nonWitnessingActiveLocalNames =
                   localInstance.getActiveTermsIn[LocalName] -- localWitnessGuess.values
 
-                val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
+                val allQueryConstantEmbeddings = allInjectionsBetween(
                   subqueryConstants,
                   nonWitnessingActiveLocalNames
                 )

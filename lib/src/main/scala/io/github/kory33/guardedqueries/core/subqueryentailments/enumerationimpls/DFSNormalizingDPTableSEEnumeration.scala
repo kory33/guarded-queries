@@ -444,7 +444,7 @@ object DFSNormalizingDPTableSEEnumeration {
       val allFormalFactsOverThePredicate =
         val parameterIndices = 0 until predicate.getArity
 
-        allTotalFunctionsBetween(parameterIndices.toSet, allLocalInstanceTerms)
+        allFunctionsBetween(parameterIndices.toSet, allLocalInstanceTerms)
           .map(parameterMap =>
             FormalFact(predicate, parameterIndices.map(parameterMap.apply).toList)
           ).toSet
@@ -492,7 +492,7 @@ object DFSNormalizingDPTableSEEnumeration {
                   coexistentialVariables
                 ) -- ruleConstantWitnessGuess.keySet
 
-              val allLocalWitnessGuesses = allTotalFunctionsBetween(
+              val allLocalWitnessGuesses = allFunctionsBetween(
                 nonConstantNeighbourhood,
                 localInstance.getActiveTermsIn[LocalName].filter(localName =>
                   localName.value < nonConstantNeighbourhood.size
@@ -506,7 +506,7 @@ object DFSNormalizingDPTableSEEnumeration {
                   localInstance.getActiveTermsIn[LocalName] --
                     localWitnessGuess.values
 
-                val allQueryConstantEmbeddings = allInjectiveTotalFunctionsBetween(
+                val allQueryConstantEmbeddings = allInjectionsBetween(
                   subqueryConstants,
                   nonWitnessingActiveLocalNames
                 )
