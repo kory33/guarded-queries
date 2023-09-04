@@ -117,10 +117,7 @@ final class NormalizingDPTableSEEnumeration(
 
       // we keep chasing from the saturated input instance until we reach a fixpoint
       val saturatedInputInstance = datalogSaturationEngine
-        .saturateInstance(
-          saturatedRuleSet.saturatedRulesAsDatalogProgram,
-          localInstance
-        )
+        .saturateInstance(datalogSaturation, localInstance)
       Set(saturatedInputInstance).generateFromElementsUntilFixpoint(shortcutChaseOneStep)
     }
 
