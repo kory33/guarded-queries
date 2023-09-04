@@ -317,12 +317,9 @@ object NormalizingDPTableSEEnumeration {
   /**
    * Checks whether the given set of local names is of a form {0, ..., n - 1} for some n.
    */
-  private def isZeroStartingContiguousLocalNameSet(localNames: Set[LocalName]) = {
-    var firstElementAfterZeroNotContainedInSet = 0
-    while (localNames.contains(LocalName(firstElementAfterZeroNotContainedInSet)))
-      firstElementAfterZeroNotContainedInSet += 1
-    firstElementAfterZeroNotContainedInSet == localNames.size
-  }
+  private def isZeroStartingContiguousLocalNameSet(localNames: Set[LocalName]) =
+    (0 until localNames.size)
+      .forall { name => localNames.contains(LocalName(name)) }
 
   private def allNormalizedLocalInstances(extensionalSignature: FunctionFreeSignature,
                                           ruleConstants: Set[Constant]
