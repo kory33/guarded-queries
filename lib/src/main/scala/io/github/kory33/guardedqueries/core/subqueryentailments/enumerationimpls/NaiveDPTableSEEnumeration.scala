@@ -61,7 +61,7 @@ final class NaiveDPTableSEEnumeration(
         // We can first find all possible homomorphisms from the body of
         // the existential rule to the instance by a join algorithm,
         // and then filter out those that do not preserve the names.
-        val allChasesWithRule = (existentialRule: NormalGTGD) => {
+        val allChildrenWithRule = (existentialRule: NormalGTGD) => {
           // A set of existential variables in the existential rule
           val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
@@ -105,7 +105,7 @@ final class NaiveDPTableSEEnumeration(
             })
         }
 
-        saturatedRuleSet.existentialRules.flatMap(allChasesWithRule)
+        saturatedRuleSet.existentialRules.flatMap(allChildrenWithRule)
       }
 
       // we keep chasing from the saturated input instance until we reach a fixpoint
