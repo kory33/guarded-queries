@@ -97,6 +97,11 @@ object SetExtensions {
       def naturalPowerTo(n: Int): Iterable[List[T]] = (0 until n).productAll(_ => set)
 
       /**
+       * Tests if this set is a subset of the given set.
+       */
+      def subsetOfSupertypeSet[U >: T](other: Set[U]): Boolean = set.widen[U].subsetOf(other)
+
+      /**
        * Union of all elements in this set, where each element is an iterable.
        */
       def unionAll[U](using ev: T <:< Iterable[U]): Set[U] = set.flatMap(ev(_))

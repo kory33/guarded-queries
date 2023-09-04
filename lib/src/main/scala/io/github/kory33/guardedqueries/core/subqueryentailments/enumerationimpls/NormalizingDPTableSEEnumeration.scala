@@ -68,39 +68,20 @@ final class NormalizingDPTableSEEnumeration(
 
           FilterNestedLoopJoin[LocalInstanceTerm]
             .join(existentialRule.bodyAsCQ, instance)
-            .allHomomorphisms.flatMap { bodyHomomorphism =>
+            .allHomomorphisms
+            .associate { bodyHomomorphism =>
               // The set of local names that are inherited from the parent instance
               // to the child instance.
-              val inheritedLocalNames =
-                existentialRule.frontierVariables.map(bodyHomomorphism(_))
-
-              // Names we can reuse (i.e. assign to existential variables in the rule)
-              // in the child instance. All names in this set should be considered distinct
-              // from the names in the parent instance having the same value, so we
-              // are explicitly ignoring the "implicit equality coding" semantics here.
-              val namesToReuseInChild = (0 until maxArityOfAllPredicatesUsedInRules)
-                .map(LocalName(_))
-                .toSet.removedAll(inheritedLocalNames)
-                .toVector
-
-              val extendedHomomorphism =
-                bodyHomomorphism.extendWithMap(
-                  existentialVariables.zip(namesToReuseInChild).toMap
-                )
-
-              // The instance containing only the head atom produced by the existential rule.
-              // This should be a singleton instance because the existential rule is normal.
-              val headInstance = FormalInstance.of(
-                extendedHomomorphism.materializeFunctionFreeAtom(
-                  existentialRule.getHeadAtoms.head
-                )
-              )
-
-              if (
-                namesToBePreservedDuringChase.widen[LocalInstanceTerm].subsetOf(
-                  inheritedLocalNames
-                )
-              ) {
+              existentialRule.frontierVariables.map(bodyHomomorphism)
+            }
+            .filter { (_, inheritedLocalNames) =>
+              // we accept a homomorphism only if names are preserved
+              namesToBePreservedDuringChase subsetOfSupertypeSet inheritedLocalNames
+            }
+            .map { (bodyHomomorphism, inheritedLocalNames) =>
+              // The child instance, which is the saturation of the union of
+              // the set of inherited facts and the head instance.
+              val childInstance = {
                 // The set of facts in the parent instance that are
                 // "guarded" by the head of the existential rule.
                 // Those are precisely the facts that have its local names
@@ -110,22 +91,32 @@ final class NormalizingDPTableSEEnumeration(
                   term.isConstantOrSatisfies(inheritedLocalNames.contains)
                 )
 
-                // The child instance, which is the saturation of the union of
-                // the set of inherited facts and the head instance.
-                val childInstance =
-                  datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
-                    datalogSaturation,
-                    // because the parent is saturated, a restriction of it to the alphabet
-                    // occurring in the child is also saturated.
-                    inheritedFactsInstance,
-                    headInstance
-                  )
+                val materializedHead = {
+                  // Names we can reuse (i.e. assign to existential variables in the rule)
+                  // in the child instance. All names in this set should be considered distinct
+                  // from the names in the parent instance having the same value, so we
+                  // are explicitly ignoring the "implicit equality coding" semantics here.
+                  val namesToReuseInChild = (0 until maxArityOfAllPredicatesUsedInRules)
+                    .map(LocalName(_))
+                    .toSet.removedAll(inheritedLocalNames)
+                    .toVector
 
-                // we only need to keep chasing with extensional signature
-                Some(childInstance.restrictToSignature(extensionalSignature))
-              } else {
-                None
+                  bodyHomomorphism
+                    .extendWithMap(existentialVariables.zip(namesToReuseInChild).toMap)
+                    .materializeFunctionFreeAtom(existentialRule.getHeadAtoms.head)
+                }
+
+                datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                  datalogSaturation,
+                  // because the parent is saturated, a restriction of it to the alphabet
+                  // occurring in the child is also saturated.
+                  inheritedFactsInstance,
+                  FormalInstance.of(materializedHead)
+                )
               }
+
+              // we only need to keep chasing with extensional signature
+              childInstance.restrictToSignature(extensionalSignature)
             }
         }
 
