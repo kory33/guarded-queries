@@ -2,8 +2,8 @@ package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpl
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
-import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
+import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{LocalName, RuleConstant}
 import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstance, LocalInstanceTerm, SubqueryEntailmentEnumeration, SubqueryEntailmentInstance}
@@ -254,7 +254,7 @@ object NormalizingDPTableSEEnumeration {
     extensionalSignature: FunctionFreeSignature,
     ruleConstants: Set[Constant],
     conjunctiveQuery: ConjunctiveQuery
-  ) = {
+  ): Iterable[SubqueryEntailmentInstance] = {
     val queryVariables = conjunctiveQuery.allVariables
     val queryExistentialVariables = conjunctiveQuery.getBoundVariables.toSet
 

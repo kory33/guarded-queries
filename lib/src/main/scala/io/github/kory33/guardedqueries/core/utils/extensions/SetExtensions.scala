@@ -1,8 +1,9 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
+import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
+
 import scala.annotation.tailrec
 import scala.collection.View
-import IterableExtensions.given
 
 object SetExtensions {
   given Extension: AnyRef with
@@ -88,7 +89,7 @@ object SetExtensions {
         recurse(set)
       }
 
-      def widen[U >: T]: Set[U] = set.map(t => t)
+      private def widen[U >: T]: Set[U] = set.map(t => t)
 
       /**
        * Returns the [[Iterable]] that enumerates all sequences (with length `n`) of elements
