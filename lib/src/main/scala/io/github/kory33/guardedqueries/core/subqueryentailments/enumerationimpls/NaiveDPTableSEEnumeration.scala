@@ -250,13 +250,12 @@ object NaiveDPTableSEEnumeration {
     // over the extensional signature, we only need to consider subsets of
     // {0, ..., 2 * extensionalSignature.maxArity - 1} with size
     // at most extensionalSignature.maxArity.
-    val allActiveLocalTermSets = (0 until extensionalSignature.maxArity * 2)
+    val allActiveLocalNameSets = (0 until extensionalSignature.maxArity * 2).map(LocalName(_))
       .toSet
       .powerset
       .filter(_.size <= extensionalSignature.maxArity)
-      .map(localNames => localNames.map(LocalName(_)))
 
-    allActiveLocalTermSets.flatMap(localNames => {
+    allActiveLocalNameSets.flatMap(localNames => {
       val allLocalInstanceTerms = localNames ++ ruleConstants.map(RuleConstant(_))
 
       val allFormalFactsOverPredicate = (predicate: Predicate) =>
