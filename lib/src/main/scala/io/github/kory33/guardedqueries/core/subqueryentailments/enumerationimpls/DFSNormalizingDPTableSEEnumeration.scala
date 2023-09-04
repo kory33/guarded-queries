@@ -2,7 +2,6 @@ package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpl
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
-import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
@@ -12,13 +11,11 @@ import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
-import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
-import uk.ac.ox.cs.pdq.fol.{Atom, ConjunctiveQuery, Variable}
+import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Variable}
 
 import scala.collection.mutable
-import scala.util.boundary
 
 /**
  * An implementation of subquery entailment enumeration using a DP table together with efficient
@@ -27,25 +24,20 @@ import scala.util.boundary
 final class DFSNormalizingDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
+  private def isSubqueryEntailmentCached(
+    extensionalSignature: FunctionFreeSignature,
+    saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
+    connectedConjunctiveQuery: ConjunctiveQuery
+  ): SubqueryEntailmentInstance => Boolean = {
+    val maxArityOfAllPredicatesUsedInRules =
+      FunctionFreeSignature
+        .encompassingRuleQuery(saturatedRuleSet.allRules, connectedConjunctiveQuery)
+        .maxArity
 
-  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
-                              private val extensionalSignature: FunctionFreeSignature,
-                              private val maxArityOfAllPredicatesUsedInRules: Int,
-                              private val connectedConjunctiveQuery: ConjunctiveQuery
-  ) {
-    final private val table = mutable.HashMap[SubqueryEntailmentInstance, Boolean]()
-    private def isYesInstance(instance: SubqueryEntailmentInstance) = {
-      fillTableUpto(instance)
-      this.table(instance)
-    }
+    val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
 
-    /**
-     * Returns a set of all children (in the shortcut chase tree) of the given saturated
-     * instance
-     */
-    private def allNormalizedSaturatedChildrenOf(
-      saturatedInstance: LocalInstance,
-      namesToBePreserved: Set[LocalName]
+    def saturatedNormalizedChildrenOf(saturatedInstance: LocalInstance,
+                                      namesToBePreservedDuringChase: Set[LocalName]
     ): Set[LocalInstance] = {
       // We need to chase the instance with all existential rules
       // while preserving all names in namesToBePreservedDuringChase.
@@ -63,56 +55,26 @@ final class DFSNormalizingDPTableSEEnumeration(
       // about the identity of local names at all, we can ignore the
       // "direct equivalence" semantics for implicitly-equality-coded
       // tree codes).
-      val allChasesWithRule = (existentialRule: NormalGTGD) => {
-        def foo(existentialRule: NormalGTGD): List[LocalInstance] = {
-          val headAtom = existentialRule.getHeadAtoms()(0)
-          // A set of existential variables in the existential rule
-          val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
-          val bodyJoinResult =
-            FilterNestedLoopJoin[LocalInstanceTerm].join(
-              existentialRule.bodyAsCQ,
-              saturatedInstance
-            )
+      val allNormalizedChildrenWithRule = (existentialRule: NormalGTGD) => {
+        // A set of existential variables in the existential rule
+        val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
-          // because we are "reusing" local names, we can no longer
-          // uniformly extend homomorphisms to existential variables
-          // (i.e. local names to which existential variables are mapped depend on
-          //  how frontier variables are mapped to local names, as those are the
-          //  local names that get inherited to the child instance)
-          bodyJoinResult.allHomomorphisms.flatMap(bodyHomomorphism => {
-            def foo(bodyHomomorphism: HomomorphicMapping[LocalInstanceTerm])
-              : IterableOnce[LocalInstance] = {
-              // The set of local names that are inherited from the parent instance
-              // to the child instance.
-              val inheritedLocalNames =
-                existentialRule.frontierVariables.map(bodyHomomorphism.apply)
-
-              // Names we can reuse (i.e. assign to existential variables in the rule)
-              // in the child instance. All names in this set should be considered distinct
-              // from the names in the parent instance having the same value, so we
-              // are explicitly ignoring the "implicit equality coding" semantics here.
-              val namesToReuseInChild =
-                (0 until maxArityOfAllPredicatesUsedInRules).map(LocalName.apply)
-                  .toSet.removedAll(inheritedLocalNames)
-                  .toList
-
-              val headVariableHomomorphism =
-                existentialVariables
-                  .zipWithIndex
-                  .map { (variable, index) => (variable, namesToReuseInChild(index)) }
-                  .toMap
-
-              val extendedHomomorphism =
-                bodyHomomorphism.extendWithMap(headVariableHomomorphism)
-                // The instance containing only the head atom produced by the existential rule.
-                // This should be a singleton instance because the existential rule is normal.
-              val headInstance =
-                FormalInstance.of(extendedHomomorphism.materializeFunctionFreeAtom(headAtom))
-
-              // if names are not preserved, we reject this homomorphism
-              if (!namesToBePreserved.widen[LocalInstanceTerm].subsetOf(inheritedLocalNames))
-                return Set.empty
-
+        FilterNestedLoopJoin[LocalInstanceTerm]
+          .join(existentialRule.bodyAsCQ, saturatedInstance)
+          .allHomomorphisms
+          .associate { bodyHomomorphism =>
+            // The set of local names that are inherited from the parent instance
+            // to the child instance.
+            existentialRule.frontierVariables.map(bodyHomomorphism)
+          }
+          .filter { (_, inheritedLocalNames) =>
+            // we accept a homomorphism only if names are preserved
+            namesToBePreservedDuringChase subsetOfSupertypeSet inheritedLocalNames
+          }
+          .map { (bodyHomomorphism, inheritedLocalNames) =>
+            // The child instance, which is the saturation of the union of
+            // the set of inherited facts and the head instance.
+            val childInstance = {
               // The set of facts in the parent instance that are
               // "guarded" by the head of the existential rule.
               // Those are precisely the facts that have its local names
@@ -122,268 +84,170 @@ final class DFSNormalizingDPTableSEEnumeration(
                 term.isConstantOrSatisfies(inheritedLocalNames.contains)
               )
 
-              // The child instance, which is the saturation of the union of
-              // the set of inherited facts and the head instance.
-              val childInstance =
-                datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
-                  saturatedRuleSet.saturatedRulesAsDatalogProgram,
-                  // because the parent is saturated, a restriction of it to the alphabet
-                  // occurring in the child is also saturated.
-                  inheritedFactsInstance,
-                  headInstance
-                )
+              val materializedHead = {
+                // Names we can reuse (i.e. assign to existential variables in the rule)
+                // in the child instance. All names in this set should be considered distinct
+                // from the names in the parent instance having the same value, so we
+                // are explicitly ignoring the "implicit equality coding" semantics here.
+                val namesToReuseInChild = (0 until maxArityOfAllPredicatesUsedInRules)
+                  .map(LocalName(_))
+                  .toSet.removedAll(inheritedLocalNames)
+                  .toVector
 
-              // we only need to keep chasing with extensional signature
-              Set(childInstance.restrictToSignature(extensionalSignature))
+                bodyHomomorphism
+                  .extendWithMap(existentialVariables.zip(namesToReuseInChild).toMap)
+                  .materializeFunctionFreeAtom(existentialRule.getHeadAtoms.head)
+              }
+
+              datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                datalogSaturation,
+                // because the parent is saturated, a restriction of it to the alphabet
+                // occurring in the child is also saturated.
+                inheritedFactsInstance,
+                FormalInstance.of(materializedHead)
+              )
             }
-            foo(bodyHomomorphism)
-          })
-        }
-        foo(existentialRule)
+
+            // we only need to keep chasing with extensional signature
+            childInstance.restrictToSignature(extensionalSignature)
+          }
       }
-      saturatedRuleSet.existentialRules.flatMap(allChasesWithRule.apply)
+
+      saturatedRuleSet.existentialRules.flatMap(allNormalizedChildrenWithRule)
     }
 
-    /**
-     * Check if the given instance (whose relevant subquery is given) can be split into YES
-     * instances without chasing further.
-     *
-     * @param relevantSubquery
-     *   this must equal
-     *   `connectedConjunctiveQuery.subqueryRelevantToVariables(instance.coexistentialVariables).get()`
-     */
-    private def canBeSplitIntoYesInstancesWithoutChasing(relevantSubquery: ConjunctiveQuery,
-                                                         instance: SubqueryEntailmentInstance
-    ): Boolean = boundary { returnMethod ?=>
-      val localWitnessGuessExtensions = allPartialFunctionsBetween(
-        instance.coexistentialVariables,
-        instance.localInstance.getActiveTermsIn[LocalName]
-      )
+    // The cache acting as a DP table.
+    val subqueryEntailmentMemoization =
+      mutable.HashMap.empty[SubqueryEntailmentInstance, Boolean]
 
-      for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
-        boundary: continueInnerLoop ?=>
-          if (localWitnessGuessExtension.isEmpty) {
-            // we do not allow "empty split"; whenever we split (i.e. make some progress
-            // in the chase automaton), we must pick a nonempty set of coexistential variables
-            // to map to local names in the chased instance.
-            boundary.break()(using continueInnerLoop)
-          }
+    enum SubqueryEntailmentRecursionResult:
+      case Entailed
+      case NotEntailed
+      case AlreadyVisitedAndUnknown
+    import SubqueryEntailmentRecursionResult.*
 
-          val newlyCoveredVariables = localWitnessGuessExtension.keySet
-          val extendedLocalWitnessGuess =
-            instance.localWitnessGuess.toMap ++ localWitnessGuessExtension
+    extension (b: Boolean)
+      private def asSubqueryEntailmentRecursionResult: SubqueryEntailmentRecursionResult =
+        if b then SubqueryEntailmentRecursionResult.Entailed
+        else SubqueryEntailmentRecursionResult.NotEntailed
 
-          val newlyCoveredAtomsOccurInChasedInstance = {
-            val extendedGuess =
-              extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms
+    // We now define the three-way mutual recursion among isSubqueryEntailment, splitsAtInstance and splitsAtInstanceWith.
+    def isSubqueryEntailment(inputInstance: SubqueryEntailmentInstance): Boolean = {
+      def performDFSOnChase(
+        instance: SubqueryEntailmentInstance,
+        isLocalInstanceSaturatedAPriori: Boolean,
+        localInstancesSeenInThisRecursion: mutable.Set[LocalInstance]
+      ): SubqueryEntailmentRecursionResult = {
+        if (subqueryEntailmentMemoization.contains(instance)) {
+          subqueryEntailmentMemoization(instance).asSubqueryEntailmentRecursionResult
+        } else if (!localInstancesSeenInThisRecursion.contains(instance.localInstance)) {
+          val result: Boolean = {
+            if (!isLocalInstanceSaturatedAPriori) {
+              val saturatedInstance = instance.withLocalInstance {
+                datalogSaturationEngine.saturateInstance(
+                  datalogSaturation,
+                  instance.localInstance
+                )
+              }
 
-            val newlyCoveredAtoms =
-              relevantSubquery.getAtoms.filter((atom: Atom) => {
-                val atomVariables = atom.getVariables.toSet
-                val allVariablesAreCovered = atomVariables.subsetOf(extendedGuess.keySet)
-
-                // we no longer care about the part of the query
-                // which entirely lies in the neighborhood of coexistential variables
-                // of the instance
-                val someVariableIsNewlyCovered =
-                  atomVariables.intersects(newlyCoveredVariables)
-
-                allVariablesAreCovered && someVariableIsNewlyCovered
-              })
-
-            newlyCoveredAtoms
-              .map(atom =>
-                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.apply)
-              )
-              .forall(instance.localInstance.containsFact)
-          }
-
-          if (!newlyCoveredAtomsOccurInChasedInstance) boundary.break()(using continueInnerLoop)
-
-          val allSplitInstancesAreYesInstances = {
-            val splitCoexistentialVariables =
-              relevantSubquery.connectedComponentsOf(
-                instance.coexistentialVariables -- newlyCoveredVariables
-              )
-
-            splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
-              val newNeighbourhood =
-                relevantSubquery.strictNeighbourhoodOf(
-                  splitCoexistentialVariablesComponent
-                ) -- instance.ruleConstantWitnessGuess.keySet
-
-              // For the same reason as .get() call in the beginning of the method,
-              // this .get() call succeeds.
-              // noinspection OptionalGetWithoutIsPresent
-              val newRelevantSubquery =
-                relevantSubquery
-                  .subqueryRelevantToVariables(splitCoexistentialVariablesComponent)
+              performDFSOnChase(
+                saturatedInstance,
+                true,
+                localInstancesSeenInThisRecursion
+              ) == Entailed
+            } else {
+              // The subquery for which we are trying to decide the entailment problem.
+              given relevantSubquery: ConjunctiveQuery = {
+                // If the instance is well-formed, the variable set is non-empty and connected,
+                // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
+                connectedConjunctiveQuery
+                  .subqueryRelevantToVariables(instance.coexistentialVariables)
                   .get
+              }
 
-              val inducedInstance = SubqueryEntailmentInstance(
-                instance.ruleConstantWitnessGuess,
-                splitCoexistentialVariablesComponent,
-                instance.localInstance,
-                extendedLocalWitnessGuess.restrictToKeys(newNeighbourhood),
-                instance.queryConstantEmbedding.restrictToKeys(newRelevantSubquery.allConstants)
-              )
+              localInstancesSeenInThisRecursion.add(instance.localInstance)
 
-              isYesInstance(inducedInstance)
-            })
+              // `instance` is a subquery entailment if and only if `instance` could be a committing point
+              // or one of its children is a subquery entailment. By making a recursive call to isSubqueryEntailment
+              // with a child instance, we are essentially performing a DFS traversal of the shortcut chase tree.
+              splitsAtInstance(instance) || {
+                saturatedNormalizedChildrenOf(
+                  instance.localInstance,
+                  // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
+                  // because they are treated as special symbols corresponding to variables and query constants
+                  // occurring in the subquery.
+                  instance.localWitnessGuess.values.toSet ++ instance.queryConstantEmbedding.values
+                ).exists(saturatedNormalizedChild =>
+                  performDFSOnChase(
+                    instance.withLocalInstance(saturatedNormalizedChild),
+                    true,
+                    localInstancesSeenInThisRecursion
+                  ) == Entailed
+                )
+              }
+            }
           }
 
-          if (allSplitInstancesAreYesInstances) boundary.break(true)(using returnMethod)
+          subqueryEntailmentMemoization.put(instance, result)
+          result.asSubqueryEntailmentRecursionResult
+        } else {
+          // We have already seen this local instance in this recursion,
+          // so we need to answer "we don't know" to avoid infinite recursion.
+          AlreadyVisitedAndUnknown
+        }
       }
 
-      // We tried all possible splits, and none of them worked.
-      false
+      performDFSOnChase(inputInstance, false, mutable.HashSet.empty) == Entailed
     }
 
-    /**
-     * Fill the DP table up to the given instance by chasing local instance when necessary.
-     */
-    def fillTableUpto(instance: SubqueryEntailmentInstance): Unit = {
-      if (this.table.contains(instance)) return
-      val saturatedInstance =
-        instance.withLocalInstance(datalogSaturationEngine.saturateInstance(
-          saturatedRuleSet.saturatedRulesAsDatalogProgram,
-          instance.localInstance
-        ))
-      if (this.table.contains(saturatedInstance)) return
-
-      // The subquery for which we are trying to decide the entailment problem.
-      // If the instance is well-formed, the variable set is non-empty and connected,
-      // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
-      // noinspection OptionalGetWithoutIsPresent
-      val relevantSubquery = connectedConjunctiveQuery
-        .subqueryRelevantToVariables(saturatedInstance.coexistentialVariables)
-        .get
-
-      // Check if the root instance can be split
-      if (canBeSplitIntoYesInstancesWithoutChasing(relevantSubquery, saturatedInstance)) {
-        // we do not need to chase further
-        this.table.put(saturatedInstance, true)
-        return
-      }
-      // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
-      // because they are treated as special symbols corresponding to variables and query constants
-      // occurring in the subquery.
-      val localNamesToPreserveDuringChase =
-        saturatedInstance.localWitnessGuess.values.toSet ++ saturatedInstance.queryConstantEmbedding.asMap.values
-
-      // Chasing procedure:
-      //   We hold a pair of (parent instance, children iterator) to the stack
-      //   and perform a DFS. The children iterator is used to lazily visit
-      //   the children of the parent instance. When we have found a YES instance,
-      //   we mark all ancestors of the instance as YES. If we exhaust the children
-      //   at any one node, we mark the node as NO and move back to the parent.
-      //   Every time we chase, we add the chased local instance to localInstancesAlreadySeen
-      //   to prevent ourselves from chasing the same instance twice.
-      var stack = List[(SubqueryEntailmentInstance, Iterator[LocalInstance])]()
-      val localInstancesAlreadySeen = mutable.HashSet[LocalInstance]()
-
-      // We begin DFS with the root saturated instance.
-      stack ::= ((
-        saturatedInstance,
-        allNormalizedSaturatedChildrenOf(
-          saturatedInstance.localInstance,
-          localNamesToPreserveDuringChase
-        ).iterator
-      ))
-      localInstancesAlreadySeen.add(saturatedInstance.localInstance)
-
-      while (stack.nonEmpty) {
-        import scala.util.boundary
-
-        boundary:
-          val (nextInstance, nextChildrenIterator) = stack.head
-          if (!nextChildrenIterator.hasNext) {
-            // if we have exhausted the children, we mark the current instance as NO
-            stack = stack.tail
-            this.table.put(nextInstance, false)
-            boundary.break()
-          }
-
-          // next instance that we wish to decide the entailment problem for
-          val nextChasedInstance = nextChildrenIterator.next
-
-          // if we have already seen this instance, we do not need to test for entailment
-          // (we already know that it is a NO instance)
-          if (localInstancesAlreadySeen.contains(nextChasedInstance)) boundary.break()
-          else localInstancesAlreadySeen.add(nextChasedInstance)
-
-          val chasedSubqueryEntailmentInstance =
-            saturatedInstance.withLocalInstance(nextChasedInstance)
-
-          val weAlreadyVisitedNextInstance =
-            this.table.contains(chasedSubqueryEntailmentInstance)
-
-          // if this is an instance we have already seen, we do not need to chase any further
-          if (weAlreadyVisitedNextInstance && !this.table(chasedSubqueryEntailmentInstance)) {
-            // otherwise we proceed to the next sibling, so continue without modifying the stack
-            boundary.break()
-          }
-
-          // If we know that the next instance is a YES instance,
-          // or we can split the current instance into YES instances without chasing,
-          // we mark all ancestors of the current instance as YES and exit
-          if (
-            (weAlreadyVisitedNextInstance && this.table(
-              chasedSubqueryEntailmentInstance
-            )) || canBeSplitIntoYesInstancesWithoutChasing(
-              relevantSubquery,
-              chasedSubqueryEntailmentInstance
-            )
-          ) {
-            stack.foreach((ancestor, _) => this.table.put(ancestor, true))
-            // we also put the original (unsaturated) instance into the table
-            this.table.put(instance, true)
-            return
-          }
-
-          // It turned out that we cannot split the current instance into YES instances.
-          // At this point, we need to chase further down the shortcut chase tree.
-          // So we push the chased instance onto the stack and keep on.
-          stack ::= ((
-            chasedSubqueryEntailmentInstance,
-            allNormalizedSaturatedChildrenOf(
-              nextChasedInstance,
-              localNamesToPreserveDuringChase
-            ).iterator
-          ))
-      }
-      // At this point, we have marked the saturated root instance as NO (since we emptied the stack
-      // and every time we pop an instance from the stack, we marked that instance as NO).
-      // Finally, we mark the original (unsaturated) instance as NO as well.
-      this.table.put(instance, false)
+    def splitsAtInstance(
+      instance: SubqueryEntailmentInstance
+    )(using relevantSubquery: ConjunctiveQuery): Boolean = {
+      allPartialFunctionsBetween(
+        instance.coexistentialVariables,
+        instance.localInstance.activeLocalNames
+      )
+        .filter(_.nonEmpty) // we require commit maps to be nonempty
+        .exists(splitsAtInstanceWith(instance, _))
     }
 
-    def getKnownYesInstances: Iterable[SubqueryEntailmentInstance] =
-      this.table.filter(_._2).keys
+    def splitsAtInstanceWith(
+      entailmentInstance: SubqueryEntailmentInstance,
+      commitMap: Map[Variable, LocalName]
+    )(using relevantSubquery: ConjunctiveQuery): Boolean = {
+      val splitInstances = entailmentInstance.splitIntoSubInstances(commitMap)
+
+      def baseSatisfied =
+        splitInstances.newlyCommittedPart.forall(entailmentInstance.localInstance.containsFact)
+
+      def allComponentsSatisfied =
+        splitInstances.subInstances.forall(isSubqueryEntailment)
+
+      baseSatisfied && allComponentsSatisfied
+    }
+
+    isSubqueryEntailment
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance] = {
-    val ruleConstants = saturatedRuleSet.constants
-    val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules,
-      connectedConjunctiveQuery
-    ).maxArity
-    val dpTable = new DPTable(
-      saturatedRuleSet,
+    val isSubqueryEntailment = isSubqueryEntailmentCached(
       extensionalSignature,
-      maxArityOfAllPredicatesUsedInRules,
+      saturatedRuleSet,
       connectedConjunctiveQuery
     )
 
-    NormalizingDPTableSEEnumeration.allWellFormedNormalizedSubqueryEntailmentInstances(
-      extensionalSignature,
-      ruleConstants,
-      connectedConjunctiveQuery
-    ).foreach(dpTable.fillTableUpto.apply)
-    dpTable.getKnownYesInstances
+    for {
+      subqueryEntailmentInstance <-
+        NormalizingDPTableSEEnumeration.allWellFormedNormalizedSubqueryEntailmentInstances(
+          extensionalSignature,
+          saturatedRuleSet.constants,
+          connectedConjunctiveQuery
+        )
+      if isSubqueryEntailment(subqueryEntailmentInstance)
+    } yield subqueryEntailmentInstance
   }
 
   override def toString: String =
