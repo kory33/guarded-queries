@@ -14,6 +14,7 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTer
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTermFact
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
 import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
+import io.github.kory33.guardedqueries.core.utils.CachingFunction
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
@@ -37,279 +38,193 @@ import scala.util.boundary
 final class NormalizingDPTableSEEnumeration(
   private val datalogSaturationEngine: DatalogSaturationEngine
 ) extends SubqueryEntailmentEnumeration {
-  final private class DPTable(private val saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
-                              private val extensionalSignature: FunctionFreeSignature,
-                              private val maxArityOfAllPredicatesUsedInRules: Int,
-                              private val connectedConjunctiveQuery: ConjunctiveQuery
-  ) {
-    final private val table = mutable.HashMap[SubqueryEntailmentInstance, Boolean]()
+  private def isSubqueryEntailmentCached(
+    extensionalSignature: FunctionFreeSignature,
+    saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
+    connectedConjunctiveQuery: ConjunctiveQuery
+  ): CachingFunction[SubqueryEntailmentInstance, Boolean] = {
+    val maxArityOfAllPredicatesUsedInRules =
+      FunctionFreeSignature
+        .encompassingRuleQuery(saturatedRuleSet.allRules, connectedConjunctiveQuery)
+        .maxArity
 
-    private def isYesInstance(instance: SubqueryEntailmentInstance) = {
-      if (!this.table.contains(instance)) fillTableUpto(instance)
-      this.table(instance)
-    }
-
-    private def chaseLocalInstance(localInstance: LocalInstance,
-                                   namesToBePreservedDuringChase: Set[LocalName]
+    def chaseNormalizedLocalInstance(localInstance: LocalInstance,
+                                     namesToBePreservedDuringChase: Set[LocalName]
     ): Set[LocalInstance] = {
       val datalogSaturation = saturatedRuleSet.saturatedRulesAsDatalogProgram
       val shortcutChaseOneStep = (instance: LocalInstance) => {
-        def foo(instance: LocalInstance): Set[LocalInstance] = {
-          // We need to chase the instance with all existential rules
-          // while preserving all names in namesToBePreservedDuringChase.
-          //
-          // A name is preserved by a chase step if and only if
-          // it appears in the substituted head of the existential rule.
-          //
-          // We can first find all possible homomorphisms from the body of
-          // the existential rule to the instance by a join algorithm,
-          // and then filter out those that do not preserve the names.
-          //
-          // NORMALIZATION: unlike in NaiveDPTableSEEnumeration,
-          // when we apply an existential rule, we "reuse" local names below
-          // maxArityOfAllPredicatesUsedInRules (since we don't care
-          // about the identity of local names at all, we can ignore the
-          // "direct equivalence" semantics for implicitly-equality-coded
-          // tree codes).
-          val allChasesWithRule = (existentialRule: NormalGTGD) => {
-            def foo(existentialRule: NormalGTGD): List[LocalInstance] = {
-              val headAtom = existentialRule.getHeadAtoms()(0)
+        // We need to chase the instance with all existential rules
+        // while preserving all names in namesToBePreservedDuringChase.
+        //
+        // A name is preserved by a chase step if and only if
+        // it appears in the substituted head of the existential rule.
+        //
+        // We can first find all possible homomorphisms from the body of
+        // the existential rule to the instance by a join algorithm,
+        // and then filter out those that do not preserve the names.
+        //
+        // NORMALIZATION: unlike in NaiveDPTableSEEnumeration,
+        // when we apply an existential rule, we "reuse" local names below
+        // maxArityOfAllPredicatesUsedInRules (since we don't care
+        // about the identity of local names at all, we can ignore the
+        // "direct equivalence" semantics for implicitly-equality-coded
+        // tree codes).
+        val allNormalizedChildrenWithRule = (existentialRule: NormalGTGD) => {
+          // A set of existential variables in the existential rule
+          val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
-              // A set of existential variables in the existential rule
-              val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
+          FilterNestedLoopJoin[LocalInstanceTerm]
+            .join(existentialRule.bodyAsCQ, instance)
+            .allHomomorphisms.flatMap { bodyHomomorphism =>
+              // The set of local names that are inherited from the parent instance
+              // to the child instance.
+              val inheritedLocalNames =
+                existentialRule.frontierVariables.map(bodyHomomorphism(_))
 
-              val bodyJoinResult = FilterNestedLoopJoin[LocalInstanceTerm]
-                .join(existentialRule.bodyAsCQ, instance)
+              // Names we can reuse (i.e. assign to existential variables in the rule)
+              // in the child instance. All names in this set should be considered distinct
+              // from the names in the parent instance having the same value, so we
+              // are explicitly ignoring the "implicit equality coding" semantics here.
+              val namesToReuseInChild = (0 until maxArityOfAllPredicatesUsedInRules)
+                .map(LocalName(_))
+                .toSet.removedAll(inheritedLocalNames)
+                .toVector
 
-              // because we are "reusing" local names, we can no longer
-              // uniformly extend homomorphisms to existential variables
-              // (i.e. local names to which existential variables are mapped depend on
-              //  how frontier variables are mapped to local names, as those are the
-              //  local names that get inherited to the child instance)
-              bodyJoinResult.allHomomorphisms.flatMap(bodyHomomorphism => {
-                def foo(bodyHomomorphism: HomomorphicMapping[LocalInstanceTerm])
-                  : IterableOnce[LocalInstance] = {
+              val extendedHomomorphism =
+                bodyHomomorphism.extendWithMap(
+                  existentialVariables.zip(namesToReuseInChild).toMap
+                )
 
-                  // The set of local names that are inherited from the parent instance
-                  // to the child instance.
-                  val inheritedLocalNames =
-                    existentialRule.frontierVariables.map(bodyHomomorphism.apply)
+              // The instance containing only the head atom produced by the existential rule.
+              // This should be a singleton instance because the existential rule is normal.
+              val headInstance = FormalInstance.of(
+                extendedHomomorphism.materializeFunctionFreeAtom(
+                  existentialRule.getHeadAtoms.head
+                )
+              )
 
-                  // Names we can reuse (i.e. assign to existential variables in the rule)
-                  // in the child instance. All names in this set should be considered distinct
-                  // from the names in the parent instance having the same value, so we
-                  // are explicitly ignoring the "implicit equality coding" semantics here.
-                  val namesToReuseInChild =
-                    (0 until maxArityOfAllPredicatesUsedInRules).map(LocalName.apply)
-                      .toSet.removedAll(inheritedLocalNames)
-                      .toVector
+              if (
+                namesToBePreservedDuringChase.widen[LocalInstanceTerm].subsetOf(
+                  inheritedLocalNames
+                )
+              ) {
+                // The set of facts in the parent instance that are
+                // "guarded" by the head of the existential rule.
+                // Those are precisely the facts that have its local names
+                // appearing in the head of the existential rule
+                // as a homomorphic image of a frontier variable in the rule.
+                val inheritedFactsInstance = instance.restrictToAlphabetsWith(term =>
+                  term.isConstantOrSatisfies(inheritedLocalNames.contains)
+                )
 
-                  val headVariableHomomorphism =
-                    existentialVariables
-                      .zipWithIndex
-                      .map { (variable, index) => (variable, namesToReuseInChild(index)) }
-                      .toMap
-
-                  val extendedHomomorphism =
-                    bodyHomomorphism.extendWithMap(headVariableHomomorphism)
-
-                  // The instance containing only the head atom produced by the existential rule.
-                  // This should be a singleton instance because the existential rule is normal.
-                  val headInstance = FormalInstance.of(
-                    extendedHomomorphism.materializeFunctionFreeAtom(headAtom)
+                // The child instance, which is the saturation of the union of
+                // the set of inherited facts and the head instance.
+                val childInstance =
+                  datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
+                    datalogSaturation,
+                    // because the parent is saturated, a restriction of it to the alphabet
+                    // occurring in the child is also saturated.
+                    inheritedFactsInstance,
+                    headInstance
                   )
 
-                  // if names are not preserved, we reject this homomorphism
-                  if (
-                    !namesToBePreservedDuringChase
-                      .widen[LocalInstanceTerm]
-                      .subsetOf(inheritedLocalNames)
-                  )
-                    return Set.empty
-
-                  // The set of facts in the parent instance that are
-                  // "guarded" by the head of the existential rule.
-                  // Those are precisely the facts that have its local names
-                  // appearing in the head of the existential rule
-                  // as a homomorphic image of a frontier variable in the rule.
-                  val inheritedFactsInstance = instance.restrictToAlphabetsWith(term =>
-                    term.isConstantOrSatisfies(inheritedLocalNames.contains)
-                  )
-
-                  // The child instance, which is the saturation of the union of
-                  // the set of inherited facts and the head instance.
-                  val childInstance =
-                    datalogSaturationEngine.saturateUnionOfSaturatedAndUnsaturatedInstance(
-                      datalogSaturation,
-                      // because the parent is saturated, a restriction of it to the alphabet
-                      // occurring in the child is also saturated.
-                      inheritedFactsInstance,
-                      headInstance
-                    )
-
-                  // we only need to keep chasing with extensional signature
-                  Set(childInstance.restrictToSignature(extensionalSignature))
-                }
-                foo(bodyHomomorphism)
-              })
+                // we only need to keep chasing with extensional signature
+                Some(childInstance.restrictToSignature(extensionalSignature))
+              } else {
+                None
+              }
             }
-            foo(existentialRule)
-          }
-
-          val children = saturatedRuleSet.existentialRules.flatMap(allChasesWithRule.apply)
-          children
         }
 
-        foo(instance)
+        saturatedRuleSet.existentialRules.flatMap(allNormalizedChildrenWithRule)
       }
 
-      // we keep chasing until we reach a fixpoint
-      Set(datalogSaturationEngine.saturateInstance(
-        datalogSaturation,
-        localInstance
-      )).generateFromElementsUntilFixpoint(shortcutChaseOneStep.apply)
+      // we keep chasing from the saturated input instance until we reach a fixpoint
+      val saturatedInputInstance = datalogSaturationEngine
+        .saturateInstance(
+          saturatedRuleSet.saturatedRulesAsDatalogProgram,
+          localInstance
+        )
+      Set(saturatedInputInstance).generateFromElementsUntilFixpoint(shortcutChaseOneStep)
     }
 
-    /**
-     * Fill the DP table up to the given instance.
-     */
-    def fillTableUpto(instance: SubqueryEntailmentInstance): Unit = boundary { returnMethod ?=>
-      // The subquery for which we are trying to decide the entailment problem.
-      // If the instance is well-formed, the variable set is non-empty and connected,
-      // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
-      // noinspection OptionalGetWithoutIsPresent
-      val relevantSubquery = connectedConjunctiveQuery.subqueryRelevantToVariables(
-        instance.coexistentialVariables
-      ).get
+    // The rest of this function is exactly the same as that of NaiveDPTableSEEnumeration.
 
-      val instancesWithGuessedVariablesPreserved = chaseLocalInstance(
+    // We now define the three-way mutual recursion among isSubqueryEntailment, splitsAtInstance and splitsAtInstanceWith.
+    // We use lazy val to allow a forward reference of splitsAtInstance from isSubqueryEntailment.
+    lazy val isSubqueryEntailment = CachingFunction { (instance: SubqueryEntailmentInstance) =>
+      // The subquery for which we are trying to decide the entailment problem.
+      given relevantSubquery: ConjunctiveQuery = {
+        // If the instance is well-formed, the variable set is non-empty and connected,
+        // so the set of relevant atoms must be non-empty. Therefore the .get() call succeeds.
+        connectedConjunctiveQuery
+          .subqueryRelevantToVariables(instance.coexistentialVariables)
+          .get
+      }
+
+      chaseNormalizedLocalInstance(
         instance.localInstance,
         // we need to preserve all local names in the range of localWitnessGuess and queryConstantEmbedding
         // because they are treated as special symbols corresponding to variables and query constants
         // occurring in the subquery.
-        instance.localWitnessGuess.values.toSet ++ instance.queryConstantEmbedding.asMap.values
-      )
-
-      for (chasedInstance <- instancesWithGuessedVariablesPreserved) {
-        val localWitnessGuessExtensions = allPartialFunctionsBetween(
-          instance.coexistentialVariables,
-          chasedInstance.getActiveTermsIn[LocalName]
-        )
-
-        for (localWitnessGuessExtension <- localWitnessGuessExtensions) {
-          boundary: continueInnerLoop ?=>
-            if (localWitnessGuessExtension.isEmpty) {
-              // we do not allow "empty split"; whenever we split (i.e. make some progress
-              // in the chase automaton), we must pick a nonempty set of coexistential variables
-              // to map to local names in the chased instance.
-              boundary.break()(using continueInnerLoop)
-            }
-            val newlyCoveredVariables = localWitnessGuessExtension.keySet
-            val extendedLocalWitnessGuess =
-              instance.localWitnessGuess.toMap ++ localWitnessGuessExtension
-
-            val newlyCoveredAtomsOccurInChasedInstance = {
-              val extendedGuess =
-                extendedLocalWitnessGuess ++ instance.ruleConstantWitnessGuessAsMapToInstanceTerms
-              val coveredVariables = extendedGuess.keySet
-              val newlyCoveredAtoms = relevantSubquery.getAtoms.filter((atom: Atom) => {
-                val atomVariables = atom.getVariables.toSet
-                val allVariablesAreCovered = atomVariables.subsetOf(coveredVariables)
-
-                // we no longer care about the part of the query
-                // which entirely lies in the neighborhood of coexistential variables
-                // of the instance
-                val someVariableIsNewlyCovered =
-                  atomVariables.intersects(newlyCoveredVariables)
-
-                allVariablesAreCovered && someVariableIsNewlyCovered
-              })
-
-              newlyCoveredAtoms.map((atom: Atom) =>
-                LocalInstanceTermFact.fromAtomWithVariableMap(atom, extendedGuess.apply)
-              ).forall(chasedInstance.containsFact)
-            }
-
-            if (!newlyCoveredAtomsOccurInChasedInstance)
-              boundary.break()(using continueInnerLoop)
-
-            val allSplitInstancesAreYesInstances = {
-              val splitCoexistentialVariables =
-                relevantSubquery.connectedComponentsOf(
-                  instance.coexistentialVariables -- newlyCoveredVariables
-                )
-
-              splitCoexistentialVariables.forall(splitCoexistentialVariablesComponent => {
-                val newNeighbourhood =
-                  relevantSubquery.strictNeighbourhoodOf(
-                    splitCoexistentialVariablesComponent
-                  ) -- instance.ruleConstantWitnessGuess.keySet
-
-                // For the same reason as .get() call in the beginning of the method,
-                // this .get() call succeeds.
-                // noinspection OptionalGetWithoutIsPresent
-                val newRelevantSubquery =
-                  relevantSubquery
-                    .subqueryRelevantToVariables(splitCoexistentialVariablesComponent)
-                    .get
-
-                val inducedInstance = SubqueryEntailmentInstance(
-                  instance.ruleConstantWitnessGuess,
-                  splitCoexistentialVariablesComponent,
-                  chasedInstance,
-                  extendedLocalWitnessGuess.restrictToKeys(newNeighbourhood),
-                  instance.queryConstantEmbedding.restrictToKeys(
-                    newRelevantSubquery.allConstants
-                  )
-                )
-
-                isYesInstance(inducedInstance)
-              })
-            }
-
-            if (allSplitInstancesAreYesInstances) {
-              this.table.put(instance, true)
-              boundary.break()(using returnMethod)
-            }
-        }
-      }
-
-      // all instances chased from the original instance fail to fulfill the subquery
-      // strongly induced by instance.coexistentialVariables(), so we mark the original instance false.
-      this.table.put(instance, false)
+        instance.localWitnessGuess.values.toSet ++ instance.queryConstantEmbedding.values
+      ).exists(chasedInstance => splitsAtInstance(instance.withLocalInstance(chasedInstance)))
     }
 
-    def getKnownYesInstances: Iterable[SubqueryEntailmentInstance] =
-      this.table.filter(_._2).keys
+    def splitsAtInstance(
+      instance: SubqueryEntailmentInstance
+    )(using relevantSubquery: ConjunctiveQuery): Boolean = {
+      allPartialFunctionsBetween(
+        instance.coexistentialVariables,
+        instance.localInstance.activeLocalNames
+      )
+        .filter(_.nonEmpty) // we require commit maps to be nonempty
+        .exists(splitsAtInstanceWith(instance, _))
+    }
+
+    def splitsAtInstanceWith(
+      entailmentInstance: SubqueryEntailmentInstance,
+      commitMap: Map[Variable, LocalName]
+    )(using relevantSubquery: ConjunctiveQuery): Boolean = {
+      val splitInstances = entailmentInstance.splitIntoSubInstances(commitMap)
+
+      def baseSatisfied =
+        splitInstances.newlyCommittedPart
+          .forall(entailmentInstance.localInstance.containsFact)
+
+      def allComponentsSatisfied =
+        splitInstances.subInstances
+          .forall(isSubqueryEntailment)
+
+      baseSatisfied && allComponentsSatisfied
+    }
+
+    isSubqueryEntailment
   }
 
   def apply(extensionalSignature: FunctionFreeSignature,
             saturatedRuleSet: SaturatedRuleSet[? <: NormalGTGD],
             connectedConjunctiveQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance] = {
-    val ruleConstants = saturatedRuleSet.constants
-    val maxArityOfAllPredicatesUsedInRules = FunctionFreeSignature.encompassingRuleQuery(
-      saturatedRuleSet.allRules,
-      connectedConjunctiveQuery
-    ).maxArity
-
-    val dpTable = new DPTable(
-      saturatedRuleSet,
+    val isSubqueryEntailment = isSubqueryEntailmentCached(
       extensionalSignature,
-      maxArityOfAllPredicatesUsedInRules,
+      saturatedRuleSet,
       connectedConjunctiveQuery
     )
 
-    NormalizingDPTableSEEnumeration.allWellFormedNormalizedSubqueryEntailmentInstancesFor(
-      extensionalSignature,
-      ruleConstants,
-      connectedConjunctiveQuery
-    ).foreach(dpTable.fillTableUpto.apply)
-
-    dpTable.getKnownYesInstances
+    for {
+      subqueryEntailmentInstance <-
+        NormalizingDPTableSEEnumeration.allWellFormedNormalizedSubqueryEntailmentInstancesFor(
+          extensionalSignature,
+          saturatedRuleSet.constants,
+          connectedConjunctiveQuery
+        )
+      if isSubqueryEntailment(subqueryEntailmentInstance)
+    } yield subqueryEntailmentInstance
   }
+
   override def toString: String =
-    "NormalizingDPTableSEEnumeration{" + "datalogSaturationEngine=" + datalogSaturationEngine + '}'
+    s"NormalizingDPTableSEEnumeration{datalogSaturationEngine=$datalogSaturationEngine}"
 }
 
 object NormalizingDPTableSEEnumeration {
