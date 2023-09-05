@@ -42,14 +42,10 @@ case class DatalogRewriteResult(
     ]
   ): DatalogRewriteResult = {
     val maximalRuleSet = maximalDatalogRuleSetFactory.emptyTGDSet()
-    for (rule <- subgoalAndGoalDerivationRules.rules) {
+    for (rule <- subgoalAndGoalDerivationRules) {
       maximalRuleSet.addRule(rule)
     }
 
-    DatalogRewriteResult(
-      this.inputRuleSaturationRules,
-      DatalogProgram(maximalRuleSet.getRules),
-      this.goal
-    )
+    DatalogRewriteResult(this.inputRuleSaturationRules, maximalRuleSet.getRules, this.goal)
   }
 }

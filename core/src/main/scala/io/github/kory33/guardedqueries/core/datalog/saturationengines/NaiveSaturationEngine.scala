@@ -1,8 +1,8 @@
 package io.github.kory33.guardedqueries.core.datalog.saturationengines
 
 import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogSaturationEngine}
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance, IncludesFolConstants}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
+import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance, IncludesFolConstants}
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 
@@ -23,7 +23,7 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
     val joinAlgorithm = FilterNestedLoopJoin[TA]
 
     for {
-      rule <- program.rules
+      rule <- program
       joinResult = joinAlgorithm.join(rule.bodyAsCQ, inputInstance)
       ruleHeadAtom <- rule.getHeadAtoms
       // because we are dealing with Datalog rules, we can materialize every head atom

@@ -4,14 +4,10 @@ import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.DFSNormalizingDPTableSEEnumeration
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NaiveDPTableSEEnumeration
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NormalizingDPTableSEEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{DFSNormalizingDPTableSEEnumeration, NaiveDPTableSEEnumeration, NormalizingDPTableSEEnumeration}
 import io.github.kory33.guardedqueries.core.subsumption.formula
-import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet
-import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet
-import uk.ac.ox.cs.gsat.GSat
-import uk.ac.ox.cs.gsat.GTGD
+import io.github.kory33.guardedqueries.core.subsumption.formula.{MinimalExactBodyDatalogRuleSet, MinimallyUnifiedDatalogRuleSet}
+import uk.ac.ox.cs.gsat.{GSat, GTGD}
 
 object App {
   private def formatGTGD(rule: GTGD): String = {
@@ -90,7 +86,7 @@ object App {
   ): DatalogRewriteResult = {
     log {
       "# of subgoal derivation rules in original output: " +
-        originalRewriteResult.subgoalAndGoalDerivationRules.rules.size
+        originalRewriteResult.subgoalAndGoalDerivationRules.size
     }
 
     val minimalExactBodyMinimizedRewriting =
@@ -99,7 +95,7 @@ object App {
 
     log {
       "# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " +
-        minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules.rules.size
+        minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules.size
     }
 
     val minimizedRewriting =
@@ -108,7 +104,7 @@ object App {
 
     log {
       "# of subgoal derivation rules in minimizedRewriting: " +
-        minimizedRewriting.subgoalAndGoalDerivationRules.rules.size
+        minimizedRewriting.subgoalAndGoalDerivationRules.size
     }
 
     minimizedRewriting
@@ -162,11 +158,11 @@ object App {
         log("Rewritten query:")
         log("  Goal atom: " + minimizedRewriteResult.goal)
         log("  Atomic rewriting part:")
-        minimizedRewriteResult.inputRuleSaturationRules.rules.foreach(rule =>
+        minimizedRewriteResult.inputRuleSaturationRules.foreach(rule =>
           log("    " + formatDatalogRule(rule))
         )
         log("  Subgoal derivation part:")
-        minimizedRewriteResult.subgoalAndGoalDerivationRules.rules.foreach(rule =>
+        minimizedRewriteResult.subgoalAndGoalDerivationRules.foreach(rule =>
           log("    " + formatDatalogRule(rule))
         )
 
