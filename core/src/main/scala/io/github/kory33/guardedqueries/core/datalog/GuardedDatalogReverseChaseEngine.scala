@@ -16,7 +16,7 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstance, 
  * to `localNamesToFix`)".
  *
  * The [[reverseChase]] method returns a finite collection of all (`R`-isomorphism-classes of)
- * `R`-minimal local instances `I` that satisfies `instance R saturate(program, I)`, where
+ * `R`-maximal local instances `I` that satisfies `instance R saturate(program, I)`, where
  * `saturate` is [[DatalogSaturationEngine.saturateInstance]].
  */
 trait GuardedDatalogReverseChaseEngine {
