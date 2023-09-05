@@ -45,6 +45,10 @@ object NormalGTGD {
      */
     def tryFromGTGD(gtgd: GTGD) =
       new NormalGTGD.FullGTGD(gtgd.getBodyAtoms.toSet, gtgd.getHeadAtoms.toSet)
+
+    given Extensions: AnyRef with
+      extension (gtgd: FullGTGD)
+        def asDatalogRule: DatalogRule = DatalogRule(gtgd.getBodyAtoms, gtgd.getHeadAtoms)
   }
 
   /**
