@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
+import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
@@ -57,7 +57,7 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[? <
     originalRewriteResult: DatalogRewriteResult
   ) = {
     GSatEquivalenceTestHarness.logWithTime(
-      "# of subgoal derivation rules in original output: " + originalRewriteResult.subgoalAndGoalDerivationRules.rules.size
+      "# of subgoal derivation rules in original output: " + originalRewriteResult.subgoalAndGoalDerivationRules.size
     )
 
     val minimalExactBodyMinimizedRewriting =
@@ -66,7 +66,7 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[? <
       )
 
     GSatEquivalenceTestHarness.logWithTime(
-      "# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " + minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules.rules.size
+      "# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " + minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules.size
     )
 
     val minimizedRewriting =
@@ -75,7 +75,7 @@ case class GSatEquivalenceTestHarness(gsatImplementation: AbstractSaturation[? <
       )
 
     GSatEquivalenceTestHarness.logWithTime(
-      "# of subgoal derivation rules in minimizedRewriting: " + minimizedRewriting.subgoalAndGoalDerivationRules.rules.size
+      "# of subgoal derivation rules in minimizedRewriting: " + minimizedRewriting.subgoalAndGoalDerivationRules.size
     )
 
     minimizedRewriting

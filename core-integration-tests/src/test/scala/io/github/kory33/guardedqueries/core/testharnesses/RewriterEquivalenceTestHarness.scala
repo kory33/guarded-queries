@@ -45,7 +45,7 @@ case class RewriterEquivalenceTestHarness(firstRewriter: GuardedRuleAndQueryRewr
     originalRewriteResult: DatalogRewriteResult
   ) = {
     RewriterEquivalenceTestHarness.logWithTime(
-      "# of subgoal derivation rules in original output: " + originalRewriteResult.subgoalAndGoalDerivationRules.rules.size
+      "# of subgoal derivation rules in original output: " + originalRewriteResult.subgoalAndGoalDerivationRules.size
     )
 
     val minimalExactBodyMinimizedRewriting =
@@ -54,7 +54,7 @@ case class RewriterEquivalenceTestHarness(firstRewriter: GuardedRuleAndQueryRewr
       )
 
     RewriterEquivalenceTestHarness.logWithTime(
-      "# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " + minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules.rules.size
+      "# of subgoal derivation rules in minimalExactBodyMinimizedRewriting: " + minimalExactBodyMinimizedRewriting.subgoalAndGoalDerivationRules.size
     )
 
     val minimizedRewriting =
@@ -63,7 +63,7 @@ case class RewriterEquivalenceTestHarness(firstRewriter: GuardedRuleAndQueryRewr
       )
 
     RewriterEquivalenceTestHarness.logWithTime(
-      "# of subgoal derivation rules in minimizedRewriting: " + minimizedRewriting.subgoalAndGoalDerivationRules.rules.size
+      "# of subgoal derivation rules in minimizedRewriting: " + minimizedRewriting.subgoalAndGoalDerivationRules.size
     )
 
     minimizedRewriting
