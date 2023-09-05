@@ -25,7 +25,7 @@ val installKaon2 = taskKey[Unit]("Install kaon2 jar to local Maven repository")
 val mavenPackage = taskKey[File]("Package submodule using Maven")
 
 lazy val root = (project in file("."))
-  .aggregate(guardedSaturationWrapper, lib, formulaParsers, libIntegrationTests, app)
+  .aggregate(guardedSaturationWrapper, core, formulaParsers, coreIntegrationTests, app)
 
 lazy val guardedSaturationWrapper = project
   .in(file("guarded-saturation-wrapper"))
@@ -133,8 +133,8 @@ lazy val guardedSaturationWrapper = project
     }
   )
 
-lazy val lib = project
-  .in(file("lib"))
+lazy val core = project
+  .in(file("core"))
   .settings(
     Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value,
     libraryDependencies ++= Seq(
@@ -145,16 +145,16 @@ lazy val lib = project
 
 lazy val formulaParsers = project
   .in(file("formula-parsers"))
-  .dependsOn(lib)
+  .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
     )
   )
 
-lazy val libIntegrationTests = project
-  .in(file("lib-integration-tests"))
-  .dependsOn(lib, formulaParsers)
+lazy val coreIntegrationTests = project
+  .in(file("core-integration-tests"))
+  .dependsOn(core, formulaParsers)
   .settings(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest-flatspec" % "3.2.16" % Test
@@ -165,7 +165,7 @@ lazy val libIntegrationTests = project
 
 lazy val app = project
   .in(file("app"))
-  .dependsOn(lib, formulaParsers)
+  .dependsOn(core, formulaParsers)
   .settings(
     Compile / mainClass := Some("io.github.kory33.guardedqueries.app.App"),
     assembly / assemblyJarName := "guarded-saturation-0.1.0.jar"
