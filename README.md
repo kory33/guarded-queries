@@ -4,14 +4,14 @@ Rewrite GTGD constraints + conjunctive query into a Datalog program.
 
 ## Quick Start
 
-Install Java 17 and [Gradle](https://gradle.org/install/). Run
+Install Java 17 and [sbt](https://www.scala-sbt.org). Run
 
 ```bash
-./gradlew :app:shadowJar
+sbt app/assembly
 
 # Run jar file in the same directory, since GSat requires
 # a config.properties file in the working directory
-java -jar .\app\build\libs\guarded-saturation-0.1.0-all.jar
+java -jar ./app/target/guarded-saturation-app-0.1.0.jar
 ```
 
 Example interaction:
@@ -61,11 +61,10 @@ Running GSat...
 [guarded-queries app] >
 ```
 
-## Gradle Module Structures
+## Module Structures
 
-- [`lib`](./lib): The core library for rewriting GTGD constraints + conjunctive query into a Datalog program.
-- [`lib-unit-tests`](./lib-unit-tests): Unit tests for the core library.
-- [`lib-integration-tests`](./lib-integration-tests): Integration tests for rewriting algorithms.
+- [`core`](./core): The core library for rewriting GTGD constraints + conjunctive query into a Datalog program.
+- [`core-integration-tests`](./core-integration-tests): Integration tests for rewriting algorithms.
 - [`app`](./app): A command-line application that uses the core library. Provides an interface as shown in the Quick
   Start section.
-- [`util-parser`](./util-parser): Parser for GTGD constraints + conjunctive query. Used by app and integration tests.
+- [`formula-parsers`](./formula-parsers): Parsers for GTGD constraints + conjunctive query. Used by app and integration tests.

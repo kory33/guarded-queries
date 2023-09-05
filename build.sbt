@@ -1,4 +1,5 @@
 import sbt.*
+
 import scala.sys.process.*
 
 ThisBuild / scalaVersion := "3.3.0"
@@ -168,5 +169,5 @@ lazy val app = project
   .dependsOn(core, formulaParsers)
   .settings(
     Compile / mainClass := Some("io.github.kory33.guardedqueries.app.App"),
-    assembly / assemblyJarName := "guarded-saturation-0.1.0.jar"
+    assembly / assemblyOutputPath := baseDirectory.value / "target" / "guarded-saturation-app-0.1.0.jar"
   )
