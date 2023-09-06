@@ -2,7 +2,10 @@ package io.github.kory33.guardedqueries.core.rewriterequivalencetests
 
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{DFSNormalizingDPTableSEEnumeration, NormalizingDPTableSEEnumeration}
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{
+  DFSNormalizingDPTableSEEnumeration,
+  NormalizingDPTableSEEnumeration
+}
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndConjunctiveQueryTestCases
 import io.github.kory33.guardedqueries.core.testharnesses.RewriterEquivalenceTestHarness
 import org.scalatest.flatspec.AnyFlatSpec

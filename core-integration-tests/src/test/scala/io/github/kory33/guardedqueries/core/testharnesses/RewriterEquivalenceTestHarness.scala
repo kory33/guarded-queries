@@ -3,8 +3,14 @@ package io.github.kory33.guardedqueries.core.testharnesses
 import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subsumption.formula.{MinimalExactBodyDatalogRuleSet, MinimallyUnifiedDatalogRuleSet}
-import io.github.kory33.guardedqueries.core.testcases.{GTGDRuleAndConjunctiveQuery, GTGDRuleAndGTGDReducibleQuery}
+import io.github.kory33.guardedqueries.core.subsumption.formula.{
+  MinimalExactBodyDatalogRuleSet,
+  MinimallyUnifiedDatalogRuleSet
+}
+import io.github.kory33.guardedqueries.core.testcases.{
+  GTGDRuleAndConjunctiveQuery,
+  GTGDRuleAndGTGDReducibleQuery
+}
 import io.github.kory33.guardedqueries.core.testharnesses.InstanceGeneration.randomInstanceOver
 import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, Term}
 

@@ -1,10 +1,19 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
 import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
-import io.github.kory33.guardedqueries.core.fol.{DatalogRule, FunctionFreeSignature, LocalVariableContext, NormalGTGD}
+import io.github.kory33.guardedqueries.core.fol.{
+  DatalogRule,
+  FunctionFreeSignature,
+  LocalVariableContext,
+  NormalGTGD
+}
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstanceTerm, SubqueryEntailmentEnumeration, SubqueryEntailmentInstance}
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstanceTerm,
+  SubqueryEntailmentEnumeration,
+  SubqueryEntailmentInstance
+}
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given

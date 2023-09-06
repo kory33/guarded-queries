@@ -5,8 +5,16 @@ import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGT
 import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{LocalName, RuleConstant}
-import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstance, LocalInstanceTerm, SubqueryEntailmentEnumeration, SubqueryEntailmentInstance}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{
+  LocalName,
+  RuleConstant
+}
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstance,
+  LocalInstanceTerm,
+  SubqueryEntailmentEnumeration,
+  SubqueryEntailmentInstance
+}
 import io.github.kory33.guardedqueries.core.utils.CachingFunction
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*

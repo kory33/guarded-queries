@@ -1,7 +1,11 @@
 package io.github.kory33.guardedqueries.core.subsumption.formula
 
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance, IncludesFolConstants}
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalFact,
+  FormalInstance,
+  IncludesFolConstants
+}
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet.VariableOrConstant
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given

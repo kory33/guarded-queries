@@ -4,9 +4,16 @@ import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{DFSNormalizingDPTableSEEnumeration, NaiveDPTableSEEnumeration, NormalizingDPTableSEEnumeration}
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{
+  DFSNormalizingDPTableSEEnumeration,
+  NaiveDPTableSEEnumeration,
+  NormalizingDPTableSEEnumeration
+}
 import io.github.kory33.guardedqueries.core.subsumption.formula
-import io.github.kory33.guardedqueries.core.subsumption.formula.{MinimalExactBodyDatalogRuleSet, MinimallyUnifiedDatalogRuleSet}
+import io.github.kory33.guardedqueries.core.subsumption.formula.{
+  MinimalExactBodyDatalogRuleSet,
+  MinimallyUnifiedDatalogRuleSet
+}
 import uk.ac.ox.cs.gsat.{GSat, GTGD}
 
 object App {
