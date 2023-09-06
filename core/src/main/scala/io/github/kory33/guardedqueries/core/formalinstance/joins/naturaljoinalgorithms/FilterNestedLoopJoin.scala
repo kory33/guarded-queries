@@ -123,6 +123,7 @@ class FilterNestedLoopJoin[QueryVariable, Constant]
       resultBuilder.append
     )
 
+    // FIXME: It benefits us (especially with nonEmpty calls) to use a lazy collection here.
     JoinResult[QueryVariable, Constant](queryVariableOrdering, resultBuilder.toList)
   }
 }

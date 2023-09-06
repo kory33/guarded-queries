@@ -31,14 +31,18 @@ import uk.ac.ox.cs.pdq.fol.Variable
 //format: on
 class JoinResult[QueryVariable, Term](
   variableOrdering: List[QueryVariable],
-  orderedMappingsOfAllHomomorphisms: List[List[Term]]
+  orderedMappingsOfAllHomomorphisms: Iterable[List[Term]]
 ) {
-  // invariant: a single instance of List<Variable> variableOrdering is shared among
-  //            all HomomorphicMapping objects
-  final var allHomomorphisms: List[HomomorphicMapping[QueryVariable, Term]] =
-    orderedMappingsOfAllHomomorphisms.map((homomorphism: List[Term]) =>
-      HomomorphicMapping[QueryVariable, Term](variableOrdering, homomorphism)
-    )
+  // A single instance of List<Variable> variableOrdering is shared among
+  // all HomomorphicMapping objects
+  lazy val allHomomorphisms: List[HomomorphicMapping[QueryVariable, Term]] =
+    orderedMappingsOfAllHomomorphisms
+      .map((homomorphism: List[Term]) =>
+        HomomorphicMapping[QueryVariable, Term](variableOrdering, homomorphism)
+      )
+      .toList
+
+  def nonEmpty: Boolean = orderedMappingsOfAllHomomorphisms.nonEmpty
 
   /**
    * Materialize the given atom by replacing the variables in the atom with the values in this
