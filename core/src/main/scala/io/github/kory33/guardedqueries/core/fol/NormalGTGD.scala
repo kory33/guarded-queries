@@ -2,7 +2,7 @@ package io.github.kory33.guardedqueries.core.fol
 
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Variable}
+import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, Variable}
 
 import scala.jdk.CollectionConverters.*
 
@@ -49,6 +49,7 @@ object NormalGTGD {
     given Extensions: AnyRef with
       extension (gtgd: FullGTGD)
         def asDatalogRule: DatalogRule = DatalogRule(gtgd.getBodyAtoms, gtgd.getHeadAtoms)
+        def allConstants: Set[Constant] = gtgd.getTerms.collect { case c: Constant => c }.toSet
   }
 
   /**

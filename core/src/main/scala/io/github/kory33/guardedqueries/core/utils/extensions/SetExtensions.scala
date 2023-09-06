@@ -4,6 +4,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.
 
 import scala.annotation.tailrec
 import scala.collection.View
+import scala.collection.immutable.BitSet
 
 object SetExtensions {
   given Extension: AnyRef with
@@ -106,4 +107,42 @@ object SetExtensions {
        * Union of all elements in this set, where each element is an iterable.
        */
       def unionAll[U](using ev: T <:< Iterable[U]): Set[U] = set.flatMap(ev(_))
+
+      /**
+       * Returns the set of all partitions of this set into nonempty subsets.
+       */
+      def allPartitions: Iterable[Set[Set[T]]] = {
+        def partitionBitSet(bitSet: BitSet): Iterable[Set[BitSet]] = {
+          if (bitSet.isEmpty) {
+            None
+          } else {
+            val notMin = bitSet - bitSet.min
+
+            // We can (non-deterministically) pick a nonempty subset `s` that contains
+            // the minimum element in bitSet, and then recursively consider partitions of
+            // `bitSet - s` into nonempty subsets.
+            // In the following code, `subsetNotContainingMin` corresponds to `bitSet - s`
+            // and `setAccompanyingMin` corresponds to `s`.
+            notMin.powerset.flatMap { subsetNotContainingMin =>
+              if (subsetNotContainingMin.isEmpty) {
+                // If the complement of `s` is empty, then { bitSet } is the only possible partition
+                Some(Set(bitSet))
+              } else {
+                val setAccompanyingMin = bitSet -- subsetNotContainingMin
+
+                partitionBitSet(BitSet.fromSpecific(subsetNotContainingMin)).map {
+                  _ + setAccompanyingMin
+                }
+              }
+            }
+          }
+        }
+
+        // Convert the indices to BitSet, get all partitions and revert indices back to elements
+        val orderedSet = set.toList
+        val bitSetToPartition = BitSet(orderedSet.indices: _*)
+        partitionBitSet(bitSetToPartition).map { bitSets =>
+          bitSets.map { bitSet => bitSet.view.map(orderedSet(_)).toSet }
+        }
+      }
 }
