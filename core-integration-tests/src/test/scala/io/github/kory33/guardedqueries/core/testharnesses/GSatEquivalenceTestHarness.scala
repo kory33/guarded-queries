@@ -34,7 +34,10 @@ object GSatEquivalenceTestHarness {
       val gsatSaturatedInstance =
         new NaiveSaturationEngine().saturateInstance(gsatRewriting, testInstance)
 
-      FormalInstance[Constant](new FilterNestedLoopJoin[Constant]().join(
+      FormalInstance[Constant](new FilterNestedLoopJoin[
+        Variable,
+        Constant
+      ].joinConjunctiveQuery(
         gsatQuery,
         gsatSaturatedInstance
       ).materializeFunctionFreeAtom(answerAtom).toSet)

@@ -69,8 +69,8 @@ final class NaiveDPTableSEEnumeration(
           val headVariableHomomorphism =
             existentialVariables.zip(localNamesUsableInChildren).toMap
 
-          FilterNestedLoopJoin[LocalInstanceTerm]
-            .join(existentialRule.bodyAsCQ, instance)
+          FilterNestedLoopJoin[Variable, LocalInstanceTerm]
+            .joinConjunctiveQuery(existentialRule.bodyAsCQ, instance)
             .extendWithConstantHomomorphism(headVariableHomomorphism)
             .materializeFunctionFreeAtom(existentialRule.getHeadAtoms.head)
             .filter((substitutedHead: FormalFact[LocalInstanceTerm]) =>

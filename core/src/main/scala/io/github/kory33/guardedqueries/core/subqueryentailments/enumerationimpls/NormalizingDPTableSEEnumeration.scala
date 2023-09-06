@@ -66,8 +66,8 @@ final class NormalizingDPTableSEEnumeration(
           // A set of existential variables in the existential rule
           val existentialVariables = existentialRule.getHead.getBoundVariables.toSet
 
-          FilterNestedLoopJoin[LocalInstanceTerm]
-            .join(existentialRule.bodyAsCQ, instance)
+          FilterNestedLoopJoin[Variable, LocalInstanceTerm]
+            .joinConjunctiveQuery(existentialRule.bodyAsCQ, instance)
             .allHomomorphisms
             .associate { bodyHomomorphism =>
               // The set of local names that are inherited from the parent instance

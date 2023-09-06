@@ -1,8 +1,14 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalInstance, IncludesFolConstants}
-import io.github.kory33.guardedqueries.core.formalinstance.joins.{JoinResult, NaturalJoinAlgorithm}
-import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalInstance,
+  QueryLikeAtom,
+  QueryLikeInstance
+}
+import io.github.kory33.guardedqueries.core.formalinstance.joins.{
+  JoinResult,
+  NaturalJoinAlgorithm
+}
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import uk.ac.ox.cs.pdq.fol.*
 
@@ -13,54 +19,12 @@ import scala.util.boundary
  * A join algorithm that first filters tuples matching query atoms and then joins them in a
  * nested loop fashion.
  */
-class FilterNestedLoopJoin[TA: IncludesFolConstants]
-    extends NaturalJoinAlgorithm[TA, FormalInstance[TA]] {
-  override def join(query: ConjunctiveQuery,
-                    formalInstance: FormalInstance[TA]
-  ): JoinResult[TA] = {
-    // we throw IllegalArgumentException if the query contains existential atoms
-    if (query.getBoundVariables.length != 0)
-      throw new IllegalArgumentException("NestedLoopJoin does not support existential queries")
+class FilterNestedLoopJoin[QueryVariable, Constant]
+    extends NaturalJoinAlgorithm[QueryVariable, Constant, FormalInstance[Constant]] {
 
-    val relevantRelationsToInstancesMap: Map[Predicate, FormalInstance[TA]] = {
-      val queryPredicates = query.allPredicates
-      formalInstance.facts
-        .filter(fact => queryPredicates.contains(fact.predicate))
-        .groupBy(_.predicate)
-        .view.mapValues(FormalInstance(_)).toMap
-    }
-
-    val queryAtomsToMatches: Map[Atom, JoinResult[TA]] = query.getAtoms.toVector
-      .associate { atom =>
-        val relevantInstance: FormalInstance[TA] = relevantRelationsToInstancesMap
-          .getOrElse(atom.getPredicate, FormalInstance.empty)
-
-        SingleAtomMatching.allMatches(atom, relevantInstance)
-      }
-
-    // we start joining from the outer
-    val queryAtomsOrderedByMatchSizes: List[Atom] =
-      queryAtomsToMatches.keySet.toList.sortBy(atom =>
-        queryAtomsToMatches(atom).allHomomorphisms.size
-      )
-
-    val queryVariableOrdering: List[Variable] = query.allVariables.toList
-    val emptyHomomorphism = queryVariableOrdering.map(_ => None)
-    val resultBuilder = ArrayBuffer[List[TA]]()
-
-    FilterNestedLoopJoin.visitAllJoinResults(
-      queryAtomsOrderedByMatchSizes,
-      queryAtomsToMatches,
-      queryVariableOrdering,
-      emptyHomomorphism,
-      resultBuilder.append
-    )
-
-    JoinResult[TA](queryVariableOrdering, resultBuilder.toList)
-  }
-}
-
-object FilterNestedLoopJoin {
+  private type QueryAtom = QueryLikeAtom[QueryVariable, Constant]
+  private type Query = QueryLikeInstance[QueryVariable, Constant]
+  private type Instance = FormalInstance[Constant]
 
   /**
    * Recursively nest matching loops to extend the given partial homomorphism, in the order
@@ -73,11 +37,12 @@ object FilterNestedLoopJoin {
    * `atomToMatches` does not contain duplicate tuples, no duplicate tuples will be passed to
    * `visitEachCompleteHomomorphism`.
    */
-  private def visitAllJoinResults[TA](remainingAtomsToJoin: List[Atom],
-                                      atomToMatches: Map[Atom, JoinResult[TA]],
-                                      resultVariableOrdering: List[Variable],
-                                      partialHomomorphism: List[Option[TA]],
-                                      visitEachCompleteHomomorphism: List[TA] => Unit
+  private def visitAllJoinResults(
+    remainingAtomsToJoin: List[QueryAtom],
+    atomToMatches: Map[QueryAtom, JoinResult[QueryVariable, Constant]],
+    resultVariableOrdering: List[QueryVariable],
+    partialHomomorphism: List[Option[Constant]],
+    visitEachCompleteHomomorphism: List[Constant] => Unit
   ): Unit = remainingAtomsToJoin match {
     case Nil =>
       // If there are no more atoms to join, the given partial homomorphism
@@ -117,5 +82,47 @@ object FilterNestedLoopJoin {
           )
         }
       }
+  }
+
+  override def join(query: Query,
+                    formalInstance: Instance
+  ): JoinResult[QueryVariable, Constant] = {
+    val relevantRelationsToInstancesMap: Map[Predicate, Instance] = {
+      formalInstance.facts
+        .filter(fact => query.activePredicates.contains(fact.predicate))
+        .groupBy(_.predicate)
+        .view.mapValues(FormalInstance(_)).toMap
+    }
+
+    val queryAtomsToMatches: Map[QueryAtom, JoinResult[QueryVariable, Constant]] =
+      query.facts.associate { atom =>
+        val relevantInstance =
+          relevantRelationsToInstancesMap.getOrElse(atom.predicate, FormalInstance.empty)
+
+        SingleAtomMatching.allMatches(atom, relevantInstance)
+      }
+
+    // we start joining from the outer
+    val queryAtomsOrderedByMatchSizes: List[QueryAtom] =
+      queryAtomsToMatches.keySet.toList.sortBy(atom =>
+        queryAtomsToMatches(atom).allHomomorphisms.size
+      )
+
+    val queryVariableOrdering: List[QueryVariable] = query.facts
+      .flatMap(_.appliedTerms)
+      .collect { case Left(variable) => variable }
+      .toList
+    val emptyHomomorphism = queryVariableOrdering.map(_ => None)
+    val resultBuilder = ArrayBuffer[List[Constant]]()
+
+    visitAllJoinResults(
+      queryAtomsOrderedByMatchSizes,
+      queryAtomsToMatches,
+      queryVariableOrdering,
+      emptyHomomorphism,
+      resultBuilder.append
+    )
+
+    JoinResult[QueryVariable, Constant](queryVariableOrdering, resultBuilder.toList)
   }
 }

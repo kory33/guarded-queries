@@ -9,6 +9,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.{
 }
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
+import uk.ac.ox.cs.pdq.fol.Variable
 
 /**
  * An implementation of [[DatalogSaturationEngine]] that performs naive bottom-up saturation.
@@ -24,11 +25,11 @@ class NaiveSaturationEngine extends DatalogSaturationEngine {
     facts: Set[FormalFact[TA]]
   ) = {
     val inputInstance = FormalInstance[TA](facts)
-    val joinAlgorithm = FilterNestedLoopJoin[TA]
+    val joinAlgorithm = FilterNestedLoopJoin[Variable, TA]
 
     for {
       rule <- program
-      joinResult = joinAlgorithm.join(rule.bodyAsCQ, inputInstance)
+      joinResult = joinAlgorithm.joinConjunctiveQuery(rule.bodyAsCQ, inputInstance)
       ruleHeadAtom <- rule.getHeadAtoms
       // because we are dealing with Datalog rules, we can materialize every head atom
       // using the join result (and its variable ordering)

@@ -5,7 +5,6 @@ import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.
 import uk.ac.ox.cs.pdq.fol.Atom
 import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
 import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Predicate
 import uk.ac.ox.cs.pdq.fol.Variable
 
 object ConjunctiveQueryExtensions {
@@ -134,9 +133,6 @@ object ConjunctiveQueryExtensions {
 
       def allConstants: Set[Constant] =
         conjunctiveQuery.getTerms.collect { case constant: Constant => constant }.toSet
-
-      def allPredicates: Set[Predicate] =
-        conjunctiveQuery.getAtoms.map(_.getPredicate).toSet
 
       def allVariables: Set[Variable] =
         conjunctiveQuery.getBoundVariables.toSet.union(conjunctiveQuery.getFreeVariables.toSet)

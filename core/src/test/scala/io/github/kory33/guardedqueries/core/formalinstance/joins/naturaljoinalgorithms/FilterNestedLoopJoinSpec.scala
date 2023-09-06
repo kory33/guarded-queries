@@ -51,7 +51,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
   "All homomorphisms in FilterNestedLoopJoin.join" should "materialize a subset of the input instance" in {
     forAll(genInstanceAndJoinQuery, minSuccessful(100)) {
       case (instance, query) =>
-        new FilterNestedLoopJoin().join(query, instance)
+        new FilterNestedLoopJoin().joinConjunctiveQuery(query, instance)
           .allHomomorphisms
           .foreach { homomorphism =>
             val materializedInstance =
@@ -61,24 +61,20 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
     }
   }
 
-  val genQueryAndHomomorphism: Gen[(ConjunctiveQuery, HomomorphicMapping[Constant])] = for {
-    predicateSet <- genSmallPredicateSet
-    query <- smallNonExistentialQueryOver(predicateSet)
-    variablesInQuery = query.getFreeVariables.toSet
-    homomorphism <-
-      Gen.listOfN(variablesInQuery.size, GenFormula.genConstant(15)).map { constants =>
-        HomomorphicMapping(variablesInQuery.toList, constants)
-      }
-  } yield (query, homomorphism)
+  val genQueryAndHomomorphism: Gen[(ConjunctiveQuery, HomomorphicMapping[Variable, Constant])] =
+    for {
+      predicateSet <- genSmallPredicateSet
+      query <- smallNonExistentialQueryOver(predicateSet)
+      variablesInQuery = query.getFreeVariables.toSet
+      homomorphism <-
+        Gen.listOfN(variablesInQuery.size, GenFormula.genConstant(15)).map { constants =>
+          HomomorphicMapping(variablesInQuery.toList, constants)
+        }
+    } yield (query, homomorphism)
 
-  def equivalentAsHomomorphisms(h1: HomomorphicMapping[Constant],
-                                h2: HomomorphicMapping[Constant]
-  ): Boolean = {
-    def asMap(h: HomomorphicMapping[Constant]): Map[Variable, Constant] =
-      h.variableOrdering.zip(h.orderedMapping).toMap
-
-    asMap(h1) == asMap(h2)
-  }
+  def equivalentAsHomomorphisms(h1: HomomorphicMapping[Variable, Constant],
+                                h2: HomomorphicMapping[Variable, Constant]
+  ): Boolean = h1.toMap == h2.toMap
 
   "FilterNestedLoopJoin.join" should "find every valid answer" in {
     forAll(genQueryAndHomomorphism, minSuccessful(3000)) {
@@ -87,8 +83,8 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
           .materializeFunctionFreeAtoms(query.getAtoms.toSet)
 
         assert {
-          new FilterNestedLoopJoin[Constant]()
-            .join(query, materializedInstance)
+          new FilterNestedLoopJoin[Variable, Constant]
+            .joinConjunctiveQuery(query, materializedInstance)
             .allHomomorphisms
             .exists(equivalentAsHomomorphisms(_, originalHomomorphism))
         }

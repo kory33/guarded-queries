@@ -11,7 +11,7 @@ import uk.ac.ox.cs.pdq.fol.Variable
  * A class of objects representing the result of a join operation.
  *
  * We say that a `JoinResult` is well-formed if: <ol> <li>the `variableOrdering` is a list of
- * distinct variables</li> <li>each list in `orderedMapping` has the same length as
+ * distinct query variables</li> <li>each list in `orderedMapping` has the same length as
  * `variableOrdering`</li> <li>`orderedMapping` is a list opf distinct join result tuples</li>
  * </ol>
  *
@@ -29,15 +29,15 @@ import uk.ac.ox.cs.pdq.fol.Variable
  *   operation
  */
 //format: on
-class JoinResult[Term](
-  variableOrdering: List[Variable],
+class JoinResult[QueryVariable, Term](
+  variableOrdering: List[QueryVariable],
   orderedMappingsOfAllHomomorphisms: List[List[Term]]
 ) {
   // invariant: a single instance of List<Variable> variableOrdering is shared among
   //            all HomomorphicMapping objects
-  final var allHomomorphisms: List[HomomorphicMapping[Term]] =
+  final var allHomomorphisms: List[HomomorphicMapping[QueryVariable, Term]] =
     orderedMappingsOfAllHomomorphisms.map((homomorphism: List[Term]) =>
-      HomomorphicMapping[Term](variableOrdering, homomorphism)
+      HomomorphicMapping[QueryVariable, Term](variableOrdering, homomorphism)
     )
 
   /**
@@ -53,8 +53,11 @@ class JoinResult[Term](
    */
   def materializeFunctionFreeAtom(
     atomWhoseVariablesAreInThisResult: Atom
-  )(using IncludesFolConstants[Term]): List[FormalFact[Term]] =
-    allHomomorphisms.map((h: HomomorphicMapping[Term]) =>
+  )(
+    using i: IncludesFolConstants[Term],
+    ev: QueryVariable =:= Variable
+  ): List[FormalFact[Term]] =
+    allHomomorphisms.map((h: HomomorphicMapping[QueryVariable, Term]) =>
       h.materializeFunctionFreeAtom(atomWhoseVariablesAreInThisResult)
     )
 
@@ -82,8 +85,8 @@ class JoinResult[Term](
    *   if the given homomorphism maps a variable in `variableOrdering`
    */
   // format: on
-  def extendWithConstantHomomorphism(constantHomomorphism: Map[Variable, Term])
-    : JoinResult[Term] = {
+  def extendWithConstantHomomorphism(constantHomomorphism: Map[QueryVariable, Term])
+    : JoinResult[QueryVariable, Term] = {
     if (allHomomorphisms.isEmpty) {
       // then this join result contains no information and there is nothing to extend
       return this
@@ -100,6 +103,6 @@ class JoinResult[Term](
     val extendedVariableOrdering = variableOrdering ++ extensionVariableOrdering
     val extendedHomomorphisms = allHomomorphisms.map(_.orderedMapping ++ extensionMapping)
 
-    JoinResult[Term](extendedVariableOrdering, extendedHomomorphisms)
+    JoinResult[QueryVariable, Term](extendedVariableOrdering, extendedHomomorphisms)
   }
 }

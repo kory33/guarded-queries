@@ -7,7 +7,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.{
   FormalInstance,
   IncludesFolConstants
 }
-import uk.ac.ox.cs.pdq.fol.{Atom, ConjunctiveQuery}
+import uk.ac.ox.cs.pdq.fol.{Atom, ConjunctiveQuery, Variable}
 
 object RunOutputDatalogProgram {
 
@@ -58,7 +58,7 @@ object RunOutputDatalogProgram {
       ConjunctiveQuery.create(rewriteResult.goal.getVariables, Array[Atom](rewriteResult.goal))
 
     FormalInstance[TermAlphabet](
-      FilterNestedLoopJoin[TermAlphabet]().join(
+      FilterNestedLoopJoin[Variable, TermAlphabet].joinConjunctiveQuery(
         rewrittenGoalQuery,
         saturatedInstance
       ).materializeFunctionFreeAtom(answerAtom).toSet

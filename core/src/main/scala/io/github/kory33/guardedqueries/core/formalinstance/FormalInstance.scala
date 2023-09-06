@@ -1,13 +1,16 @@
 package io.github.kory33.guardedqueries.core.formalinstance
 
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
-import uk.ac.ox.cs.pdq.fol.{Atom, Term}
+import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Term}
 
 import scala.collection.mutable
 import scala.reflect.TypeTest
 
 case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
   lazy val activeTerms: Set[TermAlphabet] = facts.flatMap(_.appliedTerms)
+
+  lazy val activePredicates: Set[Predicate] =
+    facts.map(_.predicate)
 
   def getActiveTermsIn[T <: TermAlphabet](using tt: TypeTest[TermAlphabet, T]): Set[T] =
     activeTerms.collect { case tt(subtypeTerm) => subtypeTerm }

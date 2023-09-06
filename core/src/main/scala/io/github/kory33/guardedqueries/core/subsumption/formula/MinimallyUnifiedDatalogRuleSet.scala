@@ -40,8 +40,9 @@ final class MinimallyUnifiedDatalogRuleSet
   ): Boolean = {
     val secondBodyInstance = second.getBodyAtoms.intoFormalInstanceOfVariableOrConstant
 
-    FilterNestedLoopJoin[VariableOrConstant]
-      .join(first.bodyAsCQ, secondBodyInstance).allHomomorphisms
+    FilterNestedLoopJoin[PDQVariable, VariableOrConstant]
+      .joinConjunctiveQuery(first.bodyAsCQ, secondBodyInstance)
+      .allHomomorphisms
       .exists(homomorphism => {
         val substitutedFirstHead =
           homomorphism.materializeFunctionFreeAtoms(first.getHeadAtoms.toSet)

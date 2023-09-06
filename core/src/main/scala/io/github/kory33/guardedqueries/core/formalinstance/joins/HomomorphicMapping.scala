@@ -20,10 +20,10 @@ import uk.ac.ox.cs.pdq.fol.Variable
  * For instance, suppose that `variableOrdering = [x, y, z]` and `orderedMapping = [a, a, b]`.
  * Then the mapping this object represents is `x -> a, y -> a, z -> b`.
  */
-case class HomomorphicMapping[Term](
-  variableOrdering: List[Variable],
+case class HomomorphicMapping[QueryVariable, Term](
+  variableOrdering: List[QueryVariable],
   orderedMapping: List[Term]
-) extends (Variable => Term) {
+) extends (QueryVariable => Term) {
   if (variableOrdering.size != orderedMapping.size) throw new IllegalArgumentException(
     "variableOrdering and orderedMapping must have the same size"
   )
@@ -38,7 +38,7 @@ case class HomomorphicMapping[Term](
    * @throws IllegalArgumentException
    *   if the given variable is not in `variableOrdering`
    */
-  override def apply(variable: Variable): Term = {
+  override def apply(variable: QueryVariable): Term = {
     val index = variableOrdering.indexOf(variable)
     if (index == -1) throw new IllegalArgumentException("variable is not in variableOrdering")
     orderedMapping(index)
@@ -47,7 +47,7 @@ case class HomomorphicMapping[Term](
   /**
    * Returns a map from variables to terms, which is equivalent to this homomorphic mapping.
    */
-  def toMap: Map[Variable, Term] = variableOrdering.zip(orderedMapping).toMap
+  def toMap: Map[QueryVariable, Term] = variableOrdering.zip(orderedMapping).toMap
 
   /**
    * Materialize the given atom by mapping the variables in the atom into terms specified by
@@ -58,10 +58,10 @@ case class HomomorphicMapping[Term](
    */
   def materializeFunctionFreeAtom(
     atomWhoseVariablesAreInThisResult: Atom
-  )(using IncludesFolConstants[Term]): FormalFact[Term] = {
+  )(using i: IncludesFolConstants[Term], ev: QueryVariable =:= Variable): FormalFact[Term] = {
     FormalFact.fromAtom(atomWhoseVariablesAreInThisResult).map({
       case constant: Constant => IncludesFolConstants[Term].includeConstant(constant)
-      case variable: Variable => this.apply(variable)
+      case variable: Variable => ev.liftCo[HomomorphicMapping[_, Term]](this).apply(variable)
       case term =>
         throw new IllegalArgumentException(s"Term $term is neither constant nor variable")
     })
@@ -78,7 +78,7 @@ case class HomomorphicMapping[Term](
    */
   def materializeFunctionFreeAtoms(
     atomsWhoseVariablesAreInThisResult: Set[Atom]
-  )(using IncludesFolConstants[Term]) =
+  )(using i: IncludesFolConstants[Term], ev: QueryVariable =:= Variable) =
     FormalInstance(atomsWhoseVariablesAreInThisResult.map(materializeFunctionFreeAtom))
 
   /**
@@ -87,7 +87,8 @@ case class HomomorphicMapping[Term](
    * @throws IllegalArgumentException
    *   if the given homomorphism maps a variable in `variableOrdering`
    */
-  def extendWithMap(extensionMap: Map[Variable, Term]): HomomorphicMapping[Term] = {
+  def extendWithMap(extensionMap: Map[QueryVariable, Term])
+    : HomomorphicMapping[QueryVariable, Term] = {
     if (variableOrdering.toSet.intersects(extensionMap.keySet))
       throw new IllegalArgumentException(
         s"additionalMapping $extensionMap contains a variable in variableOrdering $variableOrdering"

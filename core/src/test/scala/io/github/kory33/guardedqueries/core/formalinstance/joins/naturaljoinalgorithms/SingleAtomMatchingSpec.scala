@@ -8,14 +8,13 @@ import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGe
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.ac.ox.cs.pdq.fol.Atom
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Predicate
-import uk.ac.ox.cs.pdq.fol.TypedConstant
+import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, TypedConstant, Variable}
 
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+  import io.github.kory33.guardedqueries.core.formalinstance.CQAsFormalInstance.given
+
   val genSmallAtom: Gen[Atom] = GenFormula.genAtom(
     4,
     Gen.oneOf(GenFormula.genNumberedVariable(30), GenFormula.genConstant(4))
@@ -52,7 +51,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genInstanceAndQuery, minSuccessful(100)) {
       case (instance, query) =>
         SingleAtomMatching
-          .allMatches(query, instance)
+          .allMatches(query.asQueryLikeAtom, instance)
           .materializeFunctionFreeAtom(query)
           .foreach { fact => assert(fact.predicate.equals(query.getPredicate)) }
     }
@@ -62,7 +61,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genInstanceAndQuery, minSuccessful(100)) {
       case (instance, query) =>
         SingleAtomMatching
-          .allMatches(query, instance)
+          .allMatches(query.asQueryLikeAtom, instance)
           .materializeFunctionFreeAtom(query)
           .foreach { fact => assert(instance.facts.contains(fact)) }
     }
@@ -72,19 +71,19 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
     forAll(genInstanceAndQuery, minSuccessful(100)) {
       case (instance, query) =>
         val firstMatch = SingleAtomMatching
-          .allMatches(query, instance)
+          .allMatches(query.asQueryLikeAtom, instance)
           .materializeFunctionFreeAtom(query)
           .toSet
 
         val secondMatch = SingleAtomMatching
-          .allMatches(query, FormalInstance(firstMatch))
+          .allMatches(query.asQueryLikeAtom, FormalInstance(firstMatch))
           .materializeFunctionFreeAtom(query)
 
         assert(firstMatch == secondMatch.toSet)
     }
   }
 
-  def genAtomAndHomomorphism: Gen[(Atom, HomomorphicMapping[Constant])] = for {
+  def genAtomAndHomomorphism: Gen[(Atom, HomomorphicMapping[Variable, Constant])] = for {
     atom <- genSmallAtom
     variablesInAtom = atom.getVariables.toSet.toList
     homomorphism <- Gen.listOfN(variablesInAtom.size, GenFormula.genConstant(10))
@@ -110,7 +109,7 @@ class SingleAtomMatchingSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
           FormalInstance.of(homomorphism.materializeFunctionFreeAtom(atom))
 
         val matches = SingleAtomMatching
-          .allMatches(atom, instanceContainingJustTheMaterializedAtom)
+          .allMatches(atom.asQueryLikeAtom, instanceContainingJustTheMaterializedAtom)
           .materializeFunctionFreeAtom(atom)
           .toSet
 
