@@ -61,7 +61,7 @@ case class HomomorphicMapping[QueryVariable, Term](
   )(using i: IncludesFolConstants[Term], ev: QueryVariable =:= Variable): FormalFact[Term] = {
     FormalFact.fromAtom(atomWhoseVariablesAreInThisResult).map({
       case constant: Constant => IncludesFolConstants[Term].includeConstant(constant)
-      case variable: Variable => ev.liftCo[HomomorphicMapping[_, Term]](this).apply(variable)
+      case variable: Variable => this.apply(ev.flip(variable))
       case term =>
         throw new IllegalArgumentException(s"Term $term is neither constant nor variable")
     })
