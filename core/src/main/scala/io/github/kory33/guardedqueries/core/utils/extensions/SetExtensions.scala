@@ -111,7 +111,7 @@ object SetExtensions {
       /**
        * Returns the set of all partitions of this set into nonempty subsets.
        */
-      def allPartitions: Iterable[Set[Set[T]]] = {
+      def allPartitions: Iterable[Set[ /* non-empty */ Set[T]]] = {
         def partitionBitSet(bitSet: BitSet): Iterable[Set[BitSet]] = {
           if (bitSet.isEmpty) {
             None
