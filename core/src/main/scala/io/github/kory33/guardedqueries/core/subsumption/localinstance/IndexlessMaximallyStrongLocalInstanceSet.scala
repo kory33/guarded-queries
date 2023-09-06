@@ -1,8 +1,10 @@
 package io.github.kory33.guardedqueries.core.subsumption.localinstance
 import io.github.kory33.guardedqueries.core.formalinstance.QueryLikeInstance
-import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstance,
+  LocalInstanceTerm
+}
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet.AddResult
 
@@ -12,6 +14,7 @@ import scala.collection.mutable
  * An implementation of [[MaximallyStrongLocalInstanceSet]] which does not use any index.
  */
 class IndexlessMaximallyStrongLocalInstanceSet(
+  joinAlgorithm: NaturalJoinAlgorithm[LocalName, LocalInstanceTerm, LocalInstance],
   override val localNamesToFix: Set[LocalInstanceTerm.LocalName]
 ) extends MaximallyStrongLocalInstanceSet {
   private val instancesKnownToBeMaximallyStrongSoFar: mutable.Set[LocalInstance] =
@@ -37,9 +40,7 @@ class IndexlessMaximallyStrongLocalInstanceSet(
           Right(ruleConstant)
       }
 
-      FilterNestedLoopJoin[LocalName, LocalInstanceTerm]
-        .join(query, another)
-        .nonEmpty
+      joinAlgorithm.join(query, another).nonEmpty
     }
 
   private def isWeakerThanSomeInstance(instance: LocalInstance) =
