@@ -1,7 +1,7 @@
 package io.github.kory33.guardedqueries.core.testharnesses
 
-import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
+import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
