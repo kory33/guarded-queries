@@ -67,7 +67,7 @@ private def allProperWeakenings(localNamesToFix: Set[LocalName],
  * An implementation of [[GuardedDatalogReverseChaseEngine]] that does not make use of any
  * indexing techniques.
  */
-class ReverseChaseEngineReferenceImpl(
+class NaiveReverseChaseEngine(
   saturationEngine: DatalogSaturationEngine,
   localInstanceSetFactory: MaximallyStrongLocalInstanceSet.Factory
 ) extends GuardedDatalogReverseChaseEngine {
