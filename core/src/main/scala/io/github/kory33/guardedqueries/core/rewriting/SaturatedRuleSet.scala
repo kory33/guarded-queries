@@ -8,7 +8,7 @@ import uk.ac.ox.cs.pdq.fol.Formula
 
 import scala.jdk.CollectionConverters.*
 
-class SaturatedRuleSet[RuleClass <: GTGD](
+class SaturatedRuleSet[+RuleClass <: GTGD](
   saturation: AbstractSaturation[? <: GTGD],
   originalRules: Set[RuleClass]
 ) {
@@ -17,8 +17,8 @@ class SaturatedRuleSet[RuleClass <: GTGD](
   val saturatedRulesAsDatalogProgram: DatalogProgram =
     DatalogProgram.tryFromDependencies(saturatedRules)
 
-  val existentialRules: Set[RuleClass] =
-    originalRules.filter(rule => rule.getExistential.length > 0)
+  val existentialRules: Iterable[RuleClass] =
+    originalRules.view.filter(rule => rule.getExistential.length > 0).toSet
 
   val allRules: Set[GTGD] = saturatedRules ++ existentialRules
 
