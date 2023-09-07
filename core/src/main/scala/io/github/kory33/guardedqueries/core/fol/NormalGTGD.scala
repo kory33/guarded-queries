@@ -7,7 +7,15 @@ import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, Variable}
 import scala.jdk.CollectionConverters.*
 
 abstract sealed class NormalGTGD protected (body: Set[Atom], head: Set[Atom])
-    extends GTGD(body.asJava, head.asJava) {}
+    extends GTGD(body.asJava, head.asJava) {
+  def asSingleHeaded: NormalGTGD.SingleHeadedGTGD = this match {
+    case singleHeaded: NormalGTGD.SingleHeadedGTGD => singleHeaded
+    case _ =>
+      throw new IllegalArgumentException(
+        "Cannot convert a non-single-headed GTGD into a single-headed one"
+      )
+  }
+}
 
 /**
  * A GTGD in a normal form (i.e. either single-headed or full).
@@ -20,7 +28,7 @@ object NormalGTGD {
   /**
    * A single-headed GTGD.
    */
-  private class SingleHeadedGTGD(body: Set[Atom], head: Atom)
+  class SingleHeadedGTGD(body: Set[Atom], head: Atom)
       extends NormalGTGD(body, Set(head)) {}
 
   /**
