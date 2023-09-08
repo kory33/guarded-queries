@@ -1,10 +1,8 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
-import uk.ac.ox.cs.gsat.AbstractSaturation
-import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.Constant
-import uk.ac.ox.cs.pdq.fol.Formula
+import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, GuardedDatalogProgram}
+import uk.ac.ox.cs.gsat.{AbstractSaturation, GTGD}
+import uk.ac.ox.cs.pdq.fol.{Constant, Formula}
 
 import scala.jdk.CollectionConverters.*
 
@@ -16,6 +14,9 @@ class SaturatedRuleSet[+RuleClass <: GTGD](
 
   val saturatedRulesAsDatalogProgram: DatalogProgram =
     DatalogProgram.tryFromDependencies(saturatedRules)
+
+  val saturatedRulesAsGuardedDatalogProgram: GuardedDatalogProgram =
+    GuardedDatalogProgram.tryFromDependencies(saturatedRules)
 
   val existentialRules: Iterable[RuleClass] =
     originalRules.view.filter(rule => rule.getExistential.length > 0).toSet

@@ -2,7 +2,7 @@ package io.github.kory33.guardedqueries.core.fol
 
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, Variable}
+import uk.ac.ox.cs.pdq.fol.*
 
 import scala.jdk.CollectionConverters.*
 
@@ -28,8 +28,8 @@ object NormalGTGD {
   /**
    * A single-headed GTGD.
    */
-  class SingleHeadedGTGD(body: Set[Atom], head: Atom)
-      extends NormalGTGD(body, Set(head)) {}
+  class SingleHeadedGTGD(body: Set[Atom], val headAtom: Atom)
+      extends NormalGTGD(body, Set(headAtom)) {}
 
   /**
    * An existential-free GTGD.
@@ -43,16 +43,16 @@ object NormalGTGD {
     )
   }
 
-  private object FullGTGD {
+  object FullGTGD {
 
     /**
-     * Try constructing the object from a GTGD.
+     * Try constructing the a full GTGD from a dependency.
      *
-     * This function may throw an [[IllegalArgumentException]] if the given GTGD contains
-     * existentially quantified variables.
+     * This function may throw an [[IllegalArgumentException]] if the given dependency contains
+     * existentially quantified variables or is not guarded.
      */
-    def tryFromGTGD(gtgd: GTGD) =
-      new NormalGTGD.FullGTGD(gtgd.getBodyAtoms.toSet, gtgd.getHeadAtoms.toSet)
+    def tryFromDependency(dependency: Dependency) =
+      new NormalGTGD.FullGTGD(dependency.getBodyAtoms.toSet, dependency.getHeadAtoms.toSet)
 
     given Extensions: AnyRef with
       extension (gtgd: FullGTGD)
@@ -82,7 +82,7 @@ object NormalGTGD {
   def normalize(inputRules: Set[GTGD], intermediaryPredicatePrefix: String): Set[NormalGTGD] = {
     val (fullRules, existentialRules) =
       inputRules.partition(_.getExistential.length == 0)
-    val fullGTGDs = fullRules.map(FullGTGD.tryFromGTGD)
+    val fullGTGDs = fullRules.map(FullGTGD.tryFromDependency)
 
     val splitExistentialRules = existentialRules.zipWithIndex.flatMap { (originalRule, index) =>
       val intermediaryPredicateVariables =

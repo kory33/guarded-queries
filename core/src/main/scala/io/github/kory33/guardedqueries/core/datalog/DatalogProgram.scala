@@ -11,3 +11,8 @@ object DatalogProgram {
 }
 
 type GuardedDatalogProgram = Set[NormalGTGD.FullGTGD]
+
+object GuardedDatalogProgram {
+  def tryFromDependencies(dependencies: Iterable[Dependency]): GuardedDatalogProgram =
+    dependencies.map(NormalGTGD.FullGTGD.tryFromDependency).toSet
+}
