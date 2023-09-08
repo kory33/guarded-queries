@@ -38,7 +38,7 @@ final class DFSNormalizingDPTableSEEnumeration(
 
     def saturatedNormalizedChildrenOf(saturatedInstance: LocalInstance,
                                       namesToBePreservedDuringChase: Set[LocalName]
-    ): Set[LocalInstance] = {
+    ): Iterable[LocalInstance] = {
       // We need to chase the instance with all existential rules
       // while preserving all names in namesToBePreservedDuringChase.
       //

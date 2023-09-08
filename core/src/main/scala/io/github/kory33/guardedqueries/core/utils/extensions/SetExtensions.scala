@@ -38,7 +38,7 @@ object SetExtensions {
        * contains all elements from the initial set</li> <li>for every element `t` of `S`,
        * `generator.apply(t)` is contained in `S`</li> </ol>
        */
-      def generateFromElementsUntilFixpoint(generator: T => Set[T]): Set[T] = {
+      def generateFromElementsUntilFixpoint(generator: T => Iterable[T]): Set[T] = {
         @tailrec def recurse(
           elementsGeneratedSoFar: Set[T],
           elementsNewlyGeneratedInPreviousIteration: Set[T]
