@@ -3,6 +3,7 @@ package io.github.kory33.guardedqueries.core.formalinstance
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
 import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Term}
 
+import scala.annotation.targetName
 import scala.collection.mutable
 import scala.reflect.TypeTest
 
@@ -14,6 +15,10 @@ case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
 
   def getActiveTermsIn[T <: TermAlphabet](using tt: TypeTest[TermAlphabet, T]): Set[T] =
     activeTerms.collect { case tt(subtypeTerm) => subtypeTerm }
+
+  @targetName("minus")
+  def -(fact: FormalFact[TermAlphabet]): FormalInstance[TermAlphabet] =
+    FormalInstance(facts - fact)
 
   def map[T](mapper: TermAlphabet => T): FormalInstance[T] =
     FormalInstance(facts.map(_.map(mapper)))

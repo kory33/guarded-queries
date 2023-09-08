@@ -12,8 +12,8 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.{
  * Let `R` be the "strength" relation on local instances, as described in
  * [[io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet]].
  *
- * The [[reverseChase]] method returns a finite collection of all (`R`-isomorphism-classes of)
- * `R`-maximal local instances `I` that satisfies
+ * The [[reverseFullChase]] method returns a finite collection of all (`R`-isomorphism-classes
+ * of) `R`-maximal local instances `I` that satisfies
  *   - `instance R saturate(program, I)`, where `saturate` is
  *     [[DatalogSaturationEngine.saturateInstance]], and
  *   - the width of `I` (number of local names active in `I`) is at most
@@ -23,7 +23,7 @@ trait GuardedDatalogReverseChaseEngine {
   // TODO (Question):
   //   Is it OK to take `instanceWidthUpperLimit` to be the maximum arity of predicates
   //   appearing in `program` and omit this parameter?
-  def reverseChase(
+  def reverseFullChase(
     localNamesToFix: Set[LocalName],
     program: GuardedDatalogProgram,
     instanceWidthUpperLimit: Int,

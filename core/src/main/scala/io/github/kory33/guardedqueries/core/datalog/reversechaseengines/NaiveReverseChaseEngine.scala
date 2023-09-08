@@ -29,8 +29,8 @@ private case class ReverseChaseProblemContext(
  *   - all `LocalName`s in `range(u)` are fix-points of `u` (i.e. `u` is a unification), and
  *   - all `LocalName`s in `localNamesToFix` are fix-points of `u`.
  */
-private def allProperWeakenings(localNamesToFix: Set[LocalName],
-                                ruleConstantsInProgram: Set[RuleConstant]
+private def allWeakenings(localNamesToFix: Set[LocalName],
+                          ruleConstantsInProgram: Set[RuleConstant]
 )(inputInstance: LocalInstance): Iterable[LocalInstance] = {
   import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 
@@ -124,7 +124,7 @@ class NaiveReverseChaseEngine(
 
     for {
       weakenedInstance <-
-        allProperWeakenings(ctx.localNamesToFix, ctx.ruleConstantsInProgram)(instance)
+        allWeakenings(ctx.localNamesToFix, ctx.ruleConstantsInProgram)(instance)
       headAtomToErase <- rule.getHeadAtoms
       headAtomMatch <- SingleAtomMatching
         .allMatches(headAtomToErase.asQueryLikeAtom[LocalInstanceTerm], weakenedInstance)
@@ -149,7 +149,7 @@ class NaiveReverseChaseEngine(
     }
   }
 
-  override def reverseChase(
+  override def reverseFullChase(
     localNamesToFix: Set[LocalName],
     program: GuardedDatalogProgram,
     instanceWidthUpperLimit: Int,
