@@ -1,16 +1,12 @@
 package io.github.kory33.guardedqueries.core.datalog.reversechaseengines
 
-import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
-import io.github.kory33.guardedqueries.core.datalog.GuardedDatalogProgram
-import io.github.kory33.guardedqueries.core.datalog.GuardedDatalogReverseChaseEngine
+import io.github.kory33.guardedqueries.core.datalog.{DatalogSaturationEngine, GuardedDatalogProgram, GuardedDatalogReverseChaseEngine}
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD.FullGTGD
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.SingleAtomMatching
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant
+import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstance, LocalInstanceTerm}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{LocalName, RuleConstant}
 import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet
 import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet.AddResult
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces
@@ -130,7 +126,9 @@ class NaiveReverseChaseEngine(
         .allMatches(headAtomToErase.asQueryLikeAtom[LocalInstanceTerm], weakenedInstance)
         .allHomomorphisms
       extendedHomomorphism <- allExtensionsOf(headAtomMatch)
-    } yield deleteHeadAtomsAndAddBodyAtomsWith(extendedHomomorphism)
+      reverseChased = deleteHeadAtomsAndAddBodyAtomsWith(extendedHomomorphism)
+      if ctx.localNamesToFix subsetOf reverseChased.activeLocalNames
+    } yield reverseChased
   }
 
   private def performDFS(
