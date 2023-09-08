@@ -35,6 +35,14 @@ case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
   def isSuperInstanceOf(other: FormalInstance[TermAlphabet]): Boolean =
     other.facts.subsetOf(facts)
 
+  @targetName("addFacts")
+  def ++(facts: Iterable[FormalFact[TermAlphabet]]): FormalInstance[TermAlphabet] =
+    FormalInstance(this.facts ++ facts)
+
+  @targetName("unionInstance")
+  def ++(another: FormalInstance[TermAlphabet]): FormalInstance[TermAlphabet] =
+    this ++ another.facts
+
   def asAtoms(using TermAlphabet =:= Term): Set[Atom] = facts.map(_.asAtom)
 }
 
