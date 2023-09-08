@@ -1,19 +1,10 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
 import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
-import io.github.kory33.guardedqueries.core.fol.{
-  DatalogRule,
-  FunctionFreeSignature,
-  LocalVariableContext,
-  NormalGTGD
-}
+import io.github.kory33.guardedqueries.core.fol.{DatalogRule, FunctionFreeSignature, LocalVariableContext, NormalGTGD}
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.{
-  LocalInstanceTerm,
-  SubqueryEntailmentEnumeration,
-  SubqueryEntailmentInstance
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstanceTerm, SubqueryEntailmentEnumeration, SubqueryEntailmentInstance}
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
@@ -150,7 +141,8 @@ case class GuardedRuleAndQueryRewriter(
 
       val neighbourhoodVariableToTermInRule: Variable => Term = variable => {
         if (unification.contains(variable)) unification(variable)
-        else if (ruleConstantWitnessGuess.contains(variable)) ruleConstantWitnessGuess(variable)
+        else if (ruleConstantWitnessGuess.contains(variable))
+          ruleConstantWitnessGuess(variable).constant
         else
           // The contract ensures that the given subquery entailment instance is a valid instance
           // with respect to the whole query (subgoalAtoms.query()), which means that

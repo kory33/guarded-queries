@@ -19,34 +19,24 @@ import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
  *   If we write `k` for the maximum arity of predicates appearing in `S` and `Q`, each
  *   [[SubqueryEntailmentInstance]] `i` in the Iterable must satisfy the following conditions:
  *   <ol>
- *   <li> `i.ruleConstantWitnessGuess()` is a map from variables in `Q` to constants
- *        appearing in `S` </li>
- *   <li> `i.coexistentialVariables()` is a nonempty set of bound variables
- *        in `Q` that is connected in `Q` but disjoint from `i.ruleConstantWitnessGuess().keySet()` </li>
- *   <li> `i.localInstance()` is a formal instance on
+ *   <li> `i.coexistentialVariables` is a nonempty set of `Q`-bound variables that is connected in `Q` </li>
+ *   <li> `i.ruleConstantWitnessGuess` is a map from the `Q`-boundary of `i.coexistentialVariables` to
+ *        constants appearing in `S` </li>
+ *   <li> `i.localInstance` is a formal instance on
  *        <ul>
  *        <li>constants appearing in `Q`</li>
- *        <li>local names from the set `{ 0,..., 2*k-1 ` }</li>
+ *        <li>local names from the set `{ 0,..., 2*k-1 }`</li>
  *        </ul>
  *        such that at most `k` distinct local names appear in the formal instance
  *   </li>
- *   <li> `i.localWitnessGuess()` is a map that sends all `Q`-bound variables that are
+ *   <li> `i.localWitnessGuess` is a map from `Q`-boundary of `i.coexistentialVariables` to
+ *        `i.localInstance.activeLocalNames` </li>
+ *   <li> `i.queryConstantEmbedding` is an injective map that send <i>all</i> constants that
  *        <ol>
- *        <li>in the strict neighbourhood of `i.coexistentialVariables()` in `Q`, and</li>
- *        <li>not in `i.ruleConstantWitnessGuess().keySet()`</li>
- *        </ol>
- *        to local names appearing in `i.localInstance()`
- *   </li>
- *   <li> `i.queryConstantEmbedding()` is an injective map that send <i>all</i> constants that
- *        <ol>
- *        <li>appear in a subquery of `Q` weakly induced by `i.coexistentialVariables()` but</li>
+ *        <li>appear in a subquery of `Q` relevant to `i.coexistentialVariables` but</li>
  *        <li>do not appear in `S`</li>
  *        </ol>
- *        to local names that are
- *        <ol>
- *        <li>active in `i.localInstance()` and</li>
- *        <li>not in the range of `i.localWitnessGuess()`</li>
- *        </ol>
+ *        to local names in `i.localInstance.activeLocalNames`
  *   </li>
  *   </ol>
  * </li>

@@ -6,7 +6,7 @@ import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalIn
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
 import io.github.kory33.guardedqueries.core.subqueryentailments.*
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{LocalName, RuleConstant}
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
 import io.github.kory33.guardedqueries.core.utils.extensions.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
@@ -243,7 +243,7 @@ final class DFSNormalizingDPTableSEEnumeration(
       subqueryEntailmentInstance <-
         NormalizingDPTableSEEnumeration.allWellFormedNormalizedSubqueryEntailmentInstances(
           extensionalSignature,
-          saturatedRuleSet.constants,
+          saturatedRuleSet.constants.map(RuleConstant.apply),
           connectedConjunctiveQuery
         )
       if isSubqueryEntailment(subqueryEntailmentInstance)

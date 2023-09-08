@@ -14,7 +14,7 @@ import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExt
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Constant, Predicate, Variable}
+import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Predicate, Variable}
 
 /**
  * An implementation of subquery entailment enumeration using a DP table plus a simple
@@ -189,7 +189,7 @@ final class NormalizingDPTableSEEnumeration(
       subqueryEntailmentInstance <-
         NormalizingDPTableSEEnumeration.allWellFormedNormalizedSubqueryEntailmentInstances(
           extensionalSignature,
-          saturatedRuleSet.constants,
+          saturatedRuleSet.constants.map(RuleConstant.apply),
           connectedConjunctiveQuery
         )
       if isSubqueryEntailment(subqueryEntailmentInstance)
@@ -210,7 +210,7 @@ object NormalizingDPTableSEEnumeration {
       .forall { name => localNames.contains(LocalName(name)) }
 
   private def allNormalizedLocalInstances(extensionalSignature: FunctionFreeSignature,
-                                          ruleConstants: Set[Constant]
+                                          ruleConstants: Set[RuleConstant]
   ) = {
     // We need to consider sufficiently large collection of set of active local names.
     // As it is sufficient to check subquery entailments for all guarded instance
@@ -232,7 +232,7 @@ object NormalizingDPTableSEEnumeration {
         .filter(isZeroStartingContiguousLocalNameSet)
 
     allActiveLocalNameSets.flatMap(localNames => {
-      val allLocalInstanceTerms = localNames ++ ruleConstants.map(RuleConstant(_))
+      val allLocalInstanceTerms = localNames ++ ruleConstants
 
       val allFormalFactsOverPredicate = (predicate: Predicate) =>
         allLocalInstanceTerms
@@ -252,7 +252,7 @@ object NormalizingDPTableSEEnumeration {
 
   def allWellFormedNormalizedSubqueryEntailmentInstances(
     extensionalSignature: FunctionFreeSignature,
-    ruleConstants: Set[Constant],
+    ruleConstants: Set[RuleConstant],
     conjunctiveQuery: ConjunctiveQuery
   ): Iterable[SubqueryEntailmentInstance] = {
     val queryVariables = conjunctiveQuery.allVariables
@@ -279,15 +279,15 @@ object NormalizingDPTableSEEnumeration {
       localWitnessGuess <-
         allFunctionsBetween(nonConstantNeighbourhood, localInstance.activeLocalNames)
       queryConstantEmbedding <- {
-        val subqueryConstants = relevantSubquery.allConstants -- ruleConstants
+        val subqueryConstants = relevantSubquery.allConstants -- ruleConstants.map(_.constant)
         val nonWitnessingActiveLocalNames =
           localInstance.activeLocalNames -- localWitnessGuess.values
 
         allInjectionsBetween(subqueryConstants, nonWitnessingActiveLocalNames)
       }
     } yield SubqueryEntailmentInstance(
-      ruleConstantWitnessGuess,
       coexistentialVariables,
+      ruleConstantWitnessGuess,
       localInstance,
       localWitnessGuess,
       queryConstantEmbedding

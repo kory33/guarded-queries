@@ -1,22 +1,17 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments
 
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Constant, Variable}
 
 case class SubqueryEntailmentInstance(
-  ruleConstantWitnessGuess: Map[Variable, Constant],
   coexistentialVariables: Set[Variable],
+  ruleConstantWitnessGuess: Map[Variable, RuleConstant],
   localInstance: LocalInstance,
   localWitnessGuess: Map[Variable, LocalInstanceTerm.LocalName],
   queryConstantEmbedding: BijectiveMap[Constant, LocalInstanceTerm.LocalName]
 ) {
-  def ruleConstantWitnessGuessAsMapToInstanceTerms
-    : Map[Variable, LocalInstanceTerm.RuleConstant] =
-    ruleConstantWitnessGuess
-      .view.mapValues[LocalInstanceTerm.RuleConstant](LocalInstanceTerm.RuleConstant.apply)
-      .toMap
-
   def withLocalInstance(newLocalInstance: LocalInstance): SubqueryEntailmentInstance =
     this.copy(localInstance =
       newLocalInstance
@@ -60,7 +55,7 @@ object SplitSubqueryEntailmentInstances {
       parentEntailmentInstance.localWitnessGuess ++ commitMap
 
     val extendedGuess: Map[Variable, LocalInstanceTerm] = extendedLocalWitnessGuess ++
-      parentEntailmentInstance.ruleConstantWitnessGuessAsMapToInstanceTerms
+      parentEntailmentInstance.ruleConstantWitnessGuess
 
     new SplitSubqueryEntailmentInstances(
       relevantSubquery.getAtoms
@@ -80,8 +75,8 @@ object SplitSubqueryEntailmentInstances {
             relevantSubquery.subqueryRelevantToVariables(component).get
 
           SubqueryEntailmentInstance(
-            parentEntailmentInstance.ruleConstantWitnessGuess,
             component,
+            parentEntailmentInstance.ruleConstantWitnessGuess,
             parentEntailmentInstance.localInstance,
             extendedLocalWitnessGuess.restrictToKeys(newNeighbourhood),
             parentEntailmentInstance.queryConstantEmbedding.restrictToKeys(
