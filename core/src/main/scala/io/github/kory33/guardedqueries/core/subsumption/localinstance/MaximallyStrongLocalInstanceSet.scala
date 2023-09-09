@@ -46,7 +46,9 @@ trait MaximallyStrongLocalInstanceSet {
 }
 
 object MaximallyStrongLocalInstanceSet {
-  type Factory = () => MaximallyStrongLocalInstanceSet
+  trait Factory {
+    def newSet(localNamesToFix: Set[LocalName]): MaximallyStrongLocalInstanceSet
+  }
 
   enum AddResult:
     case Added
