@@ -48,12 +48,13 @@ case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
 
 object FormalInstance {
 
-  def unionAll[TermAlphabet](instances: Iterable[FormalInstance[TermAlphabet]])
-    : FormalInstance[TermAlphabet] = {
-    val facts = mutable.HashSet.empty[FormalFact[TermAlphabet]]
-    for (instance <- instances) { facts ++= instance.facts }
-    FormalInstance(facts.toSet)
-  }
+  given Extensions: AnyRef with
+    extension [TA](instances: Iterable[FormalInstance[TA]])
+      def unionAll: FormalInstance[TA] = {
+        val facts = mutable.HashSet.empty[FormalFact[TA]]
+        for (instance <- instances) { facts ++= instance.facts }
+        FormalInstance(facts.toSet)
+      }
 
   def empty[TermAlphabet]: FormalInstance[TermAlphabet] = FormalInstance(Set.empty)
 
