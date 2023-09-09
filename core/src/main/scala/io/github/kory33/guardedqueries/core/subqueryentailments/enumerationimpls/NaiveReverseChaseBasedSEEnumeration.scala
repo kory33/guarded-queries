@@ -84,10 +84,8 @@ private def allWeakenings(localNamesToFix: Set[LocalName],
 /**
  * An implementation of subquery entailment enumeration based on the reverse chase algorithm.
  */
-class NaiveReverseChaseBasedSEEnumeration(
-  saturationEngine: DatalogSaturationEngine,
-  reverseChaseEngine: GuardedDatalogReverseChaseEngine
-) extends SubqueryEntailmentEnumeration {
+class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReverseChaseEngine)
+    extends SubqueryEntailmentEnumeration {
   import NaiveReverseChaseBasedSEEnumeration.SubqueryRepresentation
   import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet.AddResult
 
@@ -225,12 +223,7 @@ class NaiveReverseChaseBasedSEEnumeration(
         if maximallyStrongInstancesSoFar.add(next) == AddResult.Added
       } do performDFS(next)
 
-      performDFS(
-        saturationEngine.saturateInstance(
-          saturatedRuleSet.saturatedRulesAsDatalogProgram,
-          localInstance
-        )
-      )
+      performDFS(localInstance)
     }
 
     // We prepare a mutual recursion between allMaximallyStrongInstances and weakestCommitPointsFor
