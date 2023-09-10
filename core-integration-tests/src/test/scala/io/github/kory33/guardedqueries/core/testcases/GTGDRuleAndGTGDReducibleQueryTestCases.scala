@@ -96,6 +96,18 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
       )
     )
   }
+
+  object Arity3Rule_1 {
+    val existentialGuardedQuery: GTGDRuleAndGTGDReducibleQuery = GTGDRuleAndGTGDReducibleQuery(
+      GTGDRuleSets.arity3Rule_1,
+      GTGDReducibleConjunctiveQuery(
+        conjunctiveQuery.parse("EE x. T(x, y, z), U(x)"),
+        Set(gtgd.parse("TT(x, y, z), U(x) -> Goal(y, z)")),
+        conjunctiveQuery.parse("Goal(y, z)")
+      )
+    )
+  }
+
   object Arity4Rule {
     val atomicQuery: GTGDRuleAndGTGDReducibleQuery = GTGDRuleAndGTGDReducibleQuery(
       GTGDRuleSets.arity4Rule,

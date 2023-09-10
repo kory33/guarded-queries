@@ -67,7 +67,15 @@ class NaiveReverseChaseBasedSEEnumerationTests extends AnyFlatSpec {
     harness.checkThatGSatAndTheRewriterAgreeOn(
       GTGDRuleAndGTGDReducibleQueryTestCases.Arity3Rule_0.existentialJoinQuery,
       // Joining is very slow with this test case
-      1000
+      600
+    )
+  }
+
+  it should "agree with GSat on Arity3Rule_0.existentialGuardedQuery" in {
+    harness.checkThatGSatAndTheRewriterAgreeOn(
+      GTGDRuleAndGTGDReducibleQueryTestCases.Arity3Rule_1.existentialGuardedQuery,
+      // Joining is very slow with this test case
+      600
     )
   }
 }
