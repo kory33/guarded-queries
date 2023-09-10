@@ -348,6 +348,8 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
         maxArityOfAllPredicatesInRuleQueryPair
       )
       maximallyStrongInstance <- allMaximallyStrongInstances(subquery)
+      // We only output instances that are maximally strong in the extensional signature
+      if maximallyStrongInstance.allPredicates.subsetOf(_extensionalSignature.predicates)
     } yield subquery.toSubqueryEntailmentInstance(maximallyStrongInstance)
   }
 }

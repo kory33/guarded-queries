@@ -13,6 +13,8 @@ case class FormalInstance[TermAlphabet](facts: Set[FormalFact[TermAlphabet]]) {
   lazy val activePredicates: Set[Predicate] =
     facts.map(_.predicate)
 
+  val allPredicates: Set[Predicate] = facts.map(_.predicate)
+
   def getActiveTermsIn[T <: TermAlphabet](using tt: TypeTest[TermAlphabet, T]): Set[T] =
     activeTerms.collect { case tt(subtypeTerm) => subtypeTerm }
 
