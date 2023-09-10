@@ -101,8 +101,8 @@ object GTGDRuleAndGTGDReducibleQueryTestCases {
     val existentialGuardedQuery: GTGDRuleAndGTGDReducibleQuery = GTGDRuleAndGTGDReducibleQuery(
       GTGDRuleSets.arity3Rule_1,
       GTGDReducibleConjunctiveQuery(
-        conjunctiveQuery.parse("EE x. T(x, y, z), U(x)"),
-        Set(gtgd.parse("TT(x, y, z), U(x) -> Goal(y, z)")),
+        conjunctiveQuery.parse("EE x. T(x, y, z), M(x)"),
+        Set(gtgd.parse("T(x, y, z), M(x) -> Goal(y, z)")),
         conjunctiveQuery.parse("Goal(y, z)")
       )
     )
