@@ -197,7 +197,7 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
                   .allFunctionsBetween(nonFrontierVariables, possibleExtensionRange)
                   .map(headReverseHomomorphism.extendWithMap)
                   .map { reverseHomomorphism =>
-                    instance ++ reverseHomomorphism.materializeFunctionFreeAtoms(
+                    instanceMinusHead ++ reverseHomomorphism.materializeFunctionFreeAtoms(
                       existentialRule.getBodyAtoms.toSet
                     )
                   }
