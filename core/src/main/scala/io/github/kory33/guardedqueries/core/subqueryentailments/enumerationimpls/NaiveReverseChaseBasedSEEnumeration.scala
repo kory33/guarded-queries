@@ -10,7 +10,11 @@ import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgo
   FilterNestedLoopJoin,
   SingleAtomMatching
 }
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, QueryLikeAtom}
+import io.github.kory33.guardedqueries.core.formalinstance.{
+  FormalFact,
+  FormalInstance,
+  QueryLikeAtom
+}
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
 import io.github.kory33.guardedqueries.core.subqueryentailments.{
   LocalInstance,
@@ -250,6 +254,11 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
           .zipWithIndex
           .flatMap((p, i) => p.associate(_ => LocalName(i): LocalName))
           .toMap
+        unifiedCommittedPart = boundVariableConnectedQuery
+          .subqueryRelevantToVariables(unificationMap.keySet).get
+          .strictlyInduceSubqueryByVariables(
+            unificationMap.keySet ++ query.committedBoundaryVariables
+          )
         extraLocalNameCandidates = {
           val unusedNames = (0 until maxArityOfAllPredicatesInRuleQueryPair)
             .map(LocalName.apply)
@@ -298,7 +307,20 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
             }
             .map(_.unionAll)
         }
-      } yield unionOfMaximallyStrongSplitSubqueryInstances
+      } yield {
+        val committedVariableMap = query.boundaryVariableCommitMap ++ unificationMap
+        val committedPart = FormalInstance(
+          unifiedCommittedPart.toList.toSet
+            .flatMap(_.getAtoms)
+            .map(FormalFact.fromAtom)
+        ).map {
+          case v: Variable => committedVariableMap(v)
+          case c: Constant => query.queryConstantEmbedding.asMap.getOrElse(c, RuleConstant(c))
+          case t => throw new IllegalArgumentException(s"$t is not a variable nor a constant")
+        }
+
+        unionOfMaximallyStrongSplitSubqueryInstances ++ committedPart
+      }
     }
 
     allMaximallyStrongInstances
@@ -338,8 +360,14 @@ object NaiveReverseChaseBasedSEEnumeration {
     queryConstantEmbedding: BijectiveMap[Constant, LocalName]
   ) {
     // we must not treat these local names as potential existentials, nor unify them
-    lazy val namesToBePreservedTowardsAncestors: Set[LocalName] =
+    val namesToBePreservedTowardsAncestors: Set[LocalName] =
       boundaryVariablesToLocalNameMap.values.toSet ++ queryConstantEmbedding.values
+
+    val boundaryVariableCommitMap: Map[Variable, LocalInstanceTerm] =
+      boundaryVariablesToConstantMap ++ boundaryVariablesToLocalNameMap
+
+    // Set of all variables committed (either to a local name or to a constant) in the query
+    val committedBoundaryVariables: Set[Variable] = boundaryVariableCommitMap.keySet
 
     def toSubqueryEntailmentInstance(localInstance: LocalInstance): SubqueryEntailmentInstance =
       SubqueryEntailmentInstance(
