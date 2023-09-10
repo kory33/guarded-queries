@@ -101,7 +101,7 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
     def reverseChaseAndVisitLocalInstances(
       subquery: SubqueryRepresentation,
       localInstance: LocalInstance
-    )(using maximallyStrongInstancesSoFar: MaximallyStrongLocalInstanceSet): Unit = {
+    )(maximallyStrongInstancesSoFar: MaximallyStrongLocalInstanceSet): Unit = {
 
       /**
        * Reverse-chase the given instance existentially without weakening (hence the name
@@ -233,16 +233,17 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
     // We prepare a mutual recursion between allMaximallyStrongInstances and weakestCommitPointsFor
     lazy val allMaximallyStrongInstances =
       CachingFunction { (subquery: SubqueryRepresentation) =>
-        given m: MaximallyStrongLocalInstanceSet = IndexlessMaximallyStrongLocalInstanceSet(
-          FilterNestedLoopJoin(),
-          subquery.namesToBePreservedTowardsAncestors
-        )
+        val instanceSet: MaximallyStrongLocalInstanceSet =
+          IndexlessMaximallyStrongLocalInstanceSet(
+            FilterNestedLoopJoin(),
+            subquery.namesToBePreservedTowardsAncestors
+          )
 
         for (weakestCommitPoint <- weakestCommitPointsFor(subquery)) do {
-          reverseChaseAndVisitLocalInstances(subquery, weakestCommitPoint)
+          reverseChaseAndVisitLocalInstances(subquery, weakestCommitPoint)(instanceSet)
         }
 
-        m.getMaximalLocalInstances
+        instanceSet.getMaximalLocalInstances
       }
 
     def weakestCommitPointsFor(query: SubqueryRepresentation): Iterable[LocalInstance] = {
