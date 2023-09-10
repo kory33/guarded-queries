@@ -1,15 +1,9 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls
 
-import io.github.kory33.guardedqueries.core.datalog.{
-  DatalogSaturationEngine,
-  GuardedDatalogReverseChaseEngine
-}
+import io.github.kory33.guardedqueries.core.datalog.GuardedDatalogReverseChaseEngine
 import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
 import io.github.kory33.guardedqueries.core.fol.NormalGTGD.SingleHeadedGTGD
-import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.{
-  FilterNestedLoopJoin,
-  SingleAtomMatching
-}
+import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.SingleAtomMatching
 import io.github.kory33.guardedqueries.core.formalinstance.{
   FormalFact,
   FormalInstance,
@@ -26,10 +20,7 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTer
   LocalName,
   RuleConstant
 }
-import io.github.kory33.guardedqueries.core.subsumption.localinstance.{
-  IndexlessMaximallyStrongLocalInstanceSet,
-  MaximallyStrongLocalInstanceSet
-}
+import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Constant, Variable}
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
@@ -88,8 +79,10 @@ private def allWeakenings(localNamesToFix: Set[LocalName],
 /**
  * An implementation of subquery entailment enumeration based on the reverse chase algorithm.
  */
-class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReverseChaseEngine)
-    extends SubqueryEntailmentEnumeration {
+class NaiveReverseChaseBasedSEEnumeration(
+  reverseChaseEngine: GuardedDatalogReverseChaseEngine,
+  maximalInstanceSetFactory: MaximallyStrongLocalInstanceSet.Factory
+) extends SubqueryEntailmentEnumeration {
   import NaiveReverseChaseBasedSEEnumeration.SubqueryRepresentation
   import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet.AddResult
 
@@ -233,11 +226,8 @@ class NaiveReverseChaseBasedSEEnumeration(reverseChaseEngine: GuardedDatalogReve
     // We prepare a mutual recursion between allMaximallyStrongInstances and weakestCommitPointsFor
     lazy val allMaximallyStrongInstances =
       CachingFunction { (subquery: SubqueryRepresentation) =>
-        val instanceSet: MaximallyStrongLocalInstanceSet =
-          IndexlessMaximallyStrongLocalInstanceSet(
-            FilterNestedLoopJoin(),
-            subquery.namesToBePreservedTowardsAncestors
-          )
+        val instanceSet =
+          maximalInstanceSetFactory.newSet(subquery.namesToBePreservedTowardsAncestors)
 
         for (weakestCommitPoint <- weakestCommitPointsFor(subquery)) do {
           reverseChaseAndVisitLocalInstances(subquery, weakestCommitPoint)(instanceSet)

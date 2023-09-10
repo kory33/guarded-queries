@@ -1,6 +1,11 @@
 package io.github.kory33.guardedqueries.core.subsumption.localinstance
 
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.QueryLikeInstance
+import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
+import io.github.kory33.guardedqueries.core.subqueryentailments.{
+  LocalInstance,
+  LocalInstanceTerm
+}
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 
 /**
@@ -53,4 +58,37 @@ object MaximallyStrongLocalInstanceSet {
   enum AddResult:
     case Added
     case WeakerThanAnotherLocalInstance
+}
+
+/**
+ * The implementation of the "strength relation" on local instances.
+ */
+case class LocalInstanceStrengthRelation(
+  localNamesToFix: Set[LocalName]
+) {
+  given Extension: AnyRef with
+    extension (instance: LocalInstance)
+      def asStrongAs(another: LocalInstance)(
+        using joinAlgorithm: NaturalJoinAlgorithm[LocalName, LocalInstanceTerm, LocalInstance]
+      ): Boolean = {
+        // Recall that we have to find a map `s: LocalName => LocalInstanceTerm` such that
+        //   - `s(instance) subsetOf another`, and
+        //   - `s` is the identity map on `localNamesToFix`.
+        // This corresponds to checking the non-emptiness of the query `query` on `another`, where
+        // `query` is the existential-free conjunctive query whose conjuncts are formal facts from `instance`,
+        // where local names in `localNamesToFix` and rule constants are treated as query constants
+        // and other local names are treated as query variables.
+        val query: QueryLikeInstance[LocalName, LocalInstanceTerm] = instance.map {
+          case name: LocalName =>
+            if (localNamesToFix.contains(name)) {
+              Right(name)
+            } else {
+              Left(name)
+            }
+          case ruleConstant: LocalInstanceTerm.RuleConstant =>
+            Right(ruleConstant)
+        }
+
+        joinAlgorithm.join(query, another).nonEmpty
+      }
 }
