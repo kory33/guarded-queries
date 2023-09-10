@@ -26,7 +26,7 @@ object InstanceGeneration {
 
   def randomInstanceOver(signature: FunctionFreeSignature): FormalInstance[Constant] = {
     val constantsToUse =
-      (0 until signature.maxArity * 4).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
+      (0 until signature.maxArity * 2).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
 
     val allFactsOverSignature = signature.predicates.flatMap(p =>
       allFactsOver(p, constantsToUse).facts
@@ -34,7 +34,7 @@ object InstanceGeneration {
 
     /**
      * We first decide a selection rate and use it as a threshold to filter out some of the
-     * tuples in the instance We are making it more likely to select smaller instances so that
+     * tuples in the instance. We are making it more likely to select smaller instances so that
      * the answer set is usually smaller than all of `constantsToUse^(answer arity)`
      */
     val selectionRate = Math.pow(Math.random, 2.5)
