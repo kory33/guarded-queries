@@ -18,13 +18,6 @@ import uk.ac.ox.cs.pdq.fol.Variable
 import scala.jdk.CollectionConverters._
 
 class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
-  val genSmallPredicateSet: Gen[Set[Predicate]] = for {
-    predicateCount <- Gen.chooseNum(1, 5)
-    predicates <- (1 to predicateCount).toList.traverse { index =>
-      Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_$index", arity) }
-    }
-  } yield predicates.toSet
-
   def smallNonExistentialQueryOver(predicateSet: Set[Predicate]): Gen[ConjunctiveQuery] = for {
     querySize <- Gen.chooseNum(1, 5)
     queryAtoms <- Gen.listOfN(
@@ -41,7 +34,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
   } yield ConjunctiveQuery.create(queryVariables.toArray, queryAtoms.toArray)
 
   val genInstanceAndJoinQuery: Gen[(FormalInstance[Constant], ConjunctiveQuery)] = for {
-    predicateSet <- genSmallPredicateSet
+    predicateSet <- GenFormalInstance.genSmallPredicateSet
     constantsToUse = (1 to 10).map(i => TypedConstant.create(s"c_$i"): Constant).toSet
     instance <-
       GenFormalInstance.genFormalInstanceContainingPredicates(predicateSet, constantsToUse)
@@ -63,7 +56,7 @@ class FilterNestedLoopJoinSpec extends AnyFlatSpec with ScalaCheckPropertyChecks
 
   val genQueryAndHomomorphism: Gen[(ConjunctiveQuery, HomomorphicMapping[Variable, Constant])] =
     for {
-      predicateSet <- genSmallPredicateSet
+      predicateSet <- GenFormalInstance.genSmallPredicateSet
       query <- smallNonExistentialQueryOver(predicateSet)
       variablesInQuery = query.getFreeVariables.toSet
       homomorphism <-

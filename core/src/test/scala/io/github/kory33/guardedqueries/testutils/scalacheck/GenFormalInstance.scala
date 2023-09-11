@@ -1,5 +1,6 @@
 package io.github.kory33.guardedqueries.testutils.scalacheck
 
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkSet
@@ -10,6 +11,13 @@ import uk.ac.ox.cs.pdq.fol.Constant
 import uk.ac.ox.cs.pdq.fol.Predicate
 
 object GenFormalInstance {
+  val genSmallPredicateSet: Gen[Set[Predicate]] = for {
+    predicateCount <- Gen.chooseNum(1, 5)
+    predicates <- (1 to predicateCount).toList.traverse { index =>
+      Gen.chooseNum(1, 4).map { arity => Predicate.create(s"P_$index", arity) }
+    }
+  } yield predicates.toSet
+
   def genFormalInstanceOver(predicate: Predicate,
                             constantsToUse: Set[Constant]
   ): Gen[FormalInstance[Constant]] = {
@@ -35,6 +43,13 @@ object GenFormalInstance {
       .traverse(predicate => genFormalInstanceOver(predicate, constantsToUse))
       .map { instanceList => FormalInstance(instanceList.flatMap(_.facts).toSet) }
   }
+
+  def genSmallFormalInstanceOnConstants(constantsToUse: Set[Constant])
+    : Gen[FormalInstance[Constant]] =
+    for {
+      predicateSet <- genSmallPredicateSet
+      instance <- genFormalInstanceContainingPredicates(predicateSet, constantsToUse)
+    } yield instance
 }
 
 object ShrinkFormalInstance {
