@@ -26,7 +26,6 @@ class NaiveReverseChaseBasedSEEnumerationTests extends AnyFlatSpec {
       GSat.getInstance,
       NaiveReverseChaseBasedSEEnumeration(
         NaiveReverseChaseEngine(
-          NaiveSaturationEngine(),
           IndexlessMinimallyStrongLocalInstanceSet(_)
         ),
         IndexlessMinimallyStrongLocalInstanceSet(_)
@@ -77,7 +76,6 @@ class NaiveReverseChaseBasedSEEnumerationTests extends AnyFlatSpec {
     )
   }
 
-  /* TODO: enable this test
   it should "agree with GSat on Arity3Rule_1.existentialGuardedQuery" in {
     harness.checkThatGSatAndTheRewriterAgreeOn(
       GTGDRuleAndGTGDReducibleQueryTestCases.Arity3Rule_1.existentialGuardedQuery,
@@ -85,5 +83,4 @@ class NaiveReverseChaseBasedSEEnumerationTests extends AnyFlatSpec {
       600
     )
   }
-   */
 }

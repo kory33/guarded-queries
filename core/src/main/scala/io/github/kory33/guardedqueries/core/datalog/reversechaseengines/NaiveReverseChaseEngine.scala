@@ -1,7 +1,6 @@
 package io.github.kory33.guardedqueries.core.datalog.reversechaseengines
 
 import io.github.kory33.guardedqueries.core.datalog.{
-  DatalogSaturationEngine,
   GuardedDatalogProgram,
   GuardedDatalogReverseChaseEngine
 }
@@ -74,7 +73,6 @@ private def allWeakenings(localNamesToFix: Set[LocalName],
  * indexing techniques.
  */
 class NaiveReverseChaseEngine(
-  saturationEngine: DatalogSaturationEngine,
   localInstanceSetFactory: MinimallyStrongLocalInstanceSet.Factory
 ) extends GuardedDatalogReverseChaseEngine {
 
@@ -163,9 +161,6 @@ class NaiveReverseChaseEngine(
     instanceWidthUpperLimit: Int,
     inputInstance: LocalInstance
   ): Iterable[LocalInstance] = {
-    val saturatedInputInstance: LocalInstance =
-      saturationEngine.saturateInstance(program.map(_.asDatalogRule), inputInstance)
-
     val minimalInstanceSet = localInstanceSetFactory.newSet(localNamesToFix)
 
     given ReverseChaseProblemContext =
@@ -176,7 +171,7 @@ class NaiveReverseChaseEngine(
         instanceWidthUpperLimit
       )
 
-    performDFS(saturatedInputInstance, minimalInstanceSet)
+    performDFS(inputInstance, minimalInstanceSet)
 
     minimalInstanceSet.getMinimalLocalInstances
   }
