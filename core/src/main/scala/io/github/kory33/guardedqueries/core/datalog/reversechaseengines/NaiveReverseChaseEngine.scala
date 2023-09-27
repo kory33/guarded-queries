@@ -17,8 +17,8 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTer
   LocalName,
   RuleConstant
 }
-import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet
-import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet.AddResult
+import io.github.kory33.guardedqueries.core.subsumption.localinstance.MinimallyStrongLocalInstanceSet
+import io.github.kory33.guardedqueries.core.subsumption.localinstance.MinimallyStrongLocalInstanceSet.AddResult
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces
 import uk.ac.ox.cs.pdq.fol.Variable
 
@@ -75,7 +75,7 @@ private def allWeakenings(localNamesToFix: Set[LocalName],
  */
 class NaiveReverseChaseEngine(
   saturationEngine: DatalogSaturationEngine,
-  localInstanceSetFactory: MaximallyStrongLocalInstanceSet.Factory
+  localInstanceSetFactory: MinimallyStrongLocalInstanceSet.Factory
 ) extends GuardedDatalogReverseChaseEngine {
 
   private def reverseChaseOneStepWith(
@@ -143,16 +143,16 @@ class NaiveReverseChaseEngine(
 
   private def performDFS(
     currentInstance: LocalInstance,
-    maximalInstancesSoFar: MaximallyStrongLocalInstanceSet
+    minimalInstancesSoFar: MinimallyStrongLocalInstanceSet
   )(using ctx: ReverseChaseProblemContext): Unit = {
     for {
       rule <- ctx.program
       reverseChasedOneStep <-
         reverseChaseOneStepWith(rule, currentInstance)
     } {
-      if (maximalInstancesSoFar.add(reverseChasedOneStep) == AddResult.Added) {
+      if (minimalInstancesSoFar.add(reverseChasedOneStep) == AddResult.Added) {
         // we only go further up the tree if the reverse-chased instance is not a subsumed one
-        performDFS(reverseChasedOneStep, maximalInstancesSoFar)
+        performDFS(reverseChasedOneStep, minimalInstancesSoFar)
       }
     }
   }
@@ -166,7 +166,7 @@ class NaiveReverseChaseEngine(
     val saturatedInputInstance: LocalInstance =
       saturationEngine.saturateInstance(program.map(_.asDatalogRule), inputInstance)
 
-    val maximalInstanceSet = localInstanceSetFactory.newSet(localNamesToFix)
+    val minimalInstanceSet = localInstanceSetFactory.newSet(localNamesToFix)
 
     given ReverseChaseProblemContext =
       ReverseChaseProblemContext(
@@ -176,8 +176,8 @@ class NaiveReverseChaseEngine(
         instanceWidthUpperLimit
       )
 
-    performDFS(saturatedInputInstance, maximalInstanceSet)
+    performDFS(saturatedInputInstance, minimalInstanceSet)
 
-    maximalInstanceSet.getMaximalLocalInstances
+    minimalInstanceSet.getMinimalLocalInstances
   }
 }

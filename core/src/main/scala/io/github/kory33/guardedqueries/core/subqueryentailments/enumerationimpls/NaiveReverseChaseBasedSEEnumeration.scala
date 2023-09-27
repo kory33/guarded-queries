@@ -20,7 +20,7 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTer
   LocalName,
   RuleConstant
 }
-import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet
+import io.github.kory33.guardedqueries.core.subsumption.localinstance.MinimallyStrongLocalInstanceSet
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
 import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Constant, Variable}
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
@@ -81,10 +81,10 @@ private def allWeakenings(localNamesToFix: Set[LocalName],
  */
 class NaiveReverseChaseBasedSEEnumeration(
   reverseChaseEngine: GuardedDatalogReverseChaseEngine,
-  maximalInstanceSetFactory: MaximallyStrongLocalInstanceSet.Factory
+  minimalInstanceSetFactory: MinimallyStrongLocalInstanceSet.Factory
 ) extends SubqueryEntailmentEnumeration {
   import NaiveReverseChaseBasedSEEnumeration.SubqueryRepresentation
-  import io.github.kory33.guardedqueries.core.subsumption.localinstance.MaximallyStrongLocalInstanceSet.AddResult
+  import io.github.kory33.guardedqueries.core.subsumption.localinstance.MinimallyStrongLocalInstanceSet.AddResult
 
   def allMaximallyStrongInstancesCached(
     saturatedRuleSet: SaturatedRuleSet[NormalGTGD],
@@ -94,7 +94,7 @@ class NaiveReverseChaseBasedSEEnumeration(
     def reverseChaseAndVisitLocalInstances(
       subquery: SubqueryRepresentation,
       localInstance: LocalInstance
-    )(maximallyStrongInstancesSoFar: MaximallyStrongLocalInstanceSet): Unit = {
+    )(minimallyStrongInstancesSoFar: MinimallyStrongLocalInstanceSet): Unit = {
 
       /**
        * Reverse-chase the given instance existentially without weakening (hence the name
@@ -210,14 +210,14 @@ class NaiveReverseChaseBasedSEEnumeration(
           maxArityOfAllPredicatesInRuleQueryPair,
           current
         )
-        if maximallyStrongInstancesSoFar.add(reverseFullChasedFromCurrent) == AddResult.Added
+        if minimallyStrongInstancesSoFar.add(reverseFullChasedFromCurrent) == AddResult.Added
 
         weakenedReverseFullChased <- allWeakenings(
           subquery.namesToBePreservedTowardsAncestors,
           saturatedRuleSet.constants.map(RuleConstant.apply)
         )(reverseFullChasedFromCurrent)
         next <- reverseChaseOneStepExistentiallyExact(weakenedReverseFullChased)
-        if maximallyStrongInstancesSoFar.add(next) == AddResult.Added
+        if minimallyStrongInstancesSoFar.add(next) == AddResult.Added
       } do performDFS(next)
 
       performDFS(localInstance)
@@ -227,13 +227,13 @@ class NaiveReverseChaseBasedSEEnumeration(
     lazy val allMaximallyStrongInstances =
       CachingFunction { (subquery: SubqueryRepresentation) =>
         val instanceSet =
-          maximalInstanceSetFactory.newSet(subquery.namesToBePreservedTowardsAncestors)
+          minimalInstanceSetFactory.newSet(subquery.namesToBePreservedTowardsAncestors)
 
         for (weakestCommitPoint <- weakestCommitPointsFor(subquery)) do {
           reverseChaseAndVisitLocalInstances(subquery, weakestCommitPoint)(instanceSet)
         }
 
-        instanceSet.getMaximalLocalInstances
+        instanceSet.getMinimalLocalInstances
       }
 
     def weakestCommitPointsFor(query: SubqueryRepresentation): Iterable[LocalInstance] = {
@@ -287,13 +287,13 @@ class NaiveReverseChaseBasedSEEnumeration(
 
           splitSubqueries
             .productAll { subquery =>
-              allMaximallyStrongInstances(subquery).flatMap { maximallyStrongInstance =>
+              allMaximallyStrongInstances(subquery).flatMap { minimallyStrongInstance =>
                 FunctionSpaces
                   .allFunctionsBetween(
-                    maximallyStrongInstance.activeLocalNames -- subquery.namesToBePreservedTowardsAncestors,
+                    minimallyStrongInstance.activeLocalNames -- subquery.namesToBePreservedTowardsAncestors,
                     localNameCandidates
                   )
-                  .map(nameRemapping => maximallyStrongInstance.mapLocalNames(nameRemapping))
+                  .map(nameRemapping => minimallyStrongInstance.mapLocalNames(nameRemapping))
               }
             }
             .map(_.unionAll)
@@ -338,10 +338,10 @@ class NaiveReverseChaseBasedSEEnumeration(
         saturatedRuleSet.constants.map(RuleConstant.apply),
         maxArityOfAllPredicatesInRuleQueryPair
       )
-      maximallyStrongInstance <- allMaximallyStrongInstances(subquery)
-      // We only output instances that are maximally strong in the extensional signature
-      if maximallyStrongInstance.allPredicates.subsetOf(_extensionalSignature.predicates)
-    } yield subquery.toSubqueryEntailmentInstance(maximallyStrongInstance)
+      minimallyStrongInstance <- allMaximallyStrongInstances(subquery)
+      // We only output instances that are minimally strong in the extensional signature
+      if minimallyStrongInstance.allPredicates.subsetOf(_extensionalSignature.predicates)
+    } yield subquery.toSubqueryEntailmentInstance(minimallyStrongInstance)
   }
 }
 

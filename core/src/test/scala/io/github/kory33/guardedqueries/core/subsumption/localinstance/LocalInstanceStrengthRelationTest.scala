@@ -61,7 +61,7 @@ class LocalInstanceStrengthRelationTest extends AnyFlatSpec with ScalaCheckPrope
         val localInstanceStrengthRelation = LocalInstanceStrengthRelation(fixedLocalNames)
         import localInstanceStrengthRelation.given
 
-        assert(i1 asStrongAs i2)
+        assert(i1 asWeakAs i2)
     }
   }
 }

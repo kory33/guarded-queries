@@ -10,7 +10,7 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.{
   LocalInstanceTerm
 }
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subsumption.localinstance.IndexlessMaximallyStrongLocalInstanceSet
+import io.github.kory33.guardedqueries.core.subsumption.localinstance.IndexlessMinimallyStrongLocalInstanceSet
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQueryTestCases
 import io.github.kory33.guardedqueries.core.testharnesses.GSatEquivalenceTestHarness
 import org.scalatest.flatspec.AnyFlatSpec
@@ -27,9 +27,9 @@ class NaiveReverseChaseBasedSEEnumerationTests extends AnyFlatSpec {
       NaiveReverseChaseBasedSEEnumeration(
         NaiveReverseChaseEngine(
           NaiveSaturationEngine(),
-          IndexlessMaximallyStrongLocalInstanceSet(_)
+          IndexlessMinimallyStrongLocalInstanceSet(_)
         ),
-        IndexlessMaximallyStrongLocalInstanceSet(_)
+        IndexlessMinimallyStrongLocalInstanceSet(_)
       )
     )
   )

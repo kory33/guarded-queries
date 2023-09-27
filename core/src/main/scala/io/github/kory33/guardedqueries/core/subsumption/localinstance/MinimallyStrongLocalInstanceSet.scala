@@ -9,55 +9,54 @@ import io.github.kory33.guardedqueries.core.subqueryentailments.{
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 
 /**
- * An interface to objects that can keep track of a set of local instances which are "maximal"
+ * An interface to objects that can keep track of a set of local instances which are "minimal"
  * with respect to the following "strength relation":
  *
- * Fix [[localNamesToFix]] and define a binary relation `R` on [[LocalInstance]] as follows:
- * `instance1 R instance2` if and only if there exists a map `s: LocalName => LocalInstanceTerm`
+ * We fix [[localNamesToFix]] and define a binary relation `≲` on [[LocalInstance]] as follows:
+ * `instance1 ≲ instance2` if and only if there exists a map `s: LocalName => LocalInstanceTerm`
  * such that
- *   - `s(instance2) subsetOf instance1`, and
+ *   - `s(instance1) ⊆ instance2`, and
  *   - `s` is the identity map on [[localNamesToFix]].
  *
- * The relation `R` so defined is a preorder on [[LocalInstance]]. When we have a relation
- * `instance1 R instance2`, we say that "`instance2` is as strong as `instance1` (with respect
- * to `localNamesToFix`)".
+ * The relation `≲` so defined is a preorder on [[LocalInstance]]. When we have a relation
+ * `instance1 ≲ instance2`, we say that "`instance2` is stronger than `instance1` (with respect
+ * to `localNamesToFix`)", or that "`instance1` is weaker than `instance2`". Here, the notion of
+ * being "weaker than" or "stronger than" is not strict.
  *
- * Local instances can also be thought of as "preconditions" to witness a certain existential
- * query. Under this formulation, the smaller and the more "un-unified" the local instance is,
- * the more weaker the assumption is. This observation justifies the name "strength relation",
- * in that the local instances acting as weaker preconditions are more useful, hence "stronger".
+ * It follows that if `instance1 ≲ instance2`, then the shortcut chase-tree of `instance1` can
+ * be homomorphically mapped to `instance2`.
  *
- * Objects implementing [[MaximallyStrongLocalInstanceSet]] are useful in finding the maximally
- * strong local instances stronger than a given local instance.
+ * Objects implementing [[MinimallyStrongLocalInstanceSet]] are useful in finding the set of
+ * minimally strong local instances from the given set of local instances.
  */
-trait MaximallyStrongLocalInstanceSet {
+trait MinimallyStrongLocalInstanceSet {
   val localNamesToFix: Set[LocalName]
 
   /**
    * Add a local instance to this set.
    *
-   * The method should check that the local instance is not weaker than any of the local
-   * instances already in the set. If the instance is weaker, the method should return
-   * [[AddResult.WeakerThanAnotherLocalInstance]]. If the instance is not weaker, the method
-   * should remove all the local instances in the set that are weaker than the given instance,
-   * add the given instance to the set, and return [[AddResult.Added]].
+   * The method should check if there is a local instance in that set that is as weak as the
+   * given [[localInstance]]. If there is such an instance, the method should return
+   * [[AddResult.StrongerThanAnotherLocalInstance]]. Otherwise, the method should remove all the
+   * local instances in the set that are stronger than [[localInstance]], add [[localInstance]]
+   * to the set, and return [[AddResult.Added]].
    */
-  def add(localInstance: LocalInstance): MaximallyStrongLocalInstanceSet.AddResult
+  def add(localInstance: LocalInstance): MinimallyStrongLocalInstanceSet.AddResult
 
   /**
    * Get the set of local instances currently in this set.
    */
-  def getMaximalLocalInstances: Set[LocalInstance]
+  def getMinimalLocalInstances: Set[LocalInstance]
 }
 
-object MaximallyStrongLocalInstanceSet {
+object MinimallyStrongLocalInstanceSet {
   trait Factory {
-    def newSet(localNamesToFix: Set[LocalName]): MaximallyStrongLocalInstanceSet
+    def newSet(localNamesToFix: Set[LocalName]): MinimallyStrongLocalInstanceSet
   }
 
   enum AddResult:
     case Added
-    case WeakerThanAnotherLocalInstance
+    case StrongerThanAnotherLocalInstance
 }
 
 /**
@@ -68,7 +67,7 @@ case class LocalInstanceStrengthRelation(
 ) {
   given Extension: AnyRef with
     extension (instance: LocalInstance)
-      def asStrongAs(another: LocalInstance)(
+      def asWeakAs(another: LocalInstance)(
         using joinAlgorithm: NaturalJoinAlgorithm[LocalName, LocalInstanceTerm, LocalInstance]
       ): Boolean = {
         // Recall that we have to find a map `s: LocalName => LocalInstanceTerm` such that
