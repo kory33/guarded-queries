@@ -4,17 +4,14 @@ import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.fol.DatalogRule
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{
-  DFSNormalizingDPTableSEEnumeration,
-  NaiveDPTableSEEnumeration,
-  NormalizingDPTableSEEnumeration
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.DFSNormalizingDPTableSEEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NaiveDPTableSEEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NormalizingDPTableSEEnumeration
 import io.github.kory33.guardedqueries.core.subsumption.formula
-import io.github.kory33.guardedqueries.core.subsumption.formula.{
-  MinimalExactBodyDatalogRuleSet,
-  MinimallyUnifiedDatalogRuleSet
-}
-import uk.ac.ox.cs.gsat.{GSat, GTGD}
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimalExactBodyDatalogRuleSet
+import io.github.kory33.guardedqueries.core.subsumption.formula.MinimallyUnifiedDatalogRuleSet
+import uk.ac.ox.cs.gsat.GSat
+import uk.ac.ox.cs.gsat.GTGD
 
 object App {
   private def formatGTGD(rule: GTGD): String = {

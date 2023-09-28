@@ -1,7 +1,9 @@
 package io.github.kory33.guardedqueries.core.formalinstance
 
 import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
-import uk.ac.ox.cs.pdq.fol.{Atom, Predicate, Term}
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.Term
 
 import scala.annotation.targetName
 import scala.collection.mutable

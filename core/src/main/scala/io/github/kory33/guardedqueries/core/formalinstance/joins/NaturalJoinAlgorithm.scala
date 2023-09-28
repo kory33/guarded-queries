@@ -1,7 +1,8 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins
 
 import io.github.kory33.guardedqueries.core.formalinstance.*
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Variable}
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Variable
 
 /**
  * An interface to objects that can answer natural join queries over database instances.

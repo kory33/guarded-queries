@@ -1,6 +1,8 @@
 package io.github.kory33.guardedqueries.core.utils.extensions
 
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, TGD, Variable}
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.TGD
+import uk.ac.ox.cs.pdq.fol.Variable
 
 object TGDExtensions {
   given Extensions: AnyRef with

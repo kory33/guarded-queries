@@ -1,14 +1,10 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalInstance,
-  QueryLikeAtom,
-  QueryLikeInstance
-}
-import io.github.kory33.guardedqueries.core.formalinstance.joins.{
-  JoinResult,
-  NaturalJoinAlgorithm
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.QueryLikeAtom
+import io.github.kory33.guardedqueries.core.formalinstance.QueryLikeInstance
+import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
+import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import uk.ac.ox.cs.pdq.fol.*
 

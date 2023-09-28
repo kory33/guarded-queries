@@ -2,10 +2,8 @@ package io.github.kory33.guardedqueries.core.subsumption.localinstance
 
 import io.github.kory33.guardedqueries.core.formalinstance.QueryLikeInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
-import io.github.kory33.guardedqueries.core.subqueryentailments.{
-  LocalInstance,
-  LocalInstanceTerm
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
 
 /**

@@ -3,20 +3,17 @@ package io.github.kory33.guardedqueries.core.subsumption.localinstance
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
-import io.github.kory33.guardedqueries.core.subqueryentailments.{
-  LocalInstance,
-  LocalInstanceTerm
-}
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{
-  LocalName,
-  RuleConstant
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces
 import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormalInstance
 import org.scalacheck.Gen
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.flatspec.AnyFlatSpec
-import uk.ac.ox.cs.pdq.fol.{Constant, TypedConstant}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.TypedConstant
 
 class LocalInstanceStrengthRelationTest extends AnyFlatSpec with ScalaCheckPropertyChecks {
   val genSmallFormalInstance: Gen[FormalInstance[Constant]] = {

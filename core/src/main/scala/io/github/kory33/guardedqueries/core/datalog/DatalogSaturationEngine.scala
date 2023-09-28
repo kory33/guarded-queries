@@ -1,9 +1,7 @@
 package io.github.kory33.guardedqueries.core.datalog
 
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalInstance,
-  IncludesFolConstants
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.IncludesFolConstants
 
 trait DatalogSaturationEngine {
   def saturateInstance[TA: IncludesFolConstants](

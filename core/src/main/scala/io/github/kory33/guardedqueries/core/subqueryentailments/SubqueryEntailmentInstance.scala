@@ -3,7 +3,9 @@ package io.github.kory33.guardedqueries.core.subqueryentailments
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant
 import io.github.kory33.guardedqueries.core.utils.datastructures.BijectiveMap
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Constant, Variable}
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Variable
 
 case class SubqueryEntailmentInstance(
   coexistentialVariables: Set[Variable],

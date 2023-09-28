@@ -1,10 +1,8 @@
 package io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms
 
-import io.github.kory33.guardedqueries.core.formalinstance.{
-  FormalFact,
-  FormalInstance,
-  QueryLikeAtom
-}
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.formalinstance.QueryLikeAtom
 import io.github.kory33.guardedqueries.core.formalinstance.joins.JoinResult
 
 import scala.collection.mutable

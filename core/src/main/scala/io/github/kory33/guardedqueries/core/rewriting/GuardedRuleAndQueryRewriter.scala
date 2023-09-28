@@ -1,17 +1,24 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, DatalogRewriteResult}
-import io.github.kory33.guardedqueries.core.fol.{DatalogRule, FunctionFreeSignature, LocalVariableContext, NormalGTGD}
+import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
+import io.github.kory33.guardedqueries.core.datalog.DatalogRewriteResult
+import io.github.kory33.guardedqueries.core.fol.DatalogRule
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
+import io.github.kory33.guardedqueries.core.fol.LocalVariableContext
+import io.github.kory33.guardedqueries.core.fol.NormalGTGD
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstanceTerm, SubqueryEntailmentEnumeration, SubqueryEntailmentInstance}
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.MapExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.StringSetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.VariableIterableExtensions.given
-import uk.ac.ox.cs.gsat.{AbstractSaturation, GTGD}
+import uk.ac.ox.cs.gsat.AbstractSaturation
+import uk.ac.ox.cs.gsat.GTGD
 import uk.ac.ox.cs.pdq.fol.*
 
 import scala.jdk.CollectionConverters.*

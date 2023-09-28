@@ -1,8 +1,11 @@
 package io.github.kory33.guardedqueries.core.rewriting
 
-import io.github.kory33.guardedqueries.core.datalog.{DatalogProgram, GuardedDatalogProgram}
-import uk.ac.ox.cs.gsat.{AbstractSaturation, GTGD}
-import uk.ac.ox.cs.pdq.fol.{Constant, Formula}
+import io.github.kory33.guardedqueries.core.datalog.DatalogProgram
+import io.github.kory33.guardedqueries.core.datalog.GuardedDatalogProgram
+import uk.ac.ox.cs.gsat.AbstractSaturation
+import uk.ac.ox.cs.gsat.GTGD
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Formula
 
 import scala.jdk.CollectionConverters.*
 

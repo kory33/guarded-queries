@@ -8,7 +8,11 @@ import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGe
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.ac.ox.cs.pdq.fol.{Atom, Constant, Predicate, TypedConstant, Variable}
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.Constant
+import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.TypedConstant
+import uk.ac.ox.cs.pdq.fol.Variable
 
 import scala.jdk.CollectionConverters.*
 

@@ -1,20 +1,28 @@
 package io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls
 
 import io.github.kory33.guardedqueries.core.datalog.DatalogSaturationEngine
-import io.github.kory33.guardedqueries.core.fol.{FunctionFreeSignature, NormalGTGD}
-import io.github.kory33.guardedqueries.core.formalinstance.{FormalFact, FormalInstance}
+import io.github.kory33.guardedqueries.core.fol.FunctionFreeSignature
+import io.github.kory33.guardedqueries.core.fol.NormalGTGD
+import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
+import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.SaturatedRuleSet
-import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.{LocalName, RuleConstant}
-import io.github.kory33.guardedqueries.core.subqueryentailments.{LocalInstance, LocalInstanceTerm, SubqueryEntailmentEnumeration, SubqueryEntailmentInstance}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.RuleConstant
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.SubqueryEntailmentInstance
 import io.github.kory33.guardedqueries.core.utils.CachingFunction
 import io.github.kory33.guardedqueries.core.utils.FunctionSpaces.*
-import io.github.kory33.guardedqueries.core.utils.extensions.*
 import io.github.kory33.guardedqueries.core.utils.extensions.ConjunctiveQueryExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.IterableExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.SetExtensions.given
 import io.github.kory33.guardedqueries.core.utils.extensions.TGDExtensions.given
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Predicate, Variable}
+import io.github.kory33.guardedqueries.core.utils.extensions.*
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Predicate
+import uk.ac.ox.cs.pdq.fol.Variable
 
 /**
  * An implementation of subquery entailment enumeration using a DP table plus a simple

@@ -3,7 +3,9 @@ package io.github.kory33.guardedqueries.core.fol
 import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions
 import io.github.kory33.guardedqueries.core.utils.extensions.FormulaExtensions.given
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, Formula, Predicate}
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Formula
+import uk.ac.ox.cs.pdq.fol.Predicate
 
 /**
  * An object of this class represents a first-order logic signature with

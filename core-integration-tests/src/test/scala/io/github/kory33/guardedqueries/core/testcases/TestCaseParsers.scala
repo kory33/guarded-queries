@@ -1,8 +1,10 @@
 package io.github.kory33.guardedqueries.core.testcases
 
-import io.github.kory33.guardedqueries.parser.{FormulaParsers, FormulaParsingContext}
+import io.github.kory33.guardedqueries.parser.FormulaParsers
+import io.github.kory33.guardedqueries.parser.FormulaParsingContext
 import uk.ac.ox.cs.gsat.GTGD
-import uk.ac.ox.cs.pdq.fol.{ConjunctiveQuery, TypedConstant}
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.TypedConstant
 
 object TestCaseParsers {
   val commonParsingContext: FormulaParsingContext =

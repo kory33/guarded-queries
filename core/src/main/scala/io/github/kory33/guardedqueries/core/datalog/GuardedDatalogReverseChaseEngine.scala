@@ -1,10 +1,8 @@
 package io.github.kory33.guardedqueries.core.datalog
 
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
-import io.github.kory33.guardedqueries.core.subqueryentailments.{
-  LocalInstance,
-  LocalInstanceTerm
-}
 
 /**
  * A trait representing a reverse chase engine for guarded Datalog.
