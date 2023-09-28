@@ -1,5 +1,8 @@
 package io.github.kory33.guardedqueries.core.formalinstance
-import uk.ac.ox.cs.pdq.fol.{Atom, ConjunctiveQuery, Variable, Constant as PDQConstant}
+import uk.ac.ox.cs.pdq.fol.Atom
+import uk.ac.ox.cs.pdq.fol.ConjunctiveQuery
+import uk.ac.ox.cs.pdq.fol.Variable
+import uk.ac.ox.cs.pdq.fol.{Constant => PDQConstant}
 
 type QueryLikeAtom[QueryVariable, Constant] =
   FormalFact[Either[QueryVariable, Constant]]
@@ -31,7 +34,7 @@ object CQAsFormalInstance {
               case c: PDQConstant => Right(IncludesFolConstants[Constant].includeConstant(c))
               case t =>
                 throw IllegalArgumentException(
-                  s"query contains a non-variable, non-constant term: ${t}"
+                  s"query contains a non-variable, non-constant term: $t"
                 )
             }
             .toList

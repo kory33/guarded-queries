@@ -11,7 +11,7 @@ import uk.ac.ox.cs.gsat.GSat
 class NormalizingDPTableSEEnumerationTests extends AnyFlatSpec {
   private val harness = new GSatEquivalenceTestHarness(
     GSat.getInstance,
-    new GuardedRuleAndQueryRewriter(
+    GuardedRuleAndQueryRewriter(
       GSat.getInstance,
       new NormalizingDPTableSEEnumeration(new NaiveSaturationEngine)
     )

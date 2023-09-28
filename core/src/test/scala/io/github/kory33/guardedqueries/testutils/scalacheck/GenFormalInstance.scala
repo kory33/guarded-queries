@@ -1,10 +1,10 @@
 package io.github.kory33.guardedqueries.testutils.scalacheck
 
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
 import io.github.kory33.guardedqueries.core.formalinstance.FormalFact
 import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.ShrinkSet
 import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen
+import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
 import org.scalacheck.Gen
 import org.scalacheck.Shrink
 import uk.ac.ox.cs.pdq.fol.Constant
@@ -53,9 +53,11 @@ object GenFormalInstance {
 }
 
 object ShrinkFormalInstance {
-  given Shrink[FormalInstance[Constant]] = Shrink { instance =>
-    ShrinkSet.intoSubsets[FormalFact[Constant]]
-      .shrink(instance.facts)
-      .map(FormalInstance(_))
+  given Shrink[FormalInstance[Constant]] = Shrink.withLazyList { instance =>
+    LazyList.from {
+      ShrinkSet.intoSubsets[FormalFact[Constant]]
+        .shrink(instance.facts)
+        .map(FormalInstance(_))
+    }
   }
 }

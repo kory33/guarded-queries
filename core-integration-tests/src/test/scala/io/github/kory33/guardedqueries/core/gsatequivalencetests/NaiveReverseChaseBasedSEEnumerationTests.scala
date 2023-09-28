@@ -1,15 +1,12 @@
 package io.github.kory33.guardedqueries.core.gsatequivalencetests
 import io.github.kory33.guardedqueries.core.datalog.reversechaseengines.NaiveReverseChaseEngine
-import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
-import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.formalinstance.joins.NaturalJoinAlgorithm
+import io.github.kory33.guardedqueries.core.formalinstance.joins.naturaljoinalgorithms.FilterNestedLoopJoin
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NaiveReverseChaseBasedSEEnumeration
-import io.github.kory33.guardedqueries.core.subqueryentailments.{
-  LocalInstance,
-  LocalInstanceTerm
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstance
+import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm
 import io.github.kory33.guardedqueries.core.subqueryentailments.LocalInstanceTerm.LocalName
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NaiveReverseChaseBasedSEEnumeration
 import io.github.kory33.guardedqueries.core.subsumption.localinstance.IndexlessMinimallyStrongLocalInstanceSet
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndGTGDReducibleQueryTestCases
 import io.github.kory33.guardedqueries.core.testharnesses.GSatEquivalenceTestHarness

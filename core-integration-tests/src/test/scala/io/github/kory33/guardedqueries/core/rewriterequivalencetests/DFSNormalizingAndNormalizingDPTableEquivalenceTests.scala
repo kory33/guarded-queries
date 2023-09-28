@@ -2,10 +2,8 @@ package io.github.kory33.guardedqueries.core.rewriterequivalencetests
 
 import io.github.kory33.guardedqueries.core.datalog.saturationengines.NaiveSaturationEngine
 import io.github.kory33.guardedqueries.core.rewriting.GuardedRuleAndQueryRewriter
-import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.{
-  DFSNormalizingDPTableSEEnumeration,
-  NormalizingDPTableSEEnumeration
-}
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.DFSNormalizingDPTableSEEnumeration
+import io.github.kory33.guardedqueries.core.subqueryentailments.enumerationimpls.NormalizingDPTableSEEnumeration
 import io.github.kory33.guardedqueries.core.testcases.GTGDRuleAndConjunctiveQueryTestCases
 import io.github.kory33.guardedqueries.core.testharnesses.RewriterEquivalenceTestHarness
 import org.scalatest.flatspec.AnyFlatSpec
@@ -13,11 +11,11 @@ import uk.ac.ox.cs.gsat.GSat
 
 class DFSNormalizingAndNormalizingDPTableEquivalenceTests extends AnyFlatSpec {
   private val harness = new RewriterEquivalenceTestHarness(
-    new GuardedRuleAndQueryRewriter(
+    GuardedRuleAndQueryRewriter(
       GSat.getInstance,
       new NormalizingDPTableSEEnumeration(new NaiveSaturationEngine)
     ),
-    new GuardedRuleAndQueryRewriter(
+    GuardedRuleAndQueryRewriter(
       GSat.getInstance,
       new DFSNormalizingDPTableSEEnumeration(new NaiveSaturationEngine)
     )

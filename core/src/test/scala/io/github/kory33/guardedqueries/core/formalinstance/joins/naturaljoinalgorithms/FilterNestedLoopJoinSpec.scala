@@ -4,7 +4,6 @@ import io.github.kory33.guardedqueries.core.formalinstance.FormalInstance
 import io.github.kory33.guardedqueries.core.formalinstance.joins.HomomorphicMapping
 import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormalInstance
 import io.github.kory33.guardedqueries.testutils.scalacheck.GenFormula
-import io.github.kory33.guardedqueries.testutils.scalacheck.utils.TraverseListGen.traverse
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
