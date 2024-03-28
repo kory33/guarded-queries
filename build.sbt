@@ -139,7 +139,7 @@ lazy val core = project
   .settings(
     Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value,
     libraryDependencies ++= Seq(
-      "org.scalatestplus" %% "scalacheck-1-17" % "3.2.16.0" % Test,
+      "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
       "org.scalatest" %% "scalatest-flatspec" % "3.2.18" % Test
     )
   )
