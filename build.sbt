@@ -2,7 +2,7 @@ import sbt.*
 
 import scala.sys.process.*
 
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.4.1"
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "io.github.kory33"
 
