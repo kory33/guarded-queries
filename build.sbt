@@ -149,7 +149,7 @@ lazy val formulaParsers = project
   .dependsOn(core)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.4.0"
     )
   )
 
