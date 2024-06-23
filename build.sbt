@@ -140,7 +140,7 @@ lazy val core = project
     Compile / unmanagedJars += (guardedSaturationWrapper / mavenPackage).value,
     libraryDependencies ++= Seq(
       "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
-      "org.scalatest" %% "scalatest-flatspec" % "3.2.18" % Test
+      "org.scalatest" %% "scalatest-flatspec" % "3.2.19" % Test
     )
   )
 
@@ -158,7 +158,7 @@ lazy val coreIntegrationTests = project
   .dependsOn(core, formulaParsers)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest-flatspec" % "3.2.18" % Test
+      "org.scalatest" %% "scalatest-flatspec" % "3.2.19" % Test
     ),
     Test / logBuffered := true,
     Test / baseDirectory := (ThisBuild / baseDirectory).value
